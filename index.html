@@ -1,0 +1,350 @@
+ <!DOCTYPE html>                                                            
+  <html lang="zh-CN">                                                        
+  <head>                                                                     
+    <meta charset="UTF-8">                                                   
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">   
+    <title>宁波市通跃检测技术有限公司</title>
+    <style>                                                                  
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html { scroll-behavior: smooth; }                                      
+      body { font-family: "微软雅黑", "Helvetica Neue", Arial, sans-serif;   
+  color: #333; font-size: 16px; }                                            
+                                                                             
+      /* ── 导航栏 ── */                                                     
+      nav {       
+        position: sticky;                                                    
+        top: 0;   
+        z-index: 100;
+        background: #fff;                                                    
+        border-bottom: 1px solid #e0e0e0;
+        padding: 0 4rem;                                                     
+        display: flex;
+        justify-content: space-between;                                      
+        align-items: center;
+        height: 68px;                                                        
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      }                                                                      
+      .nav-logo { display: flex; flex-direction: column; line-height: 1.3; }
+      .nav-logo .cn { font-size: 1rem; font-weight: 700; color: #1b3a6b; }   
+      .nav-logo .en { font-size: 0.65rem; color: #888; letter-spacing:       
+  0.03em; }                                                                  
+      nav ul { list-style: none; display: flex; gap: 2.5rem; }               
+      nav ul a { text-decoration: none; color: #444; font-size: 0.95rem;     
+  transition: color 0.2s; }                                                  
+      nav ul a:hover { color: #1b3a6b; }                                     
+                                                                             
+      /* ── Hero ── */
+      .hero {
+        background: linear-gradient(135deg, #1b3a6b 0%, #2563a8 100%);       
+        color: #fff;
+        text-align: center;                                                  
+        padding: 7rem 2rem 6rem;                                             
+      }
+      .hero .tag {                                                           
+        display: inline-block;                                               
+        border: 1px solid rgba(255,255,255,0.45);
+        border-radius: 20px;                                                 
+        padding: 0.3rem 1.2rem;                                              
+        font-size: 0.85rem;
+        letter-spacing: 0.08em;                                              
+        margin-bottom: 1.5rem;                                               
+        color: rgba(255,255,255,0.85);
+      }                                                                      
+      .hero h1 { font-size: 2.4rem; font-weight: 700; line-height: 1.4;
+  margin-bottom: 0.6rem; }                                                   
+      .hero h2 { font-size: 1rem; font-weight: 400; color:
+  rgba(255,255,255,0.7); letter-spacing: 0.05em; margin-bottom: 1.8rem; }    
+      .hero p { font-size: 1.1rem; color: rgba(255,255,255,0.85); max-width:
+  560px; margin: 0 auto 2.5rem; line-height: 1.8; }                          
+      .hero-btns { display: flex; gap: 1rem; justify-content: center;
+  flex-wrap: wrap; }                                                         
+      .btn-primary {
+        background: #fff;                                                    
+        color: #1b3a6b;
+        padding: 0.75rem 2rem;                                               
+        border-radius: 4px;                                                  
+        font-size: 0.95rem;
+        font-weight: 600;                                                    
+        text-decoration: none;
+        transition: background 0.2s;                                         
+      }
+      .btn-primary:hover { background: #e8f0fb; }                            
+      .btn-outline {                                                         
+        border: 1px solid rgba(255,255,255,0.7);
+        color: #fff;                                                         
+        padding: 0.75rem 2rem;                                               
+        border-radius: 4px;
+        font-size: 0.95rem;                                                  
+        text-decoration: none;
+        transition: background 0.2s;
+      }                                                                      
+      .btn-outline:hover { background: rgba(255,255,255,0.12); }
+                                                                             
+      /* ── 数字亮点 ── */                                                   
+      .stats {
+        background: #f4f7fc;                                                 
+        display: flex;                                                       
+        justify-content: center;
+        gap: 0;                                                              
+        flex-wrap: wrap;
+      }
+      .stat {
+        flex: 1;                                                             
+        min-width: 180px;
+        text-align: center;                                                  
+        padding: 2.5rem 1rem;
+        border-right: 1px solid #dde4ef;                                     
+      }
+      .stat:last-child { border-right: none; }                               
+      .stat .num { font-size: 2.2rem; font-weight: 700; color: #1b3a6b; }    
+      .stat .label { font-size: 0.9rem; color: #666; margin-top: 0.3rem; }   
+                                                                             
+      /* ── 通用区块 ── */                                                   
+      section { padding: 5rem 4rem; }
+      .section-header { text-align: center; margin-bottom: 3rem; }           
+      .section-header h2 { font-size: 1.8rem; color: #1b3a6b; margin-bottom: 
+  0.5rem; }                                                                  
+      .section-header p { color: #777; font-size: 0.95rem; }                 
+      .divider { width: 48px; height: 3px; background: #2563a8; margin:      
+  0.8rem auto 0; border-radius: 2px; }                                       
+                                                                             
+      /* ── 服务 ── */                                                       
+      #services { background: #fff; }
+      .service-grid {                                                        
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;                                                         
+        max-width: 1000px;
+        margin: 0 auto;                                                      
+      }           
+      .service-card {                                                        
+        border: 1px solid #e5eaf3;
+        border-radius: 8px;                                                  
+        padding: 2rem 1.5rem;                                                
+        transition: box-shadow 0.25s, transform 0.25s;
+      }                                                                      
+      .service-card:hover { box-shadow: 0 8px 24px rgba(27,58,107,0.1);
+  transform: translateY(-3px); }                                             
+      .service-icon { font-size: 2rem; margin-bottom: 1rem; }
+      .service-card h3 { font-size: 1.05rem; color: #1b3a6b; margin-bottom:  
+  0.6rem; }                                                                  
+      .service-card p { font-size: 0.9rem; color: #666; line-height: 1.7; }
+                                                                             
+      /* ── 优势 ── */
+      #advantages { background: #f4f7fc; }                                   
+      .adv-grid {                                                            
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));         
+        gap: 1.5rem;                                                         
+        max-width: 900px;
+        margin: 0 auto;                                                      
+      }           
+      .adv-item { text-align: center; padding: 1.5rem 1rem; }
+      .adv-item .adv-icon { font-size: 2.2rem; margin-bottom: 0.8rem; }      
+      .adv-item h3 { font-size: 1rem; color: #1b3a6b; margin-bottom: 0.4rem; 
+  }                                                                          
+      .adv-item p { font-size: 0.88rem; color: #666; line-height: 1.6; }     
+                                                                             
+      /* ── 联系 ── */                                                       
+      #contact { background: #fff; }
+      .contact-wrap {                                                        
+        max-width: 720px;
+        margin: 0 auto;
+        display: grid;                                                       
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;                                                           
+      }           
+      .contact-info h3 { font-size: 1.1rem; color: #1b3a6b; margin-bottom:
+  1.2rem; }                                                                  
+      .contact-row { display: flex; align-items: flex-start; gap: 0.7rem;
+  margin-bottom: 1rem; }                                                     
+      .contact-row .icon { font-size: 1.1rem; margin-top: 0.1rem; color:
+  #2563a8; flex-shrink: 0; }                                                 
+      .contact-row .text { font-size: 0.92rem; color: #444; line-height: 1.6;
+   }                                                                         
+      .contact-row .text a { color: #2563a8; text-decoration: none; }
+      .contact-row .text a:hover { text-decoration: underline; }             
+      .contact-note {                                                        
+        background: #f4f7fc;
+        border-radius: 8px;                                                  
+        padding: 1.5rem;
+        display: flex;                                                       
+        flex-direction: column;
+        justify-content: center;                                             
+      }           
+      .contact-note p { font-size: 0.92rem; color: #555; line-height: 1.8; }
+      .contact-note strong { color: #1b3a6b; }                               
+                                                                             
+      /* ── 页脚 ── */                                                       
+      footer {                                                               
+        background: #1b3a6b;
+        color: rgba(255,255,255,0.65);
+        text-align: center;                                                  
+        padding: 2rem 1rem;
+        font-size: 0.85rem;                                                  
+        line-height: 1.8;                                                    
+      }
+      footer strong { color: #fff; }                                         
+                  
+      /* ── 响应式 ── */                                                     
+      @media (max-width: 768px) {
+        nav { padding: 0 1.2rem; }                                           
+        nav ul { gap: 1.2rem; }
+        .hero h1 { font-size: 1.7rem; }                                      
+        section { padding: 3.5rem 1.2rem; }
+        .contact-wrap { grid-template-columns: 1fr; }                        
+      }           
+    </style>                                                                 
+  </head>         
+  <body>
+
+    <!-- 导航 -->                                                            
+    <nav>
+      <div class="nav-logo">                                                 
+        <span class="cn">宁波市通跃检测技术有限公司</span>
+        <span class="en">Ningbo Tongyue Testing Technology Co., Ltd.</span>
+      </div>                                                                 
+      <ul>
+        <li><a href="#services">服务项目</a></li>                            
+        <li><a href="#advantages">我们的优势</a></li>
+        <li><a href="#contact">联系我们</a></li>                             
+      </ul>
+    </nav>                                                                   
+                  
+    <!-- Hero -->
+    <section class="hero">
+      <div class="tag">专业认证 &nbsp;·&nbsp; 权威检测</div>                 
+      <h1>宁波市通跃检测技术有限公司</h1>                                    
+      <h2>Ningbo Tongyue Testing Technology Co., Ltd.</h2>                   
+                                                                             
+  <p>专注于国际认证代理与产品检测服务，助力企业合规出海，打通全球市场。</p>  
+      <div class="hero-btns">                                                
+        <a href="#services" class="btn-primary">了解服务</a>                 
+        <a href="#contact" class="btn-outline">立即咨询</a>                  
+      </div>
+    </section>                                                               
+                                                                             
+    <!-- 数字 -->
+    <div class="stats">                                                      
+      <div class="stat"><div class="num">10+</div><div 
+  class="label">服务国家与地区</div></div>                                   
+      <div class="stat"><div class="num">500+</div><div 
+  class="label">成功认证案例</div></div>                                     
+      <div class="stat"><div class="num">100%</div><div 
+  class="label">客户满意承诺</div></div>                                     
+      <div class="stat"><div class="num">7×5</div><div 
+  class="label">专业顾问在线</div></div>                                     
+    </div>        
+                                                                             
+    <!-- 服务 --> 
+    <section id="services">
+      <div class="section-header">
+        <h2>服务项目</h2>
+        <div class="divider"></div>                                          
+        <p>覆盖主要目标市场的认证与检测需求，一站式解决方案</p>
+      </div>                                                                 
+      <div class="service-grid">                                             
+        <div class="service-card">                                           
+          <div class="service-icon">🌐</div>                                 
+          <h3>国际认证代理</h3>
+          <p>代理 CE、FCC、RoHS、REACH、UL                                   
+  等主流国际认证，协助产品进入欧美及全球市场。</p>                           
+        </div>                                                               
+        <div class="service-card">                                           
+          <div class="service-icon">🔬</div>
+          <h3>产品检测服务</h3>                                              
+  
+  <p>与权威实验室合作，提供电气安全、电磁兼容、化学品等多类产品检测报告。</p>
+        </div>    
+        <div class="service-card">                                           
+          <div class="service-icon">📋</div>
+          <h3>合规咨询</h3>
+                                                                             
+  <p>针对目标市场法规要求，提供专业合规方案，降低出口风险，缩短认证周期。</p>
+        </div>                                                               
+        <div class="service-card">                                           
+          <div class="service-icon">🚀</div>                                 
+          <h3>全程跟踪服务</h3>
+                                                                             
+  <p>从资料准备、送样检测到证书获取，全流程跟踪管理，高效推进项目进度。</p>  
+        </div>
+      </div>                                                                 
+    </section>    
+
+    <!-- 优势 -->
+    <section id="advantages">
+      <div class="section-header">
+        <h2>我们的优势</h2>
+        <div class="divider"></div>                                          
+        <p>多年行业经验，值得信赖的合作伙伴</p>
+      </div>                                                                 
+      <div class="adv-grid">
+        <div class="adv-item">                                               
+          <div class="adv-icon">🏅</div>
+          <h3>专业团队</h3>                                                  
+          <p>拥有丰富认证经验的专业顾问，熟悉各国法规与流程。</p>
+        </div>                                                               
+        <div class="adv-item">
+          <div class="adv-icon">⚡</div>                                     
+          <h3>高效快捷</h3>
+          <p>优化流程、对接资源，帮助客户以最短时间取得认证。</p>            
+        </div>                                                               
+        <div class="adv-item">
+          <div class="adv-icon">🤝</div>                                     
+          <h3>诚信合作</h3>
+          <p>透明报价，无隐性收费，全程陪伴客户完成认证之路。</p>            
+        </div>                                                               
+        <div class="adv-item">                                               
+          <div class="adv-icon">🌏</div>                                     
+          <h3>广泛资源</h3>                                                  
+          <p>与多国权威机构及实验室建立长期合作关系。</p>                    
+        </div>                                                               
+      </div>                                                                 
+    </section>                                                               
+                  
+    <!-- 联系 -->
+    <section id="contact">
+      <div class="section-header">
+        <h2>联系我们</h2>
+        <div class="divider"></div>                                          
+        <p>欢迎随时来询，我们将尽快回复</p>
+      </div>                                                                 
+      <div class="contact-wrap">
+        <div class="contact-info">                                           
+          <h3>联系方式</h3>
+          <div class="contact-row">                                          
+            <span class="icon">🏢</span>
+            <div class="text">宁波市通跃检测技术有限公司<br>Ningbo Tongyue   
+  Testing Technology Co., Ltd.</div>                                         
+          </div>
+          <div class="contact-row">                                          
+            <span class="icon">📧</span>
+            <div class="text"><a                                             
+  href="mailto:fhpsyz@163.com">fhpsyz@163.com</a></div>                      
+          </div>                                                             
+          <div class="contact-row">                                          
+            <span class="icon">👤</span>
+            <div class="text">联系人：Happy &nbsp;|&nbsp; Mindy</div>
+          </div>                                                             
+          <div class="contact-row">                                          
+            <span class="icon">📍</span>                                     
+            <div class="text">宁波市</div>                                   
+          </div>  
+        </div>                                                               
+        <div class="contact-note">
+          <p>如您有认证或检测需求，欢迎发送邮件至<br><strong>fhpsyz@163.com</
+  strong><br><br>请说明产品类型、目标市场及认证要求，我们的顾问将在 1        
+  个工作日内与您联系。</p>
+        </div>                                                               
+      </div>      
+    </section>
+
+    <!-- 页脚 -->
+    <footer>
+      <p><strong>宁波市通跃检测技术有限公司</strong></p>
+      <p>Ningbo Tongyue Testing Technology Co., Ltd.</p>                     
+      <p style="margin-top:0.5rem">&copy; 2026 通跃检测. 保留所有权利.</p>
+    </footer>                                                                
+                  
+  </body>                                                                    
+  </html>         
