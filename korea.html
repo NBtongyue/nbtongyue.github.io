@@ -8,8 +8,6 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body { font-family: "微软雅黑", "Helvetica Neue", Arial, sans-serif; color: #333; font-size: 16px; background: #f4f7fc; }
-
-    /* 导航 */
     nav {
       position: sticky; top: 0; z-index: 100;
       background: #fff; border-bottom: 1px solid #e0e0e0;
@@ -22,10 +20,14 @@
     .nav-logo-text { display: flex; flex-direction: column; line-height: 1.3; }
     .nav-logo-text .cn { font-size: 1rem; font-weight: 700; color: #1b3a6b; }
     .nav-logo-text .en { font-size: 0.62rem; color: #888; letter-spacing: 0.03em; }
-    .nav-back { text-decoration: none; color: #1b3a6b; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 0.3rem; }
+    .nav-right { display: flex; align-items: center; gap: 1.5rem; }
+    .nav-back { text-decoration: none; color: #1b3a6b; font-size: 0.9rem; font-weight: 600; }
     .nav-back:hover { color: #2563a8; }
-
-    /* 页头 */
+    .lang-switcher { display: flex; align-items: center; gap: 0.35rem; }
+    .lang-btn { background: none; border: 1px solid #ccc; border-radius: 4px; padding: 0.2rem 0.65rem; font-size: 0.82rem; cursor: pointer; color: #666; font-family: inherit; transition: all 0.2s; }
+    .lang-btn.active { border-color: #1b3a6b; color: #1b3a6b; font-weight: 700; background: #f0f5ff; }
+    .lang-btn:hover { border-color: #1b3a6b; color: #1b3a6b; }
+    .lang-sep { color: #ddd; }
     .page-hero {
       background: linear-gradient(135deg, #1b3a6b 0%, #2563a8 100%);
       color: #fff; text-align: center; padding: 4rem 2rem 3rem;
@@ -33,11 +35,7 @@
     .page-hero .flag { font-size: 2.5rem; margin-bottom: 0.8rem; }
     .page-hero h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
     .page-hero p { font-size: 1rem; color: rgba(255,255,255,0.75); }
-
-    /* 内容 */
     .content { max-width: 860px; margin: 2.5rem auto 4rem; padding: 0 1.5rem; }
-
-    /* 折叠面板 */
     .accordion { border: 1px solid #dde4ef; border-radius: 8px; margin-bottom: 0.8rem; background: #fff; overflow: hidden; }
     .accordion-header {
       width: 100%; background: none; border: none; text-align: left;
@@ -58,11 +56,9 @@
     .qa-item { margin-bottom: 1rem; border-left: 3px solid #2563a8; padding-left: 0.8rem; }
     .qa-item .q { font-weight: 700; color: #1b3a6b; font-size: 0.9rem; margin-bottom: 0.3rem; }
     .qa-item .a { font-size: 0.88rem; color: #555; line-height: 1.7; }
-
-    /* 页脚 */
     footer { background: #1b3a6b; color: rgba(255,255,255,0.65); text-align: center; padding: 2rem 1rem; font-size: 0.85rem; line-height: 1.8; }
     footer strong { color: #fff; }
-
+    .lang-en { display: none; }
     @media (max-width: 768px) {
       nav { padding: 0 1.2rem; }
       .nav-logo-text .en { display: none; }
@@ -80,182 +76,267 @@
         <span class="en">Ningbo Tongyue Testing Technology Co., Ltd.</span>
       </div>
     </a>
-    <a href="index.html" class="nav-back">← 返回首页</a>
+    <a href="index.html" class="nav-back" data-i18n="back">← 返回首页</a>
   </nav>
 
   <div class="page-hero">
     <div class="flag">🇰🇷</div>
-    <h1>韩国 KC 认证指南</h1>
-    <p>Korea Certification — KC EMC · KC RF · KC Safety · KC 能效</p>
+    <h1 data-i18n="hero-h1">韩国 KC 认证指南</h1>
+    <p data-i18n="hero-p">Korea Certification — KC EMC · KC RF · KC Safety · KC 能效</p>
   </div>
 
   <div class="content">
 
+    <!-- 一、认证范围 -->
     <div class="accordion open">
       <button class="accordion-header" onclick="this.closest('.accordion').classList.toggle('open')">
-        一、认证范围 <i class="accordion-arrow">▾</i>
+        <span data-i18n="sec1-title">一、认证范围</span> <i class="accordion-arrow">▾</i>
       </button>
       <div class="accordion-body">
-        <div class="tag-row">
-          <span class="tag-badge">KC EMC</span>
-          <span class="tag-badge">KC RF</span>
-          <span class="tag-badge">KC Safety</span>
-          <span class="tag-badge">KC 能效</span>
-          <span class="tag-badge">食品接触</span>
-          <span class="tag-badge">化妆品相关</span>
+        <div class="lang-zh">
+          <div class="tag-row">
+            <span class="tag-badge">KC EMC</span><span class="tag-badge">KC RF</span>
+            <span class="tag-badge">KC Safety</span><span class="tag-badge">KC 能效</span>
+            <span class="tag-badge">食品接触</span><span class="tag-badge">化妆品相关</span>
+          </div>
+          <ul>
+            <li><strong>KC EMC：</strong>几乎所有电子电器产品（主频 &gt;9kHz）出口韩国均需申请；豁免产品：充气宝、不带射频功能充电宝等。</li>
+            <li><strong>KC RF：</strong>带射频功能产品。</li>
+            <li><strong>KC Safety：</strong>强制清单产品，常见如交流供电显示器/电视机、适配器、电水壶等小家电。</li>
+            <li><strong>KC 能效：</strong>强制清单产品，常见如供电显示器/电视机、适配器等，根据产品确认属于 E-standby 还是能效等级。</li>
+            <li><strong>食品接触：</strong>测试类（非认证），水壶、炸锅等接触食品或饮用水的产品部件需要测试。</li>
+            <li><strong>化妆品相关：</strong>洗手液、香氛液、护手霜、化妆品等有测试要求。</li>
+          </ul>
         </div>
-        <ul>
-          <li><strong>KC EMC：</strong>几乎所有电子电器产品（主频 &gt;9kHz）出口韩国均需申请；豁免产品：充气宝、不带射频功能充电宝等。</li>
-          <li><strong>KC RF：</strong>带射频功能产品。</li>
-          <li><strong>KC Safety：</strong>强制清单产品，常见如交流供电显示器/电视机、适配器、电水壶等小家电。</li>
-          <li><strong>KC 能效：</strong>强制清单产品，常见如供电显示器/电视机、适配器等，根据产品确认属于 E-standby 还是能效等级。</li>
-          <li><strong>食品接触：</strong>测试类（非认证），水壶、炸锅等接触食品或饮用水的产品部件需要测试。</li>
-          <li><strong>化妆品相关：</strong>洗手液、香氛液、护手霜、化妆品等有测试要求。</li>
-        </ul>
+        <div class="lang-en">
+          <div class="tag-row">
+            <span class="tag-badge">KC EMC</span><span class="tag-badge">KC RF</span>
+            <span class="tag-badge">KC Safety</span><span class="tag-badge">KC Energy Efficiency</span>
+            <span class="tag-badge">Food Contact</span><span class="tag-badge">Cosmetics-Related</span>
+          </div>
+          <ul>
+            <li><strong>KC EMC:</strong> Almost all electronic/electrical products (fundamental frequency &gt;9kHz) exported to Korea require KC EMC certification. Exempt products include: air pump toys, power banks without RF functions, etc.</li>
+            <li><strong>KC RF:</strong> Products with radio frequency functions.</li>
+            <li><strong>KC Safety:</strong> Mandatory list products, commonly including AC-powered monitors/TVs, adapters, electric kettles and other small appliances.</li>
+            <li><strong>KC Energy Efficiency:</strong> Mandatory list products, commonly including powered monitors/TVs, adapters, etc. Confirm whether E-standby or energy efficiency class applies.</li>
+            <li><strong>Food Contact:</strong> Testing-based (not certification). Parts of products that may contact food or drinking water (e.g., kettles, air fryers) must be tested.</li>
+            <li><strong>Cosmetics-Related:</strong> Products such as hand sanitizers, fragrance liquids, hand creams, and cosmetics have testing requirements.</li>
+          </ul>
+        </div>
       </div>
     </div>
 
+    <!-- 二、认证周期 -->
     <div class="accordion">
       <button class="accordion-header" onclick="this.closest('.accordion').classList.toggle('open')">
-        二、认证周期（以带 WiFi 2.4G 功能电视机为例） <i class="accordion-arrow">▾</i>
+        <span data-i18n="sec2-title">二、认证周期（以带 WiFi 2.4G 功能电视机为例）</span> <i class="accordion-arrow">▾</i>
       </button>
       <div class="accordion-body">
-        <ul>
-          <li><strong>KC EMC &amp; RF：</strong>8～10 周（预测1周 → 运输到韩国2周 → 韩国测试发证5～7周）</li>
-          <li><strong>KC Safety：</strong>CB + 6 周（基于CB转KC证书）</li>
-          <li><strong>KC 能效：</strong>样机到韩国后约 4 周</li>
-        </ul>
+        <div class="lang-zh">
+          <ul>
+            <li><strong>KC EMC &amp; RF：</strong>8～10 周（预测1周 → 运输到韩国2周 → 韩国测试发证5～7周）</li>
+            <li><strong>KC Safety：</strong>CB + 6 周（基于CB转KC证书）</li>
+            <li><strong>KC 能效：</strong>样机到韩国后约 4 周</li>
+          </ul>
+        </div>
+        <div class="lang-en">
+          <ul>
+            <li><strong>KC EMC &amp; RF:</strong> 8–10 weeks (Preliminary assessment: 1 week → Shipping to Korea: 2 weeks → Testing &amp; certification in Korea: 5–7 weeks)</li>
+            <li><strong>KC Safety:</strong> CB + 6 weeks (based on CB-to-KC certificate conversion)</li>
+            <li><strong>KC Energy Efficiency:</strong> Approx. 4 weeks after samples arrive in Korea</li>
+          </ul>
+        </div>
       </div>
     </div>
 
+    <!-- 三、样机数量 -->
     <div class="accordion">
       <button class="accordion-header" onclick="this.closest('.accordion').classList.toggle('open')">
-        三、样机数量（以带 WiFi 2.4G 功能电视机为例） <i class="accordion-arrow">▾</i>
+        <span data-i18n="sec3-title">三、样机数量（以带 WiFi 2.4G 功能电视机为例）</span> <i class="accordion-arrow">▾</i>
       </button>
       <div class="accordion-body">
-        <ul>
-          <li><strong>KC EMC &amp; RF：</strong>1台正常整机 + 1台传导定频整机（均需完整整机）</li>
-          <li><strong>KC 能效：</strong>2台整机</li>
-          <li><strong>KC Safety：</strong>CB转证，不需要样机</li>
-        </ul>
+        <div class="lang-zh">
+          <ul>
+            <li><strong>KC EMC &amp; RF：</strong>1台正常整机 + 1台传导定频整机（均需完整整机）</li>
+            <li><strong>KC 能效：</strong>2台整机</li>
+            <li><strong>KC Safety：</strong>CB转证，不需要样机</li>
+          </ul>
+        </div>
+        <div class="lang-en">
+          <ul>
+            <li><strong>KC EMC &amp; RF:</strong> 1 standard complete unit + 1 conducted fixed-frequency complete unit (both must be in full product form)</li>
+            <li><strong>KC Energy Efficiency:</strong> 2 complete units</li>
+            <li><strong>KC Safety:</strong> CB certificate conversion — no samples required</li>
+          </ul>
+        </div>
       </div>
     </div>
 
+    <!-- 四、铭牌要求 -->
     <div class="accordion">
       <button class="accordion-header" onclick="this.closest('.accordion').classList.toggle('open')">
-        四、KC 认证铭牌要求 <i class="accordion-arrow">▾</i>
+        <span data-i18n="sec4-title">四、KC 认证铭牌要求</span> <i class="accordion-arrow">▾</i>
       </button>
       <div class="accordion-body">
-        <p><strong>KC EMC / RF 铭牌须包含：</strong></p>
-        <ul>
-          <li>KC logo（高度 ≥ 5mm）</li>
-          <li>KC 证书号、型号名、产品名称</li>
-          <li>制造商、申请商（与制造商相同时可只标注一个）</li>
-          <li>制造国家、制造年月（标注到月份）</li>
-        </ul>
-        <p style="margin-top:0.8rem"><strong>KC Safety 铭牌须包含：</strong></p>
-        <ul>
-          <li>KC logo（无最小尺寸要求，清晰可见即可）</li>
-          <li>KC 证书号、型号名、产品名称</li>
-          <li>制造工厂、韩国申请商（韩国进口商作为持证人时需单独标注）</li>
-          <li>制造国家、制造年月（标注到月份）</li>
-          <li>韩国售后联系电话</li>
-        </ul>
+        <div class="lang-zh">
+          <p><strong>KC EMC / RF 铭牌须包含：</strong></p>
+          <ul>
+            <li>KC logo（高度 ≥ 5mm）</li>
+            <li>KC 证书号、型号名、产品名称</li>
+            <li>制造商、申请商（与制造商相同时可只标注一个）</li>
+            <li>制造国家、制造年月（标注到月份）</li>
+          </ul>
+          <p style="margin-top:0.8rem"><strong>KC Safety 铭牌须包含：</strong></p>
+          <ul>
+            <li>KC logo（无最小尺寸要求，清晰可见即可）</li>
+            <li>KC 证书号、型号名、产品名称</li>
+            <li>制造工厂、韩国申请商（韩国进口商作为持证人时需单独标注）</li>
+            <li>制造国家、制造年月（标注到月份）</li>
+            <li>韩国售后联系电话</li>
+          </ul>
+        </div>
+        <div class="lang-en">
+          <p><strong>KC EMC / RF Label must include:</strong></p>
+          <ul>
+            <li>KC logo (minimum height: 5mm)</li>
+            <li>KC certificate number, model name, product name</li>
+            <li>Manufacturer, applicant (if same as manufacturer, only one is required)</li>
+            <li>Country of manufacture, date of manufacture (month and year)</li>
+          </ul>
+          <p style="margin-top:0.8rem"><strong>KC Safety Label must include:</strong></p>
+          <ul>
+            <li>KC logo (no minimum size — must be clearly legible)</li>
+            <li>KC certificate number, model name, product name</li>
+            <li>Manufacturing facility, Korean applicant (must be listed separately if Korean importer is the certificate holder)</li>
+            <li>Country of manufacture, date of manufacture (month and year)</li>
+            <li>Korean after-sales contact number</li>
+          </ul>
+        </div>
       </div>
     </div>
 
+    <!-- 五、持证人要求 -->
     <div class="accordion">
       <button class="accordion-header" onclick="this.closest('.accordion').classList.toggle('open')">
-        五、持证人要求 <i class="accordion-arrow">▾</i>
+        <span data-i18n="sec5-title">五、持证人要求</span> <i class="accordion-arrow">▾</i>
       </button>
       <div class="accordion-body">
-        <ul>
-          <li><strong>KC Safety：</strong>生产工厂 或 韩国进口商</li>
-          <li><strong>KC EMC &amp; RF：</strong>制造商 或 韩国进口商</li>
-          <li><strong>KC 能效：</strong>韩国实际进口商</li>
-        </ul>
+        <div class="lang-zh">
+          <ul>
+            <li><strong>KC Safety：</strong>生产工厂 或 韩国进口商</li>
+            <li><strong>KC EMC &amp; RF：</strong>制造商 或 韩国进口商</li>
+            <li><strong>KC 能效：</strong>韩国实际进口商</li>
+          </ul>
+        </div>
+        <div class="lang-en">
+          <ul>
+            <li><strong>KC Safety:</strong> Manufacturing facility or Korean importer</li>
+            <li><strong>KC EMC &amp; RF:</strong> Manufacturer or Korean importer</li>
+            <li><strong>KC Energy Efficiency:</strong> Actual Korean importer</li>
+          </ul>
+        </div>
       </div>
     </div>
 
+    <!-- 六、认证模式 -->
     <div class="accordion">
       <button class="accordion-header" onclick="this.closest('.accordion').classList.toggle('open')">
-        六、认证模式 <i class="accordion-arrow">▾</i>
+        <span data-i18n="sec6-title">六、认证模式</span> <i class="accordion-arrow">▾</i>
       </button>
       <div class="accordion-body">
-        <p><strong>KC Safety（参考强制清单）：</strong></p>
-        <ul>
-          <li><strong>KC 认证：</strong>测试（or CB转证）发证 + 工厂审查（2年一次），如电磁炉、电风扇等</li>
-          <li><strong>KC 确认：</strong>测试（or CB转证）发证，不需要工厂审查，如AC供电显示器、空气净化器等</li>
-          <li><strong>KC SDoC：</strong>测试（or CB转韩国报告）无证书，仅有韩文报告 + 进口商自行备案，如DC供电显示器、DC供电打印机等</li>
-        </ul>
-        <p style="margin-top:0.8rem"><strong>KC 能效（参考官方分类）：</strong></p>
-        <ul>
-          <li>E-standby：如音箱等</li>
-          <li>能效等级（MEPS）：如电视机等</li>
-          <li>超高能效：部分灯具（常见咨询产品通常只涉及前两种）</li>
-        </ul>
-        <p style="margin-top:0.8rem"><strong>KC EMC &amp; RF：</strong></p>
-        <ul>
-          <li><strong>注册：</strong>常见EMC产品及WiFi、蓝牙等低功耗产品</li>
-          <li><strong>认证：</strong>需要测试SAR的产品，以及手机等</li>
-        </ul>
+        <div class="lang-zh">
+          <p><strong>KC Safety（参考强制清单）：</strong></p>
+          <ul>
+            <li><strong>KC 认证：</strong>测试（or CB转证）发证 + 工厂审查（2年一次），如电磁炉、电风扇等</li>
+            <li><strong>KC 确认：</strong>测试（or CB转证）发证，不需要工厂审查，如AC供电显示器、空气净化器等</li>
+            <li><strong>KC SDoC：</strong>测试（or CB转韩国报告）无证书，仅有韩文报告 + 进口商自行备案，如DC供电显示器、DC供电打印机等</li>
+          </ul>
+          <p style="margin-top:0.8rem"><strong>KC 能效（参考官方分类）：</strong></p>
+          <ul>
+            <li>E-standby：如音箱等</li>
+            <li>能效等级（MEPS）：如电视机等</li>
+            <li>超高能效：部分灯具（常见咨询产品通常只涉及前两种）</li>
+          </ul>
+          <p style="margin-top:0.8rem"><strong>KC EMC &amp; RF：</strong></p>
+          <ul>
+            <li><strong>注册：</strong>常见EMC产品及WiFi、蓝牙等低功耗产品</li>
+            <li><strong>认证：</strong>需要测试SAR的产品，以及手机等</li>
+          </ul>
+        </div>
+        <div class="lang-en">
+          <p><strong>KC Safety (refer to mandatory list):</strong></p>
+          <ul>
+            <li><strong>KC Certification:</strong> Testing (or CB conversion) + certificate issuance + factory inspection (every 2 years), e.g., induction cookers, electric fans</li>
+            <li><strong>KC Confirmation:</strong> Testing (or CB conversion) + certificate issuance, no factory inspection, e.g., AC-powered monitors, air purifiers</li>
+            <li><strong>KC SDoC:</strong> Testing (or CB conversion to Korean report), no certificate (Korean report only) + self-registration by importer, e.g., DC-powered monitors, DC-powered printers</li>
+          </ul>
+          <p style="margin-top:0.8rem"><strong>KC Energy Efficiency (refer to official classification):</strong></p>
+          <ul>
+            <li>E-standby: e.g., speakers</li>
+            <li>Energy Efficiency Level (MEPS): e.g., TVs</li>
+            <li>Ultra-high Energy Efficiency: some lighting products (most common products only involve the first two types)</li>
+          </ul>
+          <p style="margin-top:0.8rem"><strong>KC EMC &amp; RF:</strong></p>
+          <ul>
+            <li><strong>Registration:</strong> Common EMC-only products and low-power devices such as WiFi and Bluetooth</li>
+            <li><strong>Certification:</strong> Products requiring SAR testing, mobile phones, etc.</li>
+          </ul>
+        </div>
       </div>
     </div>
 
+    <!-- 七、测试注意事项 -->
     <div class="accordion">
       <button class="accordion-header" onclick="this.closest('.accordion').classList.toggle('open')">
-        七、测试注意事项 <i class="accordion-arrow">▾</i>
+        <span data-i18n="sec7-title">七、测试注意事项</span> <i class="accordion-arrow">▾</i>
       </button>
       <div class="accordion-body">
-        <ul>
-          <li><strong>SAR 要求：</strong>使用距离20cm以内的产品，若功率超出限值，韩国要求测试SAR。</li>
-          <li><strong>WiFi 2.4G 射频测试：</strong>只测试传导，不测辐射。</li>
-          <li><strong>适配器能效：</strong>即使适配器不单独出货，若产品附带适配器，需提供适配器的KC EMC、Safety、能效证书。</li>
-          <li><strong>锂电池：</strong>可充电锂电池属于KC Safety强制要求，产品内部锂电池需单独申请KC Safety证书。</li>
-        </ul>
+        <div class="lang-zh">
+          <ul>
+            <li><strong>SAR 要求：</strong>使用距离20cm以内的产品，若功率超出限值，韩国要求测试SAR。</li>
+            <li><strong>WiFi 2.4G 射频测试：</strong>只测试传导，不测辐射。</li>
+            <li><strong>适配器能效：</strong>即使适配器不单独出货，若产品附带适配器，需提供适配器的KC EMC、Safety、能效证书。</li>
+            <li><strong>锂电池：</strong>可充电锂电池属于KC Safety强制要求，产品内部锂电池需单独申请KC Safety证书。</li>
+          </ul>
+        </div>
+        <div class="lang-en">
+          <ul>
+            <li><strong>SAR Requirement:</strong> Products used within 20cm must undergo SAR testing if the power exceeds the regulatory limit.</li>
+            <li><strong>WiFi 2.4G RF Testing:</strong> Conducted testing only — radiated testing is not required.</li>
+            <li><strong>Adapter Energy Efficiency:</strong> Even if the adapter is not sold separately, if the product is shipped with an adapter, KC EMC, Safety, and Energy Efficiency certificates for the adapter are required.</li>
+            <li><strong>Lithium Battery:</strong> Rechargeable lithium batteries are subject to mandatory KC Safety requirements. Internal lithium batteries in a product must obtain a separate KC Safety certificate.</li>
+          </ul>
+        </div>
       </div>
     </div>
 
+    <!-- 八、Q&A -->
     <div class="accordion">
       <button class="accordion-header" onclick="this.closest('.accordion').classList.toggle('open')">
-        八、常见问题解答（Q&amp;A） <i class="accordion-arrow">▾</i>
+        <span data-i18n="sec8-title">八、常见问题解答（Q&amp;A）</span> <i class="accordion-arrow">▾</i>
       </button>
       <div class="accordion-body">
-        <div class="qa-item">
-          <div class="q">Q1：常见产品出口韩国要做哪些认证？</div>
-          <div class="a">常见产品涉及3个领域。以带射频功能显示器为例：需做KC Safety、KC EMC、KC RF、KC MEPS（能效）。</div>
+        <div class="lang-zh">
+          <div class="qa-item"><div class="q">Q1：常见产品出口韩国要做哪些认证？</div><div class="a">常见产品涉及3个领域。以带射频功能显示器为例：需做KC Safety、KC EMC、KC RF、KC MEPS（能效）。</div></div>
+          <div class="qa-item"><div class="q">Q2：韩国是否有食品接触要求？</div><div class="a">针对可能接触食物的产品（如电水壶、电饭煲、空气炸锅等），韩国食药监要求接触部件满足食品接触法规，此项为清关抽样检测项目。</div></div>
+          <div class="qa-item"><div class="q">Q3：适配器出口韩国是否有能效要求？</div><div class="a">适配器适用于总输出功率150W或以下、同时输出电压相同的单一输出。充电器仅适用于额定输入功率20W或以下锂离子电池充电器。但广播、医疗、照明、仪器和监控等特殊用途除外。</div></div>
+          <div class="qa-item"><div class="q">Q4：韩国对SAR是否有要求？</div><div class="a">使用距离20cm以内的产品，若功率超出限值，韩国要求测试SAR。</div></div>
+          <div class="qa-item"><div class="q">Q5：韩国KC认证是否认可模块证书？整机是否需要再认证？</div><div class="a">KC可认可模块的RF报告证书，但整机同样需要取证。模块有证书时可不测RF部分，只测RF EMC（类似301489标准）。注意：若模块取证时射频天线与整机不同，申请整机认证前需给模块报备天线，报备完成后才可提交整机认证申请，报备需模块厂配合签字提供资料。</div></div>
+          <div class="qa-item"><div class="q">Q6：韩国射频测试传导还是辐射？</div><div class="a">韩国大部分WiFi、蓝牙规格的射频只测试传导。</div></div>
+          <div class="qa-item"><div class="q">Q7：韩国KC认证样机要求？</div><div class="a">KC Safety：CB转KC证书或报告，不需要样机，若当地测试需按产品确认；KC EMC：1台正常样机（含出货适配器）；KC RF：1台传导定频整机（必须为整机，不能提供板子）；KC 能效：根据产品类别确定，例如显示器需2台整机。</div></div>
+          <div class="qa-item"><div class="q">Q8：韩国KC认证logo有无尺寸要求？</div><div class="a">KC Safety：logo无尺寸要求，清晰可见即可；KC EMC &amp; RF：最小高度5mm，按矢量图等比例缩放；KC 能效：不同产品有相应的能效标签要求。</div></div>
+          <div class="qa-item"><div class="q">Q9：韩国KC Safety认证有哪些模式？</div><div class="a">共3种模式：①KC认证：测试发证+工厂审查（2年一次），如电磁炉、电风扇；②KC确认：测试发证，不需工厂审查，如AC供电显示器、空气净化器；③KC SDoC：无证书仅韩文报告+进口商自行备案，如DC供电显示器、DC供电打印机。</div></div>
         </div>
-        <div class="qa-item">
-          <div class="q">Q2：韩国是否有食品接触要求？</div>
-          <div class="a">针对可能接触食物的产品（如电水壶、电饭煲、空气炸锅等），韩国食药监要求接触部件满足食品接触法规，此项为清关抽样检测项目。</div>
-        </div>
-        <div class="qa-item">
-          <div class="q">Q3：适配器出口韩国是否有能效要求？</div>
-          <div class="a">适配器适用于总输出功率150W或以下、同时输出电压相同的单一输出。充电器仅适用于额定输入功率20W或以下锂离子电池充电器。但广播、医疗、照明、仪器和监控等特殊用途除外。</div>
-        </div>
-        <div class="qa-item">
-          <div class="q">Q4：韩国对SAR是否有要求？</div>
-          <div class="a">使用距离20cm以内的产品，若功率超出限值，韩国要求测试SAR。</div>
-        </div>
-        <div class="qa-item">
-          <div class="q">Q5：韩国KC认证是否认可模块证书？整机是否需要再认证？</div>
-          <div class="a">KC可认可模块的RF报告证书，但整机同样需要取证。模块有证书时可不测RF部分，只测RF EMC（类似301489标准）。注意：若模块取证时射频天线与整机不同，申请整机认证前需给模块报备天线，报备完成后才可提交整机认证申请，报备需模块厂配合签字提供资料。</div>
-        </div>
-        <div class="qa-item">
-          <div class="q">Q6：韩国射频测试传导还是辐射？</div>
-          <div class="a">韩国大部分WiFi、蓝牙规格的射频只测试传导。</div>
-        </div>
-        <div class="qa-item">
-          <div class="q">Q7：韩国KC认证样机要求？</div>
-          <div class="a">KC Safety：CB转KC证书或报告，不需要样机，若当地测试需按产品确认；KC EMC：1台正常样机（含出货适配器）；KC RF：1台传导定频整机（必须为整机，不能提供板子）；KC 能效：根据产品类别确定，例如显示器需2台整机。</div>
-        </div>
-        <div class="qa-item">
-          <div class="q">Q8：韩国KC认证logo有无尺寸要求？</div>
-          <div class="a">KC Safety：logo无尺寸要求，清晰可见即可；KC EMC &amp; RF：最小高度5mm，按矢量图等比例缩放；KC 能效：不同产品有相应的能效标签要求。</div>
-        </div>
-        <div class="qa-item">
-          <div class="q">Q9：韩国KC Safety认证有哪些模式？</div>
-          <div class="a">共3种模式：①KC认证：测试发证+工厂审查（2年一次），如电磁炉、电风扇；②KC确认：测试发证，不需工厂审查，如AC供电显示器、空气净化器；③KC SDoC：无证书仅韩文报告+进口商自行备案，如DC供电显示器、DC供电打印机。</div>
+        <div class="lang-en">
+          <div class="qa-item"><div class="q">Q1: What certifications are commonly required for products exported to Korea?</div><div class="a">Most products require compliance in 3 areas. For example, a display with RF function requires: KC Safety, KC EMC, KC RF, and KC MEPS (Energy Efficiency).</div></div>
+          <div class="qa-item"><div class="q">Q2: Does Korea have food contact requirements?</div><div class="a">For products that may contact food (e.g., electric kettles, rice cookers, air fryers), the Korean Ministry of Food and Drug Safety requires that contact parts comply with food contact regulations. This is a customs sampling inspection item.</div></div>
+          <div class="qa-item"><div class="q">Q3: Do adapters exported to Korea require energy efficiency certification?</div><div class="a">Applicable to adapters with total output power ≤150W and a single output voltage. Chargers apply only to those for lithium-ion batteries with rated input power ≤20W. Adapters for special purposes such as broadcasting, medical, lighting, instruments, and surveillance are excluded.</div></div>
+          <div class="qa-item"><div class="q">Q4: Does Korea have SAR requirements?</div><div class="a">Products used within 20cm must undergo SAR testing if the transmitted power exceeds the regulatory limit.</div></div>
+          <div class="qa-item"><div class="q">Q5: Does Korean KC certification accept module certificates? Does the final product need separate certification?</div><div class="a">KC can accept a module's RF report/certificate, but the final product still requires its own certification. With a valid module certificate, only RF EMC testing (similar to EN 301489) is needed — RF testing can be omitted. Note: If the antenna used during module certification differs from the final product antenna, it must be pre-registered to the module before submitting the final product application. This requires cooperation and documentation from the module manufacturer.</div></div>
+          <div class="qa-item"><div class="q">Q6: Does Korean RF testing use conducted or radiated methods?</div><div class="a">For most WiFi and Bluetooth specifications, Korea requires conducted testing only.</div></div>
+          <div class="qa-item"><div class="q">Q7: What are the sample requirements for Korean KC certification?</div><div class="a">KC Safety: No samples needed for CB-to-KC conversion; confirm requirements if local testing applies. KC EMC: 1 standard complete unit (including the shipping adapter, if applicable). KC RF: 1 conducted fixed-frequency complete unit (must be a full product — PCB boards are not acceptable). KC Energy Efficiency: Varies by product type; e.g., 2 complete units for monitors.</div></div>
+          <div class="qa-item"><div class="q">Q8: Are there size requirements for the KC logo?</div><div class="a">KC Safety: No minimum size — must be clearly legible. KC EMC &amp; RF: Minimum height of 5mm; scale proportionally from vector artwork. KC Energy Efficiency: Specific energy label requirements vary by product.</div></div>
+          <div class="qa-item"><div class="q">Q9: What are the modes of Korean KC Safety certification?</div><div class="a">Three modes: ① KC Certification: Testing + certificate + factory inspection (every 2 years), e.g., induction cookers, electric fans. ② KC Confirmation: Testing + certificate, no factory inspection, e.g., AC-powered monitors, air purifiers. ③ KC SDoC: No certificate, Korean report only + self-registration by importer, e.g., DC-powered monitors, DC-powered printers.</div></div>
         </div>
       </div>
     </div>
@@ -265,8 +346,63 @@
   <footer>
     <p><strong>宁波市通跃检测技术有限公司</strong></p>
     <p>Ningbo Tongyue Testing Technology Co., Ltd.</p>
-    <p style="margin-top:0.5rem">&copy; 2026 通跃检测. 保留所有权利.</p>
+    <p style="margin-top:0.5rem" data-i18n="footer-rights">&copy; 2026 通跃检测. 保留所有权利.</p>
   </footer>
+
+  <script>
+    const I18N = {
+      zh: {
+        'back':       '← 返回首页',
+        'hero-h1':    '韩国 KC 认证指南',
+        'hero-p':     'Korea Certification — KC EMC · KC RF · KC Safety · KC 能效',
+        'sec1-title': '一、认证范围',
+        'sec2-title': '二、认证周期（以带 WiFi 2.4G 功能电视机为例）',
+        'sec3-title': '三、样机数量（以带 WiFi 2.4G 功能电视机为例）',
+        'sec4-title': '四、KC 认证铭牌要求',
+        'sec5-title': '五、持证人要求',
+        'sec6-title': '六、认证模式',
+        'sec7-title': '七、测试注意事项',
+        'sec8-title': '八、常见问题解答（Q&A）',
+        'footer-rights': '&copy; 2026 通跃检测. 保留所有权利.',
+      },
+      en: {
+        'back':       '← Back to Home',
+        'hero-h1':    'Korea KC Certification Guide',
+        'hero-p':     'Korea Certification — KC EMC · KC RF · KC Safety · KC Energy Efficiency',
+        'sec1-title': '1. Certification Scope',
+        'sec2-title': '2. Certification Timeline (Example: WiFi 2.4G TV)',
+        'sec3-title': '3. Sample Requirements (Example: WiFi 2.4G TV)',
+        'sec4-title': '4. KC Label Requirements',
+        'sec5-title': '5. Certificate Holder Requirements',
+        'sec6-title': '6. Certification Modes',
+        'sec7-title': '7. Testing Notes',
+        'sec8-title': '8. FAQ',
+        'footer-rights': '&copy; 2026 Tongyue Testing. All Rights Reserved.',
+      }
+    };
+
+    function setLang(lang) {
+      // 切换简单文本
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (I18N[lang] && I18N[lang][key] !== undefined) el.innerHTML = I18N[lang][key];
+      });
+      // 切换内容块
+      document.querySelectorAll('.lang-zh').forEach(el => el.style.display = lang === 'zh' ? '' : 'none');
+      document.querySelectorAll('.lang-en').forEach(el => el.style.display = lang === 'en' ? '' : 'none');
+      // 切换按钮状态
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+      });
+      localStorage.setItem('lang', lang);
+    }
+
+    // 同步首页语言选择
+    (function() {
+      const saved = localStorage.getItem('lang') || 'zh';
+      if (saved === 'en') setLang('en');
+    })();
+  </script>
 
 </body>
 </html>
