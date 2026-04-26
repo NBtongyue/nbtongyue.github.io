@@ -9,7 +9,15 @@
     html { scroll-behavior: smooth; }
     body { font-family: "微软雅黑", "Helvetica Neue", Arial, sans-serif; color: #333; font-size: 16px; }
 
+    /* ── 语言切换 ── */
+    .lang-switcher { display: flex; align-items: center; gap: 0.35rem; margin-left: 2rem; }
+    .lang-btn { background: none; border: 1px solid #ccc; border-radius: 4px; padding: 0.2rem 0.65rem; font-size: 0.82rem; cursor: pointer; color: #666; font-family: inherit; transition: all 0.2s; }
+    .lang-btn.active { border-color: #1b3a6b; color: #1b3a6b; font-weight: 700; background: #f0f5ff; }
+    .lang-btn:hover { border-color: #1b3a6b; color: #1b3a6b; }
+    .lang-sep { color: #ddd; }
+
     /* ── 导航栏 ── */
+
     nav {
       position: sticky;
       top: 0;
@@ -236,60 +244,65 @@
       </div>
     </div>
     <ul>
-      <li><a href="#services">服务项目</a></li>
-      <li><a href="#advantages">我们的优势</a></li>
-      <li><a href="#guide">技术指南</a></li>
-      <li><a href="#contact">联系我们</a></li>
+      <li><a href="#services" data-i18n="nav-services">服务项目</a></li>
+      <li><a href="#advantages" data-i18n="nav-advantages">我们的优势</a></li>
+      <li><a href="#guide" data-i18n="nav-guide">技术指南</a></li>
+      <li><a href="#contact" data-i18n="nav-contact">联系我们</a></li>
     </ul>
+    <div class="lang-switcher">
+      <button class="lang-btn active" data-lang="zh" onclick="setLang('zh')">中文</button>
+      <span class="lang-sep">|</span>
+      <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+    </div>
   </nav>
 
   <!-- Hero -->
   <section class="hero">
-    <div class="tag">专业认证 &nbsp;·&nbsp; 权威检测</div>
-    <h1>宁波市通跃检测技术有限公司</h1>
-    <h2>Ningbo Tongyue Testing Technology Co., Ltd.</h2>
-    <p>专注于国际认证代理与产品检测服务，助力企业合规出海，打通全球市场。</p>
+    <div class="tag" data-i18n="hero-tag">专业认证 &nbsp;·&nbsp; 权威检测</div>
+    <h1 data-i18n="hero-h1">宁波市通跃检测技术有限公司</h1>
+    <h2 data-i18n="hero-h2">Ningbo Tongyue Testing Technology Co., Ltd.</h2>
+    <p data-i18n="hero-p">专注于国际认证代理与产品检测服务，助力企业合规出海，打通全球市场。</p>
     <div class="hero-btns">
-      <a href="#services" class="btn-primary">了解服务</a>
-      <a href="#contact" class="btn-outline">立即咨询</a>
+      <a href="#services" class="btn-primary" data-i18n="hero-btn1">了解服务</a>
+      <a href="#contact" class="btn-outline" data-i18n="hero-btn2">立即咨询</a>
     </div>
   </section>
 
   <!-- 数字 -->
   <div class="stats">
-    <div class="stat"><div class="num">10+</div><div class="label">服务国家与地区</div></div>
-    <div class="stat"><div class="num">500+</div><div class="label">成功认证案例</div></div>
-    <div class="stat"><div class="num">100%</div><div class="label">客户满意承诺</div></div>
-    <div class="stat"><div class="num">7×5</div><div class="label">专业顾问在线</div></div>
+    <div class="stat"><div class="num">10+</div><div class="label" data-i18n="stat-1">服务国家与地区</div></div>
+    <div class="stat"><div class="num">500+</div><div class="label" data-i18n="stat-2">成功认证案例</div></div>
+    <div class="stat"><div class="num">100%</div><div class="label" data-i18n="stat-3">客户满意承诺</div></div>
+    <div class="stat"><div class="num">7×5</div><div class="label" data-i18n="stat-4">专业顾问在线</div></div>
   </div>
 
   <!-- 服务 -->
   <section id="services">
     <div class="section-header">
-      <h2>服务项目</h2>
+      <h2 data-i18n="svc-title">服务项目</h2>
       <div class="divider"></div>
-      <p>覆盖主要目标市场的认证与检测需求，一站式解决方案</p>
+      <p data-i18n="svc-sub">覆盖主要目标市场的认证与检测需求，一站式解决方案</p>
     </div>
     <div class="service-grid">
       <div class="service-card">
         <div class="service-icon">🌐</div>
-        <h3>国际认证代理</h3>
-        <p>代理 CE、FCC、RoHS、REACH、UL 等主流国际认证，协助产品进入欧美及全球市场。</p>
+        <h3 data-i18n="svc1-h">国际认证代理</h3>
+        <p data-i18n="svc1-p">代理 CE、FCC、RoHS、REACH、UL 等主流国际认证，协助产品进入欧美及全球市场。</p>
       </div>
       <div class="service-card">
         <div class="service-icon">🔬</div>
-        <h3>产品检测服务</h3>
-        <p>与权威实验室合作，提供电气安全、电磁兼容、化学品等多类产品检测报告。</p>
+        <h3 data-i18n="svc2-h">产品检测服务</h3>
+        <p data-i18n="svc2-p">与权威实验室合作，提供电气安全、电磁兼容、化学品等多类产品检测报告。</p>
       </div>
       <div class="service-card">
         <div class="service-icon">📋</div>
-        <h3>合规咨询</h3>
-        <p>针对目标市场法规要求，提供专业合规方案，降低出口风险，缩短认证周期。</p>
+        <h3 data-i18n="svc3-h">合规咨询</h3>
+        <p data-i18n="svc3-p">针对目标市场法规要求，提供专业合规方案，降低出口风险，缩短认证周期。</p>
       </div>
       <div class="service-card">
         <div class="service-icon">🚀</div>
-        <h3>全程跟踪服务</h3>
-        <p>从资料准备、送样检测到证书获取，全流程跟踪管理，高效推进项目进度。</p>
+        <h3 data-i18n="svc4-h">全程跟踪服务</h3>
+        <p data-i18n="svc4-p">从资料准备、送样检测到证书获取，全流程跟踪管理，高效推进项目进度。</p>
       </div>
     </div>
   </section>
@@ -297,30 +310,30 @@
   <!-- 优势 -->
   <section id="advantages">
     <div class="section-header">
-      <h2>我们的优势</h2>
+      <h2 data-i18n="adv-title">我们的优势</h2>
       <div class="divider"></div>
-      <p>多年行业经验，值得信赖的合作伙伴</p>
+      <p data-i18n="adv-sub">多年行业经验，值得信赖的合作伙伴</p>
     </div>
     <div class="adv-grid">
       <div class="adv-item">
         <div class="adv-icon">🏅</div>
-        <h3>专业团队</h3>
-        <p>拥有丰富认证经验的专业顾问，熟悉各国法规与流程。</p>
+        <h3 data-i18n="adv1-h">专业团队</h3>
+        <p data-i18n="adv1-p">拥有丰富认证经验的专业顾问，熟悉各国法规与流程。</p>
       </div>
       <div class="adv-item">
         <div class="adv-icon">⚡</div>
-        <h3>高效快捷</h3>
-        <p>优化流程、对接资源，帮助客户以最短时间取得认证。</p>
+        <h3 data-i18n="adv2-h">高效快捷</h3>
+        <p data-i18n="adv2-p">优化流程、对接资源，帮助客户以最短时间取得认证。</p>
       </div>
       <div class="adv-item">
         <div class="adv-icon">🤝</div>
-        <h3>诚信合作</h3>
-        <p>透明报价，无隐性收费，全程陪伴客户完成认证之路。</p>
+        <h3 data-i18n="adv3-h">诚信合作</h3>
+        <p data-i18n="adv3-p">透明报价，无隐性收费，全程陪伴客户完成认证之路。</p>
       </div>
       <div class="adv-item">
         <div class="adv-icon">🌏</div>
-        <h3>广泛资源</h3>
-        <p>与多国权威机构及实验室建立长期合作关系。</p>
+        <h3 data-i18n="adv4-h">广泛资源</h3>
+        <p data-i18n="adv4-p">与多国权威机构及实验室建立长期合作关系。</p>
       </div>
     </div>
   </section>
@@ -329,26 +342,26 @@
   <!-- 技术指南 -->
   <section id="guide">
     <div class="section-header">
-      <h2>技术指南</h2>
+      <h2 data-i18n="guide-title">技术指南</h2>
       <div class="divider"></div>
-      <p>各国认证法规解读，助您快速了解合规要求</p>
+      <p data-i18n="guide-sub">各国认证法规解读，助您快速了解合规要求</p>
     </div>
     <div class="guide-grid">
       <a href="korea.html" class="guide-card">
         <div class="guide-flag">🇰🇷</div>
-        <h3>韩国认证</h3>
-        <p>EMC / RF / Safety / 能效认证</p>
+        <h3 data-i18n="guide-kr-h">韩国认证</h3>
+        <p data-i18n="guide-kr-p">EMC / RF / Safety / 能效认证</p>
 
       </a>
       <div class="guide-card guide-coming">
         <div class="guide-flag">🇮🇳</div>
-        <h3>印度认证</h3>
-        <p>即将上线</p>
+        <h3 data-i18n="guide-in-h">印度认证</h3>
+        <p data-i18n="guide-coming">即将上线</p>
       </div>
       <div class="guide-card guide-coming">
         <div class="guide-flag">🇮🇩</div>
-        <h3>印度尼西亚认证</h3>
-        <p>即将上线</p>
+        <h3 data-i18n="guide-id-h">印度尼西亚认证</h3>
+        <p data-i18n="guide-coming">即将上线</p>
       </div>
     </div>
   </section>
@@ -356,13 +369,13 @@
   <!-- 联系 -->
   <section id="contact">
     <div class="section-header">
-      <h2>联系我们</h2>
+      <h2 data-i18n="contact-title">联系我们</h2>
       <div class="divider"></div>
-      <p>欢迎随时来询，我们将尽快回复</p>
+      <p data-i18n="contact-sub">欢迎随时来询，我们将尽快回复</p>
     </div>
     <div class="contact-wrap">
       <div class="contact-info">
-        <h3>联系方式</h3>
+        <h3 data-i18n="contact-info-h">联系方式</h3>
         <div class="contact-row">
           <span class="icon">🏢</span>
           <div class="text">宁波市通跃检测技术有限公司<br>Ningbo Tongyue Testing Technology Co., Ltd.</div>
@@ -373,18 +386,17 @@
         </div>
         <div class="contact-row">
           <span class="icon">👤</span>
-          <div class="text">
-            Happy：13732168164（微信同号）<br>
+          <div class="text" data-i18n="contact-person">
             Mindy：13586872849（微信同号）
           </div>
         </div>
         <div class="contact-row">
           <span class="icon">📍</span>
-          <div class="text">宁波市</div>
+          <div class="text" data-i18n="contact-city">宁波市</div>
         </div>
       </div>
       <div class="contact-note">
-        <p>如您有认证或检测需求，欢迎发送邮件至<br><strong>fhpsyz@163.com</strong><br><br>请说明产品类型、目标市场及认证要求，我们的顾问将在 1 个工作日内与您联系。</p>
+        <p data-i18n="contact-note">如您有认证或检测需求，欢迎发送邮件至<br><strong>fhpsyz@163.com</strong><br><br>请说明产品类型、目标市场及认证要求，我们的顾问将在 1 个工作日内与您联系。</p>
       </div>
     </div>
   </section>
@@ -393,8 +405,131 @@
   <footer>
     <p><strong>宁波市通跃检测技术有限公司</strong></p>
     <p>Ningbo Tongyue Testing Technology Co., Ltd.</p>
-    <p style="margin-top:0.5rem">&copy; 2026 通跃检测. 保留所有权利.</p>
+    <p style="margin-top:0.5rem" data-i18n="footer-rights">&copy; 2026 通跃检测. 保留所有权利.</p>
   </footer>
 
+  <script>
+    const I18N = {
+      zh: {
+        'nav-services':    '服务项目',
+        'nav-advantages':  '我们的优势',
+        'nav-guide':       '技术指南',
+        'nav-contact':     '联系我们',
+        'hero-tag':        '专业认证 &nbsp;·&nbsp; 权威检测',
+        'hero-h1':         '宁波市通跃检测技术有限公司',
+        'hero-h2':         'Ningbo Tongyue Testing Technology Co., Ltd.',
+        'hero-p':          '专注于国际认证代理与产品检测服务，助力企业合规出海，打通全球市场。',
+        'hero-btn1':       '了解服务',
+        'hero-btn2':       '立即咨询',
+        'stat-1':          '服务国家与地区',
+        'stat-2':          '成功认证案例',
+        'stat-3':          '客户满意承诺',
+        'stat-4':          '专业顾问在线',
+        'svc-title':       '服务项目',
+        'svc-sub':         '覆盖主要目标市场的认证与检测需求，一站式解决方案',
+        'svc1-h':          '国际认证代理',
+        'svc1-p':          '代理 CE、FCC、RoHS、REACH、UL 等主流国际认证，协助产品进入欧美及全球市场。',
+        'svc2-h':          '产品检测服务',
+        'svc2-p':          '与权威实验室合作，提供电气安全、电磁兼容、化学品等多类产品检测报告。',
+        'svc3-h':          '合规咨询',
+        'svc3-p':          '针对目标市场法规要求，提供专业合规方案，降低出口风险，缩短认证周期。',
+        'svc4-h':          '全程跟踪服务',
+        'svc4-p':          '从资料准备、送样检测到证书获取，全流程跟踪管理，高效推进项目进度。',
+        'adv-title':       '我们的优势',
+        'adv-sub':         '多年行业经验，值得信赖的合作伙伴',
+        'adv1-h':          '专业团队',
+        'adv1-p':          '拥有丰富认证经验的专业顾问，熟悉各国法规与流程。',
+        'adv2-h':          '高效快捷',
+        'adv2-p':          '优化流程、对接资源，帮助客户以最短时间取得认证。',
+        'adv3-h':          '诚信合作',
+        'adv3-p':          '透明报价，无隐性收费，全程陪伴客户完成认证之路。',
+        'adv4-h':          '广泛资源',
+        'adv4-p':          '与多国权威机构及实验室建立长期合作关系。',
+        'guide-title':     '技术指南',
+        'guide-sub':       '各国认证法规解读，助您快速了解合规要求',
+        'guide-kr-h':      '韩国认证',
+        'guide-kr-p':      'EMC / RF / Safety / 能效认证',
+        'guide-in-h':      '印度认证',
+        'guide-id-h':      '印度尼西亚认证',
+        'guide-coming':    '即将上线',
+        'contact-title':   '联系我们',
+        'contact-sub':     '欢迎随时来询，我们将尽快回复',
+        'contact-info-h':  '联系方式',
+        'contact-city':    '宁波市',
+        'contact-person':  'Mindy：13586872849（微信同号）',
+        'contact-note':    '如您有认证或检测需求，欢迎发送邮件至<br><strong>fhpsyz@163.com</strong><br><br>请说明产品类型、目标市场及认证要求，我们的顾问将在 1 个工作日内与您联系。',
+        'footer-rights':   '&copy; 2026 通跃检测. 保留所有权利.',
+      },
+      en: {
+        'nav-services':    'Services',
+        'nav-advantages':  'Strengths',
+        'nav-guide':       'Tech Guide',
+        'nav-contact':     'Contact',
+        'hero-tag':        'Professional Certification &nbsp;·&nbsp; Authoritative Testing',
+        'hero-h1':         'Ningbo Tongyue Testing Technology Co., Ltd.',
+        'hero-h2':         '',
+        'hero-p':          'Specializing in international certification and product testing services, helping businesses achieve compliance and access global markets.',
+        'hero-btn1':       'Our Services',
+        'hero-btn2':       'Get in Touch',
+        'stat-1':          'Countries &amp; Regions',
+        'stat-2':          'Successful Cases',
+        'stat-3':          'Client Satisfaction',
+        'stat-4':          'Advisors Online',
+        'svc-title':       'Services',
+        'svc-sub':         'One-stop certification &amp; testing solutions for key global markets',
+        'svc1-h':          'International Certification',
+        'svc1-p':          'CE, FCC, RoHS, REACH, UL and other major certifications, enabling products to enter EU, US and global markets.',
+        'svc2-h':          'Product Testing',
+        'svc2-p':          'Partnering with accredited laboratories to deliver testing reports covering electrical safety, EMC, chemicals and more.',
+        'svc3-h':          'Compliance Consulting',
+        'svc3-p':          'Tailored compliance solutions addressing target-market regulations to reduce export risk and shorten certification timelines.',
+        'svc4-h':          'End-to-End Support',
+        'svc4-p':          'Full-process management from document preparation and sample submission to certificate issuance.',
+        'adv-title':       'Our Strengths',
+        'adv-sub':         'Years of industry expertise — a trusted partner for your global expansion',
+        'adv1-h':          'Expert Team',
+        'adv1-p':          'Seasoned consultants with in-depth knowledge of international regulations and certification procedures.',
+        'adv2-h':          'Fast &amp; Efficient',
+        'adv2-p':          'Streamlined processes and established resources to help clients obtain certifications in minimal time.',
+        'adv3-h':          'Integrity First',
+        'adv3-p':          'Transparent pricing, no hidden charges — we guide you through every step of the certification journey.',
+        'adv4-h':          'Global Network',
+        'adv4-p':          'Long-standing partnerships with accredited bodies and testing laboratories worldwide.',
+        'guide-title':     'Tech Guide',
+        'guide-sub':       'Country-by-country certification guides to help you navigate compliance requirements',
+        'guide-kr-h':      'Korea Certification',
+        'guide-kr-p':      'EMC / RF / Safety / Energy Efficiency',
+        'guide-in-h':      'India Certification',
+        'guide-id-h':      'Indonesia Certification',
+        'guide-coming':    'Coming Soon',
+        'contact-title':   'Contact Us',
+        'contact-sub':     "We\'d love to hear from you — we\'ll respond as soon as possible",
+        'contact-info-h':  'Contact Information',
+        'contact-city':    'Ningbo, China',
+        'contact-person':  'Mindy: +86 135-8687-2849 (WeChat)',
+        'contact-note':    'For certification or testing inquiries, please email<br><strong>fhpsyz@163.com</strong><br><br>Please specify your product type, target market, and certification requirements. Our consultants will respond within 1 business day.',
+        'footer-rights':   '&copy; 2026 Tongyue Testing. All Rights Reserved.',
+      }
+    };
+
+    function setLang(lang) {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (I18N[lang] && I18N[lang][key] !== undefined) {
+          el.innerHTML = I18N[lang][key];
+        }
+      });
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+      });
+      localStorage.setItem('lang', lang);
+    }
+
+    // 恢复上次语言选择
+    (function() {
+      const saved = localStorage.getItem('lang') || 'zh';
+      if (saved === 'en') setLang('en');
+    })();
+  </script>
 </body>
 </html>
