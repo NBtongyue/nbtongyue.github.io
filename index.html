@@ -220,15 +220,103 @@
     }
     footer strong { color: #fff; }
 
+    /* ── 汉堡菜单按钮 ── */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      width: 24px;
+      height: 18px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      margin-left: 0.75rem;
+      flex-shrink: 0;
+    }
+    .hamburger span {
+      display: block;
+      height: 2px;
+      background: #1b3a6b;
+      border-radius: 2px;
+      transition: transform 0.25s, opacity 0.25s;
+    }
+    .hamburger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
     /* ── 响应式 ── */
     @media (max-width: 768px) {
-      nav { padding: 0 1.2rem; }
-      nav ul { gap: 1.2rem; }
-      .hero h1 { font-size: 1.7rem; }
-      section { padding: 3.5rem 1.2rem; }
-      .contact-wrap { grid-template-columns: 1fr; }
-      .nav-logo-text .cn { font-size: 0.85rem; }
+      /* 导航 */
+      nav { padding: 0 1rem; height: 60px; position: relative; }
+      .nav-logo img { height: 38px; }
+      .nav-logo-text .cn { font-size: 0.8rem; }
       .nav-logo-text .en { display: none; }
+      .hamburger { display: flex; }
+      nav ul {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: #fff;
+        border-bottom: 1px solid #e0e0e0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        padding: 0.4rem 0;
+        gap: 0;
+        z-index: 99;
+      }
+      nav ul.open { display: flex; }
+      nav ul li { border-bottom: 1px solid #f4f4f4; }
+      nav ul li:last-child { border-bottom: none; }
+      nav ul a { display: block; padding: 0.85rem 1.5rem; font-size: 0.95rem; }
+      .lang-switcher { margin-left: 0.5rem; }
+
+      /* Hero */
+      .hero { padding: 3.5rem 1.2rem 3rem; }
+      .hero .tag { font-size: 0.78rem; margin-bottom: 1rem; }
+      .hero h1 { font-size: 1.5rem; }
+      .hero h2 { font-size: 0.82rem; margin-bottom: 1.2rem; }
+      .hero p { font-size: 0.95rem; margin-bottom: 1.8rem; }
+      .btn-primary, .btn-outline { padding: 0.65rem 1.5rem; font-size: 0.9rem; }
+
+      /* 数字亮点：2 列 */
+      .stats { flex-wrap: wrap; }
+      .stat { flex: 0 0 50%; min-width: 0; border-right: none; border-bottom: 1px solid #dde4ef; padding: 1.6rem 0.5rem; }
+      .stat:nth-child(odd) { border-right: 1px solid #dde4ef; }
+      .stat:nth-last-child(-n+2):not(:nth-child(odd) ~ *) { border-bottom: none; }
+      .stat:last-child { border-bottom: none; }
+      .stat .num { font-size: 1.8rem; }
+      .stat .label { font-size: 0.82rem; }
+
+      /* 通用区块 */
+      section { padding: 3rem 1.2rem; }
+      .section-header { margin-bottom: 1.8rem; }
+      .section-header h2 { font-size: 1.4rem; }
+      .section-header p { font-size: 0.88rem; }
+
+      /* 服务：单列 */
+      .service-grid { grid-template-columns: 1fr; gap: 1rem; }
+      .service-card { padding: 1.5rem 1.2rem; }
+
+      /* 优势：2 列 */
+      .adv-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+      .adv-item { padding: 1.2rem 0.5rem; }
+
+      /* 技术指南：2 列 */
+      .guide-grid { gap: 1rem; }
+      .guide-card { width: calc(50% - 0.5rem); padding: 1.5rem 1rem; }
+
+      /* 联系：单列 */
+      .contact-wrap { grid-template-columns: 1fr; }
+      .contact-note { padding: 1.2rem; }
+    }
+
+    @media (max-width: 400px) {
+      .hero h1 { font-size: 1.3rem; }
+      .guide-card { width: 100%; }
+      .adv-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -254,6 +342,9 @@
       <span class="lang-sep">|</span>
       <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
     </div>
+    <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="菜单">
+      <span></span><span></span><span></span>
+    </button>
   </nav>
 
   <!-- Hero -->
@@ -409,6 +500,21 @@
   </footer>
 
   <script>
+    function toggleMenu() {
+      var ul = document.querySelector('nav ul');
+      var btn = document.getElementById('hamburger');
+      ul.classList.toggle('open');
+      btn.classList.toggle('open');
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('nav ul a').forEach(function(a) {
+        a.addEventListener('click', function() {
+          document.querySelector('nav ul').classList.remove('open');
+          document.getElementById('hamburger').classList.remove('open');
+        });
+      });
+    });
+
     const I18N = {
       zh: {
         'nav-services':    '服务项目',
