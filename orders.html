@@ -342,14 +342,9 @@
 
 <script>
 // ══════════════════════════════════════════════════════
-//  飞书配置
+//  代理配置
 // ══════════════════════════════════════════════════════
-const FEISHU = {
-  APP_ID:     'cli_a97ef41dd9e11bdd',
-  APP_SECRET: 'iYSnc5iLPuiXHsC6eHq0bfIugWiBvXGC',
-  APP_TOKEN:  'UXnub1zPSaHe9sszFOXcaVCvnrd',
-  TABLE_ID:   'tblWB2WhG7qnkiWE',
-};
+const WORKER = 'https://feishu-proxy.284770283.workers.dev';
 
 // 飞书多维表格字段名（与表格列名保持一致）
 const F = {
@@ -379,31 +374,13 @@ document.getElementById('m-start').value = today();
 loadData();
 
 // ══════════════════════════════════════════════════════
-//  飞书 API
+//  飞书 API（通过 Cloudflare Worker 代理）
 // ══════════════════════════════════════════════════════
-async function getToken() {
-  const t   = sessionStorage.getItem('fs_token');
-  const exp = sessionStorage.getItem('fs_exp');
-  if (t && exp && Date.now() < Number(exp)) return t;
-
-  const res = await fetch('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal', {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ app_id: FEISHU.APP_ID, app_secret: FEISHU.APP_SECRET }),
-  });
-  const d = await res.json();
-  if (d.code !== 0) throw new Error('飞书授权失败：' + d.msg);
-  sessionStorage.setItem('fs_token', d.tenant_access_token);
-  sessionStorage.setItem('fs_exp',   Date.now() + (d.expire - 300) * 1000);
-  return d.tenant_access_token;
-}
-
-async function fetchAllRecords(token) {
+async function fetchAllRecords() {
   let items = [], pageToken = '';
   do {
-    const url = `https://open.feishu.cn/open-apis/bitable/v1/apps/${FEISHU.APP_TOKEN}/tables/${FEISHU.TABLE_ID}/records`
-      + `?page_size=500${pageToken ? '&page_token=' + pageToken : ''}`;
-    const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+    const url = WORKER + '/records' + (pageToken ? '?page_token=' + pageToken : '');
+    const res = await fetch(url);
     const d   = await res.json();
     if (d.code !== 0) throw new Error('读取数据失败：' + d.msg);
     items     = items.concat(d.data.items || []);
@@ -412,15 +389,12 @@ async function fetchAllRecords(token) {
   return items;
 }
 
-async function createRecord(token, fields) {
-  const res = await fetch(
-    `https://open.feishu.cn/open-apis/bitable/v1/apps/${FEISHU.APP_TOKEN}/tables/${FEISHU.TABLE_ID}/records`,
-    {
-      method:  'POST',
-      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ fields }),
-    }
-  );
+async function createRecord(fields) {
+  const res = await fetch(WORKER + '/records', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ fields }),
+  });
   const d = await res.json();
   if (d.code !== 0) throw new Error('保存失败：' + d.msg);
 }
@@ -431,8 +405,7 @@ async function createRecord(token, fields) {
 async function loadData() {
   showLoading();
   try {
-    const token = await getToken();
-    const items = await fetchAllRecords(token);
+    const items = await fetchAllRecords();
     allRecords  = items.map(item => {
       const f = item.fields;
       const endTs = fts(f[F.end]);
@@ -630,7 +603,6 @@ async function saveOrder() {
   const btn = document.getElementById('btn-save');
   btn.disabled = true; btn.textContent = '保存中…';
   try {
-    const token  = await getToken();
     const fields = {
       [F.no]:     no,
       [F.client]: client,
@@ -646,7 +618,7 @@ async function saveOrder() {
     const note = document.getElementById('m-note').value.trim();
     if (note) fields[F.note] = note;
 
-    await createRecord(token, fields);
+    await createRecord(fields);
     closeModal();
     await loadData();
   } catch (err) {
