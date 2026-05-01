@@ -94,7 +94,7 @@
 
     /* ── 状态徽章 ── */
     .badge { display:inline-block; padding:0.2rem 0.75rem; border-radius:12px; font-size:0.8rem; font-weight:600; white-space:nowrap; }
-    .s-暂时合格   { background:#fef3c7; color:#d97706; }
+    .s-暂时合同   { background:#fef3c7; color:#d97706; }
     .s-正式合同   { background:#dbeafe; color:#1d4ed8; }
     .s-检测中     { background:#ede9fe; color:#7c3aed; }
     .s-证书申请中 { background:#d1fae5; color:#065f46; }
@@ -271,7 +271,7 @@
       placeholder="搜索订单编号、客户名称、项目名称…" oninput="applyFilters()">
     <select class="ctrl-select" id="f-status" onchange="applyFilters()">
       <option value="">全部状态</option>
-      <option>暂时合格</option>
+      <option>暂时合同</option>
       <option>正式合同</option>
       <option>检测中</option>
       <option>证书申请中</option>
@@ -344,7 +344,7 @@
       <div class="mfg">
         <label>当前状态</label>
         <select id="m-status">
-          <option>暂时合格</option>
+          <option>暂时合同</option>
           <option>正式合同</option>
           <option>检测中</option>
           <option>证书申请中</option>
@@ -410,7 +410,7 @@ const F = {
 };
 
 // 状态流转顺序
-const STATUS_FLOW = ['暂时合格', '正式合同', '检测中', '证书申请中', '已完成', '已交付', '已关闭'];
+const STATUS_FLOW = ['暂时合同', '正式合同', '检测中', '证书申请中', '已完成', '已交付', '已关闭'];
 const TERMINAL    = new Set(['已关闭', '已作废']);
 
 // ── 认证类型管理（localStorage 持久化）──
@@ -779,7 +779,7 @@ function closeModal() {
   document.getElementById('m-cert-sel').value = '';
   document.getElementById('m-cert-new').style.display = 'none';
   document.getElementById('m-cert-new').value = '';
-  document.getElementById('m-status').value = '暂时合格';
+  document.getElementById('m-status').value = '暂时合同';
   document.getElementById('m-end').value    = '';
   document.getElementById('m-start').value  = today();
   document.getElementById('btn-save').disabled    = false;
