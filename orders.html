@@ -32,7 +32,7 @@
     .btn-logout:hover { background:rgba(255,255,255,0.28); }
 
     /* ── 主体 ── */
-    main { padding:1.8rem 2rem; max-width:1400px; margin:0 auto; }
+    main { padding:1.8rem 2rem; max-width:1600px; margin:0 auto; }
 
     /* ── 统计卡片 ── */
     .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.4rem; }
@@ -118,6 +118,11 @@
       font-size:0.8rem; font-weight:700; background:#eef2ff; color:#3730a3;
     }
 
+    /* ── 金额单元格 ── */
+    .amount-cell { color:#1b3a6b; font-weight:500; white-space:nowrap; }
+    .profit-pos  { color:#065f46; font-weight:600; white-space:nowrap; }
+    .profit-neg  { color:#dc2626; font-weight:600; white-space:nowrap; }
+
     /* ── 加载 / 空状态 ── */
     .state-msg { text-align:center; padding:4rem 1rem; color:#aaa; font-size:0.95rem; }
     .spinner {
@@ -157,12 +162,13 @@
     .modal-bg.open { display:flex; }
     .modal {
       background:#fff; border-radius:12px; padding:2rem;
-      width:100%; max-width:520px;
+      width:100%; max-width:560px;
       box-shadow:0 20px 60px rgba(0,0,0,0.2);
       max-height:90vh; overflow-y:auto;
     }
     .modal h2 { font-size:1.1rem; color:#1b3a6b; margin-bottom:1.5rem; }
     .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    .form-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; }
     .mfg { margin-bottom:1rem; }
     .mfg label { display:block; font-size:.85rem; color:#555; font-weight:500; margin-bottom:.35rem; }
     .mfg input, .mfg select, .mfg textarea {
@@ -194,16 +200,17 @@
       .h-title { display:none; }
     }
     @media(max-width:600px) {
-      .form-row { grid-template-columns:1fr; }
+      .form-row-3 { grid-template-columns:1fr; }
       th:nth-child(5), td:nth-child(5),
-      th:nth-child(8), td:nth-child(8) { display:none; }
+      th:nth-child(6), td:nth-child(6),
+      th:nth-child(7), td:nth-child(7),
+      th:nth-child(11), td:nth-child(11) { display:none; }
     }
   </style>
 </head>
 <body>
 
 <script>
-  /* 未登录立即跳转，防止页面闪烁 */
   if (!sessionStorage.getItem('ty_user')) location.replace('login.html');
 </script>
 
@@ -271,6 +278,10 @@
           <th>客户名称</th>
           <th>项目名称</th>
           <th>认证类型</th>
+          <th>合同额</th>
+          <th>信息费</th>
+          <th>实验室额</th>
+          <th>利润</th>
           <th>提交日期</th>
           <th>预计完成日期</th>
           <th>当前状态</th>
@@ -279,7 +290,7 @@
         </tr>
       </thead>
       <tbody id="tbody">
-        <tr><td colspan="9" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
+        <tr><td colspan="13" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
       </tbody>
     </table>
     <div class="pagination" id="pagination"></div>
@@ -324,6 +335,20 @@
         </select>
       </div>
     </div>
+    <div class="form-row-3">
+      <div class="mfg">
+        <label>合同额（元）</label>
+        <input id="m-contract" type="number" min="0" step="0.01" placeholder="0.00">
+      </div>
+      <div class="mfg">
+        <label>信息费（元）</label>
+        <input id="m-info-fee" type="number" min="0" step="0.01" placeholder="0.00">
+      </div>
+      <div class="mfg">
+        <label>实验室额（元）</label>
+        <input id="m-lab-fee" type="number" min="0" step="0.01" placeholder="0.00">
+      </div>
+    </div>
     <div class="form-row">
       <div class="mfg">
         <label>提交日期</label>
@@ -353,14 +378,17 @@ const WORKER = 'https://nbtongyue-github-io.vercel.app';
 
 // 飞书多维表格字段名（与表格列名保持一致）
 const F = {
-  no:     '订单编号',
-  client: '客户名称',
-  proj:   '项目名称',
-  cert:   '认证类型',
-  start:  '提交日期',
-  end:    '预计完成日期',
-  status: '当前状态',
-  note:   '备注',
+  no:       '订单编号',
+  client:   '客户名称',
+  proj:     '项目名称',
+  cert:     '认证类型',
+  contract: '合同额',
+  infoFee:  '信息费',
+  labFee:   '实验室额',
+  start:    '提交日期',
+  end:      '预计完成日期',
+  status:   '当前状态',
+  note:     '备注',
 };
 
 // 状态流转顺序
@@ -389,13 +417,11 @@ function saveCustomCert(cert) {
 }
 function refreshCertUI(keepVal) {
   const all = getAllCerts();
-  // 弹窗 select
   const mSel = document.getElementById('m-cert-sel');
   const mCur = keepVal !== undefined ? keepVal : mSel.value;
   mSel.innerHTML = '<option value="">请选择</option>' +
     all.map(c => `<option value="${c}"${c === mCur ? ' selected' : ''}>${c}</option>`).join('') +
     '<option value="__custom__">＋ 添加新类型…</option>';
-  // 筛选下拉框
   const fSel = document.getElementById('f-cert');
   const fCur = fSel.value;
   fSel.innerHTML = '<option value="">全部认证</option>' +
@@ -440,7 +466,7 @@ refreshCertUI();
 loadData();
 
 // ══════════════════════════════════════════════════════
-//  飞书 API（通过 Cloudflare Worker 代理）
+//  飞书 API（通过 Vercel 代理）
 // ══════════════════════════════════════════════════════
 async function fetchAllRecords() {
   let items = [], pageToken = '';
@@ -494,25 +520,27 @@ async function loadData() {
       const f = item.fields;
       const endTs = fts(f[F.end]);
       return {
-        id:     item.record_id,
-        no:     fv(f[F.no]),
-        client: fv(f[F.client]),
-        proj:   fv(f[F.proj]),
-        cert:   fv(f[F.cert]),
-        start:  fd(f[F.start]),
+        id:       item.record_id,
+        no:       fv(f[F.no]),
+        client:   fv(f[F.client]),
+        proj:     fv(f[F.proj]),
+        cert:     fv(f[F.cert]),
+        contract: fnv(f[F.contract]),
+        infoFee:  fnv(f[F.infoFee]),
+        labFee:   fnv(f[F.labFee]),
+        start:    fd(f[F.start]),
         endTs,
-        endFmt: endTs ? fdTs(endTs) : '',
-        status: fv(f[F.status]),
-        note:   fv(f[F.note]),
+        endFmt:   endTs ? fdTs(endTs) : '',
+        status:   fv(f[F.status]),
+        note:     fv(f[F.note]),
       };
     });
-    // 从已有数据中收集自定义认证类型
     allRecords.forEach(r => { if (r.cert) saveCustomCert(r.cert); });
     applyFilters();
     renderStats();
   } catch (err) {
     document.getElementById('tbody').innerHTML =
-      `<tr><td colspan="9" class="state-msg" style="color:#dc2626">
+      `<tr><td colspan="13" class="state-msg" style="color:#dc2626">
         ⚠ ${err.message}<br>
         <small style="color:#aaa;margin-top:.5rem;display:block">
           请检查：飞书应用权限 → 多维表格读取权限是否已开启，且已将应用添加为表格协作者
@@ -545,7 +573,7 @@ function renderTable() {
   const rows  = filtered.slice(from, from + PAGE_SIZE);
 
   if (total === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" class="state-msg">暂无订单数据</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="13" class="state-msg">暂无订单数据</td></tr>';
     pgEl.style.display = 'none';
     return;
   }
@@ -553,24 +581,28 @@ function renderTable() {
   const now  = Date.now();
   const week = 7 * 24 * 3600 * 1000;
   tbody.innerHTML = rows.map(r => {
-    const done     = TERMINAL.has(r.status) || ['已完成', '已交付', '已关闭'].includes(r.status);
-    const nearDue  = r.endTs && !done && r.endTs > now && r.endTs < now + week;
-    const isOver   = r.endTs && !done && r.endTs < now;
-    const dueCls   = isOver ? 'overdue' : nearDue ? 'near-due' : '';
+    const done    = TERMINAL.has(r.status) || ['已完成', '已交付', '已关闭'].includes(r.status);
+    const nearDue = r.endTs && !done && r.endTs > now && r.endTs < now + week;
+    const isOver  = r.endTs && !done && r.endTs < now;
+    const dueCls  = isOver ? 'overdue' : nearDue ? 'near-due' : '';
     const noteText = r.note ? r.note.replace(/"/g, '&quot;') : '';
-    const idx      = STATUS_FLOW.indexOf(r.status);
-    const nextSt   = idx >= 0 && idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null;
-    const actBtns  = TERMINAL.has(r.status)
+    const idx     = STATUS_FLOW.indexOf(r.status);
+    const nextSt  = idx >= 0 && idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null;
+    const actBtns = TERMINAL.has(r.status)
       ? `<button class="btn-act btn-act-del" onclick="deleteOrder('${r.id}','${r.no}')">删除</button>`
       : `<button class="btn-act btn-act-next" onclick="advanceStatus('${r.id}','${r.status}')" title="推进到：${nextSt}">${nextSt ? '→ ' + nextSt : '→ 推进'}</button>
          <button class="btn-act btn-act-void" onclick="voidOrder('${r.id}','${r.no}')">作废</button>
          <button class="btn-act btn-act-del"  onclick="deleteOrder('${r.id}','${r.no}')">删除</button>`;
     return `<tr>
-      <td><strong>${r.no  || '—'}</strong></td>
-      <td>${r.client || '—'}</td>
-      <td>${r.proj   || '—'}</td>
+      <td><strong>${r.no     || '—'}</strong></td>
+      <td>${r.client  || '—'}</td>
+      <td>${r.proj    || '—'}</td>
       <td>${r.cert ? `<span class="cert-tag">${r.cert}</span>` : '—'}</td>
-      <td>${r.start  || '—'}</td>
+      <td class="amount-cell">${fmtAmount(r.contract)}</td>
+      <td class="amount-cell">${fmtAmount(r.infoFee)}</td>
+      <td class="amount-cell">${fmtAmount(r.labFee)}</td>
+      <td>${fmtProfit(r.contract, r.infoFee, r.labFee)}</td>
+      <td>${r.start   || '—'}</td>
       <td class="${dueCls}">${r.endFmt || '—'}${nearDue ? ' ⚠' : ''}${isOver ? ' 已超期' : ''}</td>
       <td>${r.status ? `<span class="badge s-${r.status}">${r.status}</span>` : '—'}</td>
       <td style="color:#888;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
@@ -579,7 +611,6 @@ function renderTable() {
     </tr>`;
   }).join('');
 
-  // 分页
   if (pages <= 1) { pgEl.style.display = 'none'; return; }
   pgEl.style.display = 'flex';
   let html = `<button class="pg-btn" onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>‹ 上一页</button>`;
@@ -615,7 +646,7 @@ function renderStats() {
 
 function showLoading() {
   document.getElementById('tbody').innerHTML =
-    '<tr><td colspan="9" class="state-msg"><span class="spinner"></span>加载中…</td></tr>';
+    '<tr><td colspan="13" class="state-msg"><span class="spinner"></span>加载中…</td></tr>';
   document.getElementById('pagination').style.display = 'none';
 }
 
@@ -629,6 +660,23 @@ function fv(val) {
   if (Array.isArray(val)) return val.map(v => typeof v === 'string' ? v : (v.text || v.value || '')).join('');
   if (typeof val === 'object') return val.value || val.text || '';
   return String(val);
+}
+function fnv(val) {
+  if (val == null) return null;
+  if (typeof val === 'number') return val;
+  if (typeof val === 'object' && val.value != null) return Number(val.value);
+  const n = parseFloat(val);
+  return isNaN(n) ? null : n;
+}
+function fmtAmount(val) {
+  if (val == null) return '—';
+  return '¥' + val.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function fmtProfit(contract, infoFee, labFee) {
+  if (contract == null && infoFee == null && labFee == null) return '—';
+  const profit = (contract || 0) - (infoFee || 0) - (labFee || 0);
+  const cls    = profit >= 0 ? 'profit-pos' : 'profit-neg';
+  return `<span class="${cls}">¥${profit.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>`;
 }
 function fts(val) {
   if (!val) return null;
@@ -656,7 +704,6 @@ function generateOrderNo() {
   const m = pad(now.getMonth() + 1);
   const d = pad(now.getDate());
 
-  // 从已有记录中找最大流水号，起始基数 20（下一个为 0021）
   const regex = /^NBTY\d{8}[LF](\d{4})$/;
   let maxSeq = 20;
   allRecords.forEach(r => {
@@ -676,7 +723,9 @@ function openModal() {
 }
 function closeModal() {
   document.getElementById('modal').classList.remove('open');
-  ['m-no', 'm-client', 'm-proj', 'm-note'].forEach(id => { document.getElementById(id).value = ''; });
+  ['m-no', 'm-client', 'm-proj', 'm-note', 'm-contract', 'm-info-fee', 'm-lab-fee'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
   document.getElementById('m-cert-sel').value = '';
   document.getElementById('m-cert-new').style.display = 'none';
   document.getElementById('m-cert-new').value = '';
@@ -692,8 +741,8 @@ async function saveOrder() {
   const no     = document.getElementById('m-no').value.trim();
   const client = document.getElementById('m-client').value.trim();
   const proj   = document.getElementById('m-proj').value.trim();
-  if (!no || !client || !proj) {
-    alert('请填写订单编号、客户名称和项目名称');
+  if (!client || !proj) {
+    alert('请填写客户名称和项目名称');
     return;
   }
   const btn = document.getElementById('btn-save');
@@ -709,6 +758,14 @@ async function saveOrder() {
     const certNew = document.getElementById('m-cert-new').value.trim();
     const cert    = certSel === '__custom__' ? certNew : certSel;
     if (cert) { fields[F.cert] = cert; saveCustomCert(cert); }
+
+    const contract = parseFloat(document.getElementById('m-contract').value);
+    if (!isNaN(contract)) fields[F.contract] = contract;
+    const infoFee = parseFloat(document.getElementById('m-info-fee').value);
+    if (!isNaN(infoFee)) fields[F.infoFee] = infoFee;
+    const labFee = parseFloat(document.getElementById('m-lab-fee').value);
+    if (!isNaN(labFee)) fields[F.labFee] = labFee;
+
     const start = document.getElementById('m-start').value;
     if (start) fields[F.start] = new Date(start + 'T00:00:00').getTime();
     const end = document.getElementById('m-end').value;
