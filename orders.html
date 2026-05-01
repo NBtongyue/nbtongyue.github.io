@@ -284,7 +284,7 @@
     <div class="form-row">
       <div class="mfg">
         <label>订单编号 <span class="req">*</span></label>
-        <input id="m-no" type="text" placeholder="如 TY2026001">
+        <input id="m-no" type="text" readonly style="background:#f8faff;color:#1b3a6b;font-weight:600;cursor:default;">
       </div>
       <div class="mfg">
         <label>客户名称 <span class="req">*</span></label>
@@ -581,7 +581,30 @@ function today() { return new Date().toISOString().slice(0, 10); }
 // ══════════════════════════════════════════════════════
 //  弹窗操作
 // ══════════════════════════════════════════════════════
+function generateOrderNo() {
+  const user   = sessionStorage.getItem('ty_user') || '';
+  const suffix = user === 'mindy' ? 'F' : 'L';
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = pad(now.getMonth() + 1);
+  const d = pad(now.getDate());
+
+  // 从已有记录中找最大流水号，起始基数 20（下一个为 0021）
+  const regex = /^NBTY\d{8}[LF](\d{4})$/;
+  let maxSeq = 20;
+  allRecords.forEach(r => {
+    const match = (r.no || '').match(regex);
+    if (match) {
+      const seq = parseInt(match[1], 10);
+      if (seq > maxSeq) maxSeq = seq;
+    }
+  });
+
+  return `NBTY${y}${m}${d}${suffix}${String(maxSeq + 1).padStart(4, '0')}`;
+}
+
 function openModal() {
+  document.getElementById('m-no').value = generateOrderNo();
   document.getElementById('modal').classList.add('open');
 }
 function closeModal() {
