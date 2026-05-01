@@ -100,6 +100,17 @@
     .s-证书申请中 { background:#ede9fe; color:#7c3aed; }
     .s-已完成     { background:#d1fae5; color:#065f46; }
     .s-已交付     { background:#cffafe; color:#0e7490; }
+    .s-已关闭     { background:#f1f5f9; color:#64748b; }
+    .s-已作废     { background:#fee2e2; color:#991b1b; }
+
+    /* ── 操作按钮 ── */
+    .btn-act { padding:.22rem .55rem; border-radius:4px; font-size:.76rem; cursor:pointer; font-family:inherit; border:1px solid; transition:background .15s; white-space:nowrap; }
+    .btn-act-next { background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe; }
+    .btn-act-next:hover { background:#dbeafe; }
+    .btn-act-void { background:#fffbeb; color:#b45309; border-color:#fde68a; }
+    .btn-act-void:hover { background:#fef3c7; }
+    .btn-act-del  { background:#fff5f5; color:#dc2626; border-color:#fecaca; }
+    .btn-act-del:hover  { background:#fee2e2; }
 
     /* ── 认证类型标签 ── */
     .cert-tag {
@@ -241,6 +252,8 @@
       <option>证书申请中</option>
       <option>已完成</option>
       <option>已交付</option>
+      <option>已关闭</option>
+      <option>已作废</option>
     </select>
     <select class="ctrl-select" id="f-cert" onchange="applyFilters()">
       <option value="">全部认证</option>
@@ -267,10 +280,11 @@
           <th>预计完成日期</th>
           <th>当前状态</th>
           <th>备注</th>
+          <th>操作</th>
         </tr>
       </thead>
       <tbody id="tbody">
-        <tr><td colspan="8" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
+        <tr><td colspan="9" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
       </tbody>
     </table>
     <div class="pagination" id="pagination"></div>
@@ -358,6 +372,10 @@ const F = {
   note:   '备注',
 };
 
+// 状态流转顺序
+const STATUS_FLOW = ['待提交', '资料审核', '检测中', '证书申请中', '已完成', '已交付', '已关闭'];
+const TERMINAL    = new Set(['已关闭', '已作废']);
+
 // ══════════════════════════════════════════════════════
 //  全局状态
 // ══════════════════════════════════════════════════════
@@ -399,6 +417,24 @@ async function createRecord(fields) {
   if (d.code !== 0) throw new Error('保存失败：' + d.msg);
 }
 
+async function updateRecord(recordId, fields) {
+  const res = await fetch(WORKER + '/records', {
+    method:  'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ record_id: recordId, fields }),
+  });
+  const d = await res.json();
+  if (d.code !== 0) throw new Error('更新失败：' + d.msg);
+}
+
+async function deleteRecord(recordId) {
+  const res = await fetch(WORKER + '/records?record_id=' + encodeURIComponent(recordId), {
+    method: 'DELETE',
+  });
+  const d = await res.json();
+  if (d.code !== 0) throw new Error('删除失败：' + d.msg);
+}
+
 // ══════════════════════════════════════════════════════
 //  加载与渲染
 // ══════════════════════════════════════════════════════
@@ -426,7 +462,7 @@ async function loadData() {
     renderStats();
   } catch (err) {
     document.getElementById('tbody').innerHTML =
-      `<tr><td colspan="8" class="state-msg" style="color:#dc2626">
+      `<tr><td colspan="9" class="state-msg" style="color:#dc2626">
         ⚠ ${err.message}<br>
         <small style="color:#aaa;margin-top:.5rem;display:block">
           请检查：飞书应用权限 → 多维表格读取权限是否已开启，且已将应用添加为表格协作者
@@ -459,7 +495,7 @@ function renderTable() {
   const rows  = filtered.slice(from, from + PAGE_SIZE);
 
   if (total === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" class="state-msg">暂无订单数据</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" class="state-msg">暂无订单数据</td></tr>';
     pgEl.style.display = 'none';
     return;
   }
@@ -467,11 +503,18 @@ function renderTable() {
   const now  = Date.now();
   const week = 7 * 24 * 3600 * 1000;
   tbody.innerHTML = rows.map(r => {
-    const done     = ['已完成', '已交付'].includes(r.status);
+    const done     = TERMINAL.has(r.status) || ['已完成', '已交付', '已关闭'].includes(r.status);
     const nearDue  = r.endTs && !done && r.endTs > now && r.endTs < now + week;
     const isOver   = r.endTs && !done && r.endTs < now;
     const dueCls   = isOver ? 'overdue' : nearDue ? 'near-due' : '';
     const noteText = r.note ? r.note.replace(/"/g, '&quot;') : '';
+    const idx      = STATUS_FLOW.indexOf(r.status);
+    const nextSt   = idx >= 0 && idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null;
+    const actBtns  = TERMINAL.has(r.status)
+      ? `<button class="btn-act btn-act-del" onclick="deleteOrder('${r.id}','${r.no}')">删除</button>`
+      : `<button class="btn-act btn-act-next" onclick="advanceStatus('${r.id}','${r.status}')" title="推进到：${nextSt}">${nextSt ? '→ ' + nextSt : '→ 推进'}</button>
+         <button class="btn-act btn-act-void" onclick="voidOrder('${r.id}','${r.no}')">作废</button>
+         <button class="btn-act btn-act-del"  onclick="deleteOrder('${r.id}','${r.no}')">删除</button>`;
     return `<tr>
       <td><strong>${r.no  || '—'}</strong></td>
       <td>${r.client || '—'}</td>
@@ -482,6 +525,7 @@ function renderTable() {
       <td>${r.status ? `<span class="badge s-${r.status}">${r.status}</span>` : '—'}</td>
       <td style="color:#888;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
           title="${noteText}">${r.note || '—'}</td>
+      <td><div style="display:flex;gap:4px;flex-wrap:wrap;">${actBtns}</div></td>
     </tr>`;
   }).join('');
 
@@ -513,15 +557,15 @@ function renderStats() {
   const ongoing = ['待提交', '资料审核', '检测中', '证书申请中'];
   document.getElementById('s-total').textContent   = allRecords.length;
   document.getElementById('s-ongoing').textContent = allRecords.filter(r => ongoing.includes(r.status)).length;
-  document.getElementById('s-done').textContent    = allRecords.filter(r => ['已完成', '已交付'].includes(r.status)).length;
+  document.getElementById('s-done').textContent    = allRecords.filter(r => ['已完成', '已交付', '已关闭'].includes(r.status)).length;
   document.getElementById('s-due').textContent     = allRecords.filter(r =>
-    r.endTs && r.endTs > now && r.endTs < now + week && !['已完成', '已交付'].includes(r.status)
+    r.endTs && r.endTs > now && r.endTs < now + week && !TERMINAL.has(r.status) && !['已完成', '已交付', '已关闭'].includes(r.status)
   ).length;
 }
 
 function showLoading() {
   document.getElementById('tbody').innerHTML =
-    '<tr><td colspan="8" class="state-msg"><span class="spinner"></span>加载中…</td></tr>';
+    '<tr><td colspan="9" class="state-msg"><span class="spinner"></span>加载中…</td></tr>';
   document.getElementById('pagination').style.display = 'none';
 }
 
@@ -625,6 +669,36 @@ async function saveOrder() {
     alert(err.message);
     btn.disabled = false; btn.textContent = '保存';
   }
+}
+
+// ══════════════════════════════════════════════════════
+//  订单操作：推进 / 作废 / 删除
+// ══════════════════════════════════════════════════════
+async function advanceStatus(recordId, currentStatus) {
+  const idx  = STATUS_FLOW.indexOf(currentStatus);
+  const next = STATUS_FLOW[idx + 1];
+  if (!next) return;
+  if (!confirm(`将订单状态从「${currentStatus}」推进到「${next}」？`)) return;
+  try {
+    await updateRecord(recordId, { [F.status]: next });
+    await loadData();
+  } catch (err) { alert(err.message); }
+}
+
+async function voidOrder(recordId, orderNo) {
+  if (!confirm(`确认将订单 ${orderNo} 标记为「已作废」？`)) return;
+  try {
+    await updateRecord(recordId, { [F.status]: '已作废' });
+    await loadData();
+  } catch (err) { alert(err.message); }
+}
+
+async function deleteOrder(recordId, orderNo) {
+  if (!confirm(`确认永久删除订单 ${orderNo}？删除后无法恢复。`)) return;
+  try {
+    await deleteRecord(recordId);
+    await loadData();
+  } catch (err) { alert(err.message); }
 }
 
 // ══════════════════════════════════════════════════════

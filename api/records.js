@@ -15,7 +15,7 @@ async function getToken() {
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -33,6 +33,24 @@ export default async function handler(req, res) {
       const r = await fetch(
         'https://open.feishu.cn/open-apis/bitable/v1/apps/' + APP_TOKEN + '/tables/' + TABLE_ID + '/records',
         { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(req.body) }
+      );
+      return res.json(await r.json());
+    }
+
+    if (req.method === 'PATCH') {
+      const { record_id, fields } = req.body;
+      const r = await fetch(
+        'https://open.feishu.cn/open-apis/bitable/v1/apps/' + APP_TOKEN + '/tables/' + TABLE_ID + '/records/' + record_id,
+        { method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ fields }) }
+      );
+      return res.json(await r.json());
+    }
+
+    if (req.method === 'DELETE') {
+      const record_id = req.query.record_id;
+      const r = await fetch(
+        'https://open.feishu.cn/open-apis/bitable/v1/apps/' + APP_TOKEN + '/tables/' + TABLE_ID + '/records/' + record_id,
+        { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } }
       );
       return res.json(await r.json());
     }
