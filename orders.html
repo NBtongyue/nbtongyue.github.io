@@ -88,12 +88,12 @@
       font-weight:600; color:#555;
       border-bottom:2px solid #e8eef8; white-space:nowrap;
     }
-    td { padding:0.85rem 1rem; border-bottom:1px solid #f0f4f8; }
+    td { padding:0.85rem 1rem; border-bottom:1px solid #f0f4f8; word-break:break-all; overflow-wrap:break-word; }
     tr:last-child td { border-bottom:none; }
     tr:hover td { background:#fafcff; }
 
     /* ── 状态徽章 ── */
-    .badge { display:inline-block; padding:0.2rem 0.75rem; border-radius:12px; font-size:0.8rem; font-weight:600; white-space:nowrap; }
+    .badge { display:inline-block; padding:0.2rem 0.75rem; border-radius:12px; font-size:0.8rem; font-weight:600; }
     .s-暂时合同   { background:#fef3c7; color:#d97706; }
     .s-正式合同   { background:#dbeafe; color:#1d4ed8; }
     .s-检测中     { background:#ede9fe; color:#7c3aed; }
@@ -137,7 +137,7 @@
     tr.editing-row td { background:#f0f6ff !important; padding:.35rem .5rem; }
 
     /* ── 金额单元格 ── */
-    .amount-cell { color:#1b3a6b; font-weight:500; white-space:nowrap; }
+    .amount-cell { color:#1b3a6b; font-weight:500; }
     .profit-pos  { color:#065f46; font-weight:600; white-space:nowrap; }
     .profit-neg  { color:#dc2626; font-weight:600; white-space:nowrap; }
 
@@ -649,8 +649,7 @@ function renderTable() {
       <td>${r.start   || '—'}</td>
       <td class="${dueCls}">${r.endFmt || '—'}${nearDue ? ' ⚠' : ''}${isOver ? ' 已超期' : ''}</td>
       <td>${r.status ? `<span class="badge s-${r.status}">${r.status}</span>` : '—'}</td>
-      <td style="color:#888;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
-          title="${noteText}">${r.note || '—'}</td>
+      <td style="color:#888;" title="${noteText}">${r.note || '—'}</td>
       <td>
         <button class="btn-act btn-act-next" onclick="editRow('${r.id}')">编辑</button>
       </td>
