@@ -257,7 +257,7 @@
     </div>
     <div class="stat-card">
       <div class="num" id="s-done">—</div>
-      <div class="lbl">已完成 / 已交付</div>
+      <div class="lbl">已交付</div>
     </div>
     <div class="stat-card warn">
       <div class="num" id="s-due">—</div>
@@ -275,7 +275,6 @@
       <option>正式合同</option>
       <option>检测中</option>
       <option>证书申请中</option>
-      <option>已完成</option>
       <option>已交付</option>
       <option>已关闭</option>
       <option>已作废</option>
@@ -348,7 +347,6 @@
           <option>正式合同</option>
           <option>检测中</option>
           <option>证书申请中</option>
-          <option>已完成</option>
           <option>已交付</option>
         </select>
       </div>
@@ -410,7 +408,7 @@ const F = {
 };
 
 // 状态流转顺序
-const STATUS_FLOW = ['暂时合同', '正式合同', '检测中', '证书申请中', '已完成', '已交付', '已关闭'];
+const STATUS_FLOW = ['暂时合同', '正式合同', '检测中', '证书申请中', '已交付', '已关闭'];
 const TERMINAL    = new Set(['已关闭', '已作废']);
 
 // ── 认证类型管理（localStorage 持久化）──
@@ -684,7 +682,7 @@ function renderStats() {
   const ongoing = ['待提交', '资料审核', '检测中', '证书申请中'];
   document.getElementById('s-total').textContent   = allRecords.length;
   document.getElementById('s-ongoing').textContent = allRecords.filter(r => ongoing.includes(r.status)).length;
-  document.getElementById('s-done').textContent    = allRecords.filter(r => ['已完成', '已交付', '已关闭'].includes(r.status)).length;
+  document.getElementById('s-done').textContent    = allRecords.filter(r => ['已交付', '已关闭'].includes(r.status)).length;
   document.getElementById('s-due').textContent     = allRecords.filter(r =>
     r.endTs && r.endTs > now && r.endTs < now + week && !TERMINAL.has(r.status) && !['已完成', '已交付', '已关闭'].includes(r.status)
   ).length;
