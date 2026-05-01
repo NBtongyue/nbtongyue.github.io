@@ -307,8 +307,10 @@
     <div class="form-row">
       <div class="mfg">
         <label>认证类型</label>
-        <input id="m-cert" list="cert-datalist" placeholder="选择或输入认证类型" autocomplete="off">
-        <datalist id="cert-datalist"></datalist>
+        <select id="m-cert-sel" onchange="onCertSelChange()"></select>
+        <input id="m-cert-new" type="text" placeholder="输入新认证类型，回车确认"
+               style="display:none;margin-top:.5rem;"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();confirmNewCert();}">
       </div>
       <div class="mfg">
         <label>当前状态</label>
@@ -385,16 +387,40 @@ function saveCustomCert(cert) {
     refreshCertUI();
   }
 }
-function refreshCertUI() {
+function refreshCertUI(keepVal) {
   const all = getAllCerts();
-  // 更新 datalist（弹窗输入框候选）
-  document.getElementById('cert-datalist').innerHTML =
-    all.map(c => `<option value="${c}">`).join('');
-  // 更新筛选下拉框
-  const sel  = document.getElementById('f-cert');
-  const cur  = sel.value;
-  sel.innerHTML = '<option value="">全部认证</option>' +
-    all.map(c => `<option${c === cur ? ' selected' : ''}>${c}</option>`).join('');
+  // 弹窗 select
+  const mSel = document.getElementById('m-cert-sel');
+  const mCur = keepVal !== undefined ? keepVal : mSel.value;
+  mSel.innerHTML = '<option value="">请选择</option>' +
+    all.map(c => `<option value="${c}"${c === mCur ? ' selected' : ''}>${c}</option>`).join('') +
+    '<option value="__custom__">＋ 添加新类型…</option>';
+  // 筛选下拉框
+  const fSel = document.getElementById('f-cert');
+  const fCur = fSel.value;
+  fSel.innerHTML = '<option value="">全部认证</option>' +
+    all.map(c => `<option${c === fCur ? ' selected' : ''}>${c}</option>`).join('');
+}
+
+function onCertSelChange() {
+  const inp = document.getElementById('m-cert-new');
+  if (document.getElementById('m-cert-sel').value === '__custom__') {
+    inp.style.display = 'block';
+    inp.focus();
+  } else {
+    inp.style.display = 'none';
+    inp.value = '';
+  }
+}
+
+function confirmNewCert() {
+  const inp = document.getElementById('m-cert-new');
+  const val = inp.value.trim();
+  if (!val) return;
+  saveCustomCert(val);
+  refreshCertUI(val);
+  inp.style.display = 'none';
+  inp.value = '';
 }
 
 // ══════════════════════════════════════════════════════
@@ -651,7 +677,9 @@ function openModal() {
 function closeModal() {
   document.getElementById('modal').classList.remove('open');
   ['m-no', 'm-client', 'm-proj', 'm-note'].forEach(id => { document.getElementById(id).value = ''; });
-  document.getElementById('m-cert').value   = '';
+  document.getElementById('m-cert-sel').value = '';
+  document.getElementById('m-cert-new').style.display = 'none';
+  document.getElementById('m-cert-new').value = '';
   document.getElementById('m-status').value = '待提交';
   document.getElementById('m-end').value    = '';
   document.getElementById('m-start').value  = today();
@@ -677,7 +705,9 @@ async function saveOrder() {
       [F.proj]:   proj,
       [F.status]: document.getElementById('m-status').value,
     };
-    const cert = document.getElementById('m-cert').value.trim();
+    const certSel = document.getElementById('m-cert-sel').value;
+    const certNew = document.getElementById('m-cert-new').value.trim();
+    const cert    = certSel === '__custom__' ? certNew : certSel;
     if (cert) { fields[F.cert] = cert; saveCustomCert(cert); }
     const start = document.getElementById('m-start').value;
     if (start) fields[F.start] = new Date(start + 'T00:00:00').getTime();
