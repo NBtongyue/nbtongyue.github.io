@@ -94,12 +94,12 @@
 
     /* ── 状态徽章 ── */
     .badge { display:inline-block; padding:0.2rem 0.75rem; border-radius:12px; font-size:0.8rem; font-weight:600; white-space:nowrap; }
-    .s-待提交     { background:#f3f4f6; color:#6b7280; }
-    .s-资料审核   { background:#fef3c7; color:#d97706; }
-    .s-检测中     { background:#dbeafe; color:#1d4ed8; }
-    .s-证书申请中 { background:#ede9fe; color:#7c3aed; }
-    .s-已完成     { background:#d1fae5; color:#065f46; }
-    .s-已交付     { background:#cffafe; color:#0e7490; }
+    .s-暂时合格   { background:#fef3c7; color:#d97706; }
+    .s-正式合同   { background:#dbeafe; color:#1d4ed8; }
+    .s-检测中     { background:#ede9fe; color:#7c3aed; }
+    .s-证书申请中 { background:#d1fae5; color:#065f46; }
+    .s-已完成     { background:#cffafe; color:#0e7490; }
+    .s-已交付     { background:#dcfce7; color:#16a34a; }
     .s-已关闭     { background:#f1f5f9; color:#64748b; }
     .s-已作废     { background:#fee2e2; color:#991b1b; }
 
@@ -117,6 +117,24 @@
       display:inline-block; padding:0.15rem 0.55rem; border-radius:4px;
       font-size:0.8rem; font-weight:700; background:#eef2ff; color:#3730a3;
     }
+
+    /* ── 列宽调节手柄 ── */
+    th { position:relative; }
+    .resize-handle {
+      position:absolute; right:0; top:0; height:100%; width:5px;
+      cursor:col-resize; background:transparent; user-select:none; z-index:1;
+    }
+    .resize-handle:hover, .resize-handle.dragging { background:rgba(37,99,168,0.35); }
+
+    /* ── 行内编辑 ── */
+    .cell-input {
+      width:100%; padding:.28rem .4rem; border:1.5px solid #c7d4e8;
+      border-radius:4px; font-size:.82rem; font-family:inherit;
+      outline:none; background:#fff; box-sizing:border-box; min-width:0;
+    }
+    .cell-input:focus { border-color:#2563a8; }
+    .cell-input[type="number"] { text-align:right; }
+    tr.editing-row td { background:#f0f6ff !important; padding:.35rem .5rem; }
 
     /* ── 金额单元格 ── */
     .amount-cell { color:#1b3a6b; font-weight:500; white-space:nowrap; }
@@ -253,8 +271,8 @@
       placeholder="搜索订单编号、客户名称、项目名称…" oninput="applyFilters()">
     <select class="ctrl-select" id="f-status" onchange="applyFilters()">
       <option value="">全部状态</option>
-      <option>待提交</option>
-      <option>资料审核</option>
+      <option>暂时合格</option>
+      <option>正式合同</option>
       <option>检测中</option>
       <option>证书申请中</option>
       <option>已完成</option>
@@ -326,8 +344,8 @@
       <div class="mfg">
         <label>当前状态</label>
         <select id="m-status">
-          <option>待提交</option>
-          <option>资料审核</option>
+          <option>暂时合格</option>
+          <option>正式合同</option>
           <option>检测中</option>
           <option>证书申请中</option>
           <option>已完成</option>
@@ -392,7 +410,7 @@ const F = {
 };
 
 // 状态流转顺序
-const STATUS_FLOW = ['待提交', '资料审核', '检测中', '证书申请中', '已完成', '已交付', '已关闭'];
+const STATUS_FLOW = ['暂时合格', '正式合同', '检测中', '证书申请中', '已完成', '已交付', '已关闭'];
 const TERMINAL    = new Set(['已关闭', '已作废']);
 
 // ── 认证类型管理（localStorage 持久化）──
@@ -456,6 +474,8 @@ let allRecords  = [];
 let filtered    = [];
 const PAGE_SIZE = 20;
 let currentPage = 1;
+let editingId   = null;
+let colWidths   = [];
 
 // ══════════════════════════════════════════════════════
 //  初始化
@@ -585,14 +605,38 @@ function renderTable() {
     const nearDue = r.endTs && !done && r.endTs > now && r.endTs < now + week;
     const isOver  = r.endTs && !done && r.endTs < now;
     const dueCls  = isOver ? 'overdue' : nearDue ? 'near-due' : '';
+
+    if (r.id === editingId) {
+      const certOpts = ['', ...getAllCerts()].map(c =>
+        `<option value="${escHtml(c)}"${c === r.cert ? ' selected' : ''}>${c || '请选择'}</option>`
+      ).join('');
+      const stOpts = [...STATUS_FLOW, '已作废'].map(s =>
+        `<option${s === r.status ? ' selected' : ''}>${s}</option>`
+      ).join('');
+      return `<tr class="editing-row">
+        <td><strong>${r.no || '—'}</strong></td>
+        <td><input class="cell-input" id="ei-client" type="text" value="${escHtml(r.client)}"></td>
+        <td><input class="cell-input" id="ei-proj"   type="text" value="${escHtml(r.proj)}"></td>
+        <td><select class="cell-input" id="ei-cert">${certOpts}</select></td>
+        <td><input class="cell-input" id="ei-contract" type="number" min="0" step="0.01" value="${r.contract ?? ''}"></td>
+        <td><input class="cell-input" id="ei-info-fee" type="number" min="0" step="0.01" value="${r.infoFee  ?? ''}"></td>
+        <td><input class="cell-input" id="ei-lab-fee"  type="number" min="0" step="0.01" value="${r.labFee   ?? ''}"></td>
+        <td>${fmtProfit(r.contract, r.infoFee, r.labFee)}</td>
+        <td><input class="cell-input" id="ei-start" type="date" value="${r.start}"></td>
+        <td><input class="cell-input" id="ei-end"   type="date" value="${r.endFmt}"></td>
+        <td><select class="cell-input" id="ei-status">${stOpts}</select></td>
+        <td><input class="cell-input" id="ei-note" type="text" value="${escHtml(r.note)}"></td>
+        <td>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            <button class="btn-act btn-act-next" onclick="saveRowEdit('${r.id}')">保存</button>
+            <button class="btn-act" style="background:#f0f4fa;border-color:#e0e7f0;color:#555;" onclick="cancelRowEdit()">取消</button>
+            <button class="btn-act btn-act-del"  onclick="deleteOrder('${r.id}','${r.no}')">删除</button>
+          </div>
+        </td>
+      </tr>`;
+    }
+
     const noteText = r.note ? r.note.replace(/"/g, '&quot;') : '';
-    const idx     = STATUS_FLOW.indexOf(r.status);
-    const nextSt  = idx >= 0 && idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null;
-    const actBtns = TERMINAL.has(r.status)
-      ? `<button class="btn-act btn-act-del" onclick="deleteOrder('${r.id}','${r.no}')">删除</button>`
-      : `<button class="btn-act btn-act-next" onclick="advanceStatus('${r.id}','${r.status}')" title="推进到：${nextSt}">${nextSt ? '→ ' + nextSt : '→ 推进'}</button>
-         <button class="btn-act btn-act-void" onclick="voidOrder('${r.id}','${r.no}')">作废</button>
-         <button class="btn-act btn-act-del"  onclick="deleteOrder('${r.id}','${r.no}')">删除</button>`;
     return `<tr>
       <td><strong>${r.no     || '—'}</strong></td>
       <td>${r.client  || '—'}</td>
@@ -607,9 +651,12 @@ function renderTable() {
       <td>${r.status ? `<span class="badge s-${r.status}">${r.status}</span>` : '—'}</td>
       <td style="color:#888;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
           title="${noteText}">${r.note || '—'}</td>
-      <td><div style="display:flex;gap:4px;flex-wrap:wrap;">${actBtns}</div></td>
+      <td>
+        <button class="btn-act btn-act-next" onclick="editRow('${r.id}')">编辑</button>
+      </td>
     </tr>`;
   }).join('');
+  initResizableColumns();
 
   if (pages <= 1) { pgEl.style.display = 'none'; return; }
   pgEl.style.display = 'flex';
@@ -672,6 +719,9 @@ function fmtAmount(val) {
   if (val == null) return '—';
   return '¥' + val.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+function escHtml(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 function fmtProfit(contract, infoFee, labFee) {
   if (contract == null && infoFee == null && labFee == null) return '—';
   const profit = (contract || 0) - (infoFee || 0) - (labFee || 0);
@@ -729,7 +779,7 @@ function closeModal() {
   document.getElementById('m-cert-sel').value = '';
   document.getElementById('m-cert-new').style.display = 'none';
   document.getElementById('m-cert-new').value = '';
-  document.getElementById('m-status').value = '待提交';
+  document.getElementById('m-status').value = '暂时合格';
   document.getElementById('m-end').value    = '';
   document.getElementById('m-start').value  = today();
   document.getElementById('btn-save').disabled    = false;
@@ -783,33 +833,105 @@ async function saveOrder() {
 }
 
 // ══════════════════════════════════════════════════════
-//  订单操作：推进 / 作废 / 删除
+//  行内编辑
 // ══════════════════════════════════════════════════════
-async function advanceStatus(recordId, currentStatus) {
-  const idx  = STATUS_FLOW.indexOf(currentStatus);
-  const next = STATUS_FLOW[idx + 1];
-  if (!next) return;
-  if (!confirm(`将订单状态从「${currentStatus}」推进到「${next}」？`)) return;
+function editRow(id) {
+  editingId = id;
+  renderTable();
+}
+function cancelRowEdit() {
+  editingId = null;
+  renderTable();
+}
+
+async function saveRowEdit(recordId) {
+  const client = document.getElementById('ei-client').value.trim();
+  const proj   = document.getElementById('ei-proj').value.trim();
+  if (!client || !proj) { alert('客户名称和项目名称不能为空'); return; }
   try {
-    await updateRecord(recordId, { [F.status]: next });
+    const fields = {
+      [F.client]: client,
+      [F.proj]:   proj,
+      [F.status]: document.getElementById('ei-status').value,
+    };
+    const cert = document.getElementById('ei-cert').value;
+    if (cert) { fields[F.cert] = cert; saveCustomCert(cert); }
+
+    const contract = parseFloat(document.getElementById('ei-contract').value);
+    if (!isNaN(contract)) fields[F.contract] = contract;
+    const infoFee = parseFloat(document.getElementById('ei-info-fee').value);
+    if (!isNaN(infoFee)) fields[F.infoFee] = infoFee;
+    const labFee = parseFloat(document.getElementById('ei-lab-fee').value);
+    if (!isNaN(labFee)) fields[F.labFee] = labFee;
+
+    const start = document.getElementById('ei-start').value;
+    if (start) fields[F.start] = new Date(start + 'T00:00:00').getTime();
+    const end = document.getElementById('ei-end').value;
+    if (end) fields[F.end] = new Date(end + 'T00:00:00').getTime();
+    fields[F.note] = document.getElementById('ei-note').value.trim();
+
+    await updateRecord(recordId, fields);
+    editingId = null;
     await loadData();
   } catch (err) { alert(err.message); }
 }
 
-async function voidOrder(recordId, orderNo) {
-  if (!confirm(`确认将订单 ${orderNo} 标记为「已作废」？`)) return;
-  try {
-    await updateRecord(recordId, { [F.status]: '已作废' });
-    await loadData();
-  } catch (err) { alert(err.message); }
-}
-
+// ══════════════════════════════════════════════════════
+//  删除
+// ══════════════════════════════════════════════════════
 async function deleteOrder(recordId, orderNo) {
   if (!confirm(`确认永久删除订单 ${orderNo}？删除后无法恢复。`)) return;
   try {
     await deleteRecord(recordId);
+    editingId = null;
     await loadData();
   } catch (err) { alert(err.message); }
+}
+
+// ══════════════════════════════════════════════════════
+//  可调节列宽
+// ══════════════════════════════════════════════════════
+function initResizableColumns() {
+  const table = document.querySelector('table');
+  if (!table) return;
+  const ths = Array.from(table.querySelectorAll('thead th'));
+
+  if (colWidths.length === ths.length) {
+    ths.forEach((th, i) => { th.style.width = colWidths[i]; });
+  } else {
+    ths.forEach(th => { th.style.width = th.offsetWidth + 'px'; });
+    colWidths = ths.map(th => th.style.width);
+  }
+  table.style.tableLayout = 'fixed';
+
+  ths.forEach((th, i) => {
+    if (th.querySelector('.resize-handle')) return;
+    const h = document.createElement('div');
+    h.className = 'resize-handle';
+    th.appendChild(h);
+    let x0, w0;
+    h.addEventListener('mousedown', e => {
+      x0 = e.pageX; w0 = th.offsetWidth;
+      h.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      const onMove = e => {
+        const w = Math.max(40, w0 + e.pageX - x0);
+        th.style.width = w + 'px';
+        colWidths[i] = w + 'px';
+      };
+      const onUp = () => {
+        h.classList.remove('dragging');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+      e.preventDefault();
+    });
+  });
 }
 
 // ══════════════════════════════════════════════════════
