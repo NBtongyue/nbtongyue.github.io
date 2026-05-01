@@ -257,11 +257,6 @@
     </select>
     <select class="ctrl-select" id="f-cert" onchange="applyFilters()">
       <option value="">全部认证</option>
-      <option>KC</option>
-      <option>CE</option>
-      <option>FCC</option>
-      <option>RoHS</option>
-      <option>UL</option>
     </select>
     <button class="btn-refresh" onclick="loadData()" title="从飞书重新拉取数据">↻ 刷新</button>
     <button class="btn-new" onclick="openModal()">＋ 新建订单</button>
@@ -312,14 +307,8 @@
     <div class="form-row">
       <div class="mfg">
         <label>认证类型</label>
-        <select id="m-cert">
-          <option value="">请选择</option>
-          <option>KC</option>
-          <option>CE</option>
-          <option>FCC</option>
-          <option>RoHS</option>
-          <option>UL</option>
-        </select>
+        <input id="m-cert" list="cert-datalist" placeholder="选择或输入认证类型" autocomplete="off">
+        <datalist id="cert-datalist"></datalist>
       </div>
       <div class="mfg">
         <label>当前状态</label>
@@ -376,6 +365,38 @@ const F = {
 const STATUS_FLOW = ['待提交', '资料审核', '检测中', '证书申请中', '已完成', '已交付', '已关闭'];
 const TERMINAL    = new Set(['已关闭', '已作废']);
 
+// ── 认证类型管理（localStorage 持久化）──
+const PRESET_CERTS   = ['KC', 'CE', 'FCC', 'RoHS', 'UL'];
+const CERT_STORE_KEY = 'ty_cert_types';
+
+function getCustomCerts() {
+  try { return JSON.parse(localStorage.getItem(CERT_STORE_KEY) || '[]'); } catch { return []; }
+}
+function getAllCerts() {
+  const custom = getCustomCerts();
+  return [...PRESET_CERTS, ...custom.filter(c => !PRESET_CERTS.includes(c))];
+}
+function saveCustomCert(cert) {
+  if (!cert || PRESET_CERTS.includes(cert)) return;
+  const custom = getCustomCerts();
+  if (!custom.includes(cert)) {
+    custom.push(cert);
+    localStorage.setItem(CERT_STORE_KEY, JSON.stringify(custom));
+    refreshCertUI();
+  }
+}
+function refreshCertUI() {
+  const all = getAllCerts();
+  // 更新 datalist（弹窗输入框候选）
+  document.getElementById('cert-datalist').innerHTML =
+    all.map(c => `<option value="${c}">`).join('');
+  // 更新筛选下拉框
+  const sel  = document.getElementById('f-cert');
+  const cur  = sel.value;
+  sel.innerHTML = '<option value="">全部认证</option>' +
+    all.map(c => `<option${c === cur ? ' selected' : ''}>${c}</option>`).join('');
+}
+
 // ══════════════════════════════════════════════════════
 //  全局状态
 // ══════════════════════════════════════════════════════
@@ -389,6 +410,7 @@ let currentPage = 1;
 // ══════════════════════════════════════════════════════
 document.getElementById('h-user').textContent = '👤 ' + sessionStorage.getItem('ty_user');
 document.getElementById('m-start').value = today();
+refreshCertUI();
 loadData();
 
 // ══════════════════════════════════════════════════════
@@ -458,6 +480,8 @@ async function loadData() {
         note:   fv(f[F.note]),
       };
     });
+    // 从已有数据中收集自定义认证类型
+    allRecords.forEach(r => { if (r.cert) saveCustomCert(r.cert); });
     applyFilters();
     renderStats();
   } catch (err) {
@@ -653,8 +677,8 @@ async function saveOrder() {
       [F.proj]:   proj,
       [F.status]: document.getElementById('m-status').value,
     };
-    const cert = document.getElementById('m-cert').value;
-    if (cert) fields[F.cert] = cert;
+    const cert = document.getElementById('m-cert').value.trim();
+    if (cert) { fields[F.cert] = cert; saveCustomCert(cert); }
     const start = document.getElementById('m-start').value;
     if (start) fields[F.start] = new Date(start + 'T00:00:00').getTime();
     const end = document.getElementById('m-end').value;
