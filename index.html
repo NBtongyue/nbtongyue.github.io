@@ -40,7 +40,7 @@
     }
     .nav-logo img { height: 46px; width: auto; display: block; }
     .nav-logo-text { display: flex; flex-direction: column; line-height: 1.3; }
-    .nav-logo-text .cn { font-size: 1rem; font-weight: 700; color: #1b3a6b; }
+    .nav-logo-text .cn { font-size: 1rem; font-weight: 700; color: #1b3a6b; white-space: nowrap; }
     .nav-logo-text .en { font-size: 0.62rem; color: #888; letter-spacing: 0.03em; }
     nav ul { list-style: none; display: flex; gap: 2.5rem; }
     nav ul a { text-decoration: none; color: #444; font-size: 0.95rem; transition: color 0.2s; }
@@ -250,7 +250,7 @@
       /* 导航 */
       nav { padding: 0 1rem; height: 60px; position: relative; }
       .nav-logo img { height: 38px; }
-      .nav-logo-text .cn { font-size: 0.8rem; }
+      .nav-logo-text .cn { font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
       .nav-logo-text .en { display: none; }
       .hamburger { display: flex; }
       nav ul {
@@ -314,6 +314,7 @@
     }
 
     @media (max-width: 400px) {
+      .nav-logo-text { display: none; }
       .hero h1 { font-size: 1.3rem; }
       .guide-card { width: 100%; }
       .adv-grid { grid-template-columns: 1fr; }
