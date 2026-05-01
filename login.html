@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>员工登录 — 通跃检测</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:"微软雅黑","Helvetica Neue",Arial,sans-serif;
+      background:linear-gradient(135deg,#1b3a6b 0%,#2563a8 100%);
+      min-height:100vh; display:flex; align-items:center; justify-content:center; padding:1rem;
+    }
+    .card {
+      background:#fff; border-radius:12px; padding:3rem 2.5rem;
+      width:100%; max-width:400px; box-shadow:0 20px 60px rgba(0,0,0,0.2);
+    }
+    .logo-box { text-align:center; margin-bottom:2rem; }
+    .logo-icon {
+      width:56px; height:56px;
+      background:linear-gradient(135deg,#1b3a6b,#2563a8);
+      border-radius:12px; display:inline-flex; align-items:center; justify-content:center;
+      color:#fff; font-size:1.5rem; font-weight:700; margin-bottom:1rem;
+    }
+    .logo-box h1 { font-size:1.15rem; color:#1b3a6b; font-weight:700; }
+    .logo-box p  { font-size:0.82rem; color:#999; margin-top:0.25rem; }
+    .fg { margin-bottom:1.2rem; }
+    .fg label { display:block; font-size:0.87rem; color:#555; font-weight:500; margin-bottom:0.4rem; }
+    .fg input {
+      width:100%; padding:0.75rem 1rem;
+      border:1.5px solid #e0e7f0; border-radius:7px;
+      font-size:0.95rem; font-family:inherit; color:#333;
+      outline:none; transition:border-color .2s, box-shadow .2s;
+    }
+    .fg input:focus { border-color:#2563a8; box-shadow:0 0 0 3px rgba(37,99,168,.1); }
+    .btn {
+      width:100%; padding:0.85rem;
+      background:linear-gradient(135deg,#1b3a6b,#2563a8);
+      color:#fff; border:none; border-radius:7px;
+      font-size:1rem; font-weight:600; font-family:inherit;
+      cursor:pointer; transition:opacity .2s; margin-top:0.4rem;
+    }
+    .btn:hover { opacity:.9; }
+    .btn:disabled { opacity:.6; cursor:not-allowed; }
+    .error {
+      background:#fef2f2; border:1px solid #fca5a5;
+      color:#dc2626; padding:.65rem 1rem; border-radius:7px;
+      font-size:.87rem; margin-bottom:1rem; display:none;
+    }
+    .back { text-align:center; margin-top:1.8rem; padding-top:1.5rem; border-top:1px solid #f0f0f0; }
+    .back a { color:#aaa; font-size:.82rem; text-decoration:none; }
+    .back a:hover { color:#1b3a6b; }
+    @media(max-width:480px){ .card{ padding:2rem 1.5rem; } }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo-box">
+    <div class="logo-icon">通</div>
+    <h1>内部管理系统</h1>
+    <p>宁波市通跃检测技术有限公司</p>
+  </div>
+  <div class="error" id="err">用户名或密码错误，请重试。</div>
+  <form onsubmit="doLogin(event)">
+    <div class="fg">
+      <label>用户名</label>
+      <input id="u" type="text" placeholder="请输入用户名" autocomplete="username" required>
+    </div>
+    <div class="fg">
+      <label>密码</label>
+      <input id="p" type="password" placeholder="请输入密码" autocomplete="current-password" required>
+    </div>
+    <button class="btn" id="btn">登 录</button>
+  </form>
+  <div class="back"><a href="index.html">← 返回公司主页</a></div>
+</div>
+<script>
+  // ── 账号配置（可在此处增减账号和密码）──
+  const ACCOUNTS = {
+    'admin': 'Ty@2026Admin',
+    'mindy': 'Ty@2026Mindy',
+  };
+
+  if (sessionStorage.getItem('ty_user')) location.href = 'orders.html';
+
+  function doLogin(e) {
+    e.preventDefault();
+    const u   = document.getElementById('u').value.trim();
+    const p   = document.getElementById('p').value;
+    const btn = document.getElementById('btn');
+    const err = document.getElementById('err');
+    btn.disabled = true; btn.textContent = '登录中…'; err.style.display = 'none';
+    setTimeout(() => {
+      if (ACCOUNTS[u] && ACCOUNTS[u] === p) {
+        sessionStorage.setItem('ty_user', u);
+        location.href = 'orders.html';
+      } else {
+        err.style.display = 'block';
+        btn.disabled = false; btn.textContent = '登 录';
+        document.getElementById('p').value = '';
+        document.getElementById('p').focus();
+      }
+    }, 350);
+  }
+</script>
+</body>
+</html>
