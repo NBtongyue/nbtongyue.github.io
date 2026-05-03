@@ -714,7 +714,7 @@ function fnv(val) {
 }
 function fmtAmount(val) {
   if (val == null) return '—';
-  return '¥' + val.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return '¥' + val.toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 function escHtml(s) {
   return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -723,7 +723,7 @@ function fmtProfit(contract, infoFee, labFee) {
   if (contract == null && infoFee == null && labFee == null) return '—';
   const profit = (contract || 0) - (infoFee || 0) - (labFee || 0);
   const cls    = profit >= 0 ? 'profit-pos' : 'profit-neg';
-  return `<span class="${cls}">¥${profit.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>`;
+  return `<span class="${cls}">¥${profit.toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>`;
 }
 function fts(val) {
   if (!val) return null;
