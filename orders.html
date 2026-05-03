@@ -124,8 +124,6 @@
     .btn-act { padding:.22rem .55rem; border-radius:4px; font-size:.76rem; cursor:pointer; font-family:inherit; border:1px solid; transition:background .15s; white-space:nowrap; }
     .btn-act-next { background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe; }
     .btn-act-next:hover { background:#dbeafe; }
-    .btn-act-void { background:#fffbeb; color:#b45309; border-color:#fde68a; }
-    .btn-act-void:hover { background:#fef3c7; }
     .btn-act-del  { background:#fff5f5; color:#dc2626; border-color:#fecaca; }
     .btn-act-del:hover  { background:#fee2e2; }
 
@@ -275,43 +273,112 @@ const PAGE_SIZE   = 20;
 
 const SYSTEMS = {
   cert: {
-    key:        'cert',
-    name:       '认证订单追踪系统',
-    apiUrl:     WORKER + '/records',
+    key:          'cert',
+    name:         '认证订单追踪系统',
+    apiUrl:       WORKER + '/records',
     F: {
       no:'订单编号', client:'客户名称', proj:'项目名称', tag:'认证类型',
       contract:'合同额', infoFee:'信息费', labFee:'实验室额',
       start:'提交日期', end:'预计完成日期', status:'当前状态', note:'备注',
     },
-    tagLabel:   '认证类型',
-    presetTags: ['KC','CE','FCC','RoHS','UL'],
-    storageKey: 'ty_cert_types',
-    orderPfx:   'NBTY',
+    clientLabel:  '客户名称',
+    tagLabel:     '认证类型',
+    presetTags:   ['KC','CE','FCC','RoHS','UL'],
+    storageKey:   'ty_cert_types',
+    orderPfx:     'NBTY',
+    colCount:     13,
+    selectOrderNo: false,
+    noTag:        false,
+    noInfoFee:    false,
+    noLabFee:     false,
+    noProfit:     false,
     records: [], filtered: [], page: 1, editingId: null, colWidths: [],
   },
   lab: {
-    key:        'lab',
-    name:       '实验室分包订单系统',
-    apiUrl:     WORKER + '/lab-records',
+    key:          'lab',
+    name:         '实验室分包订单系统',
+    apiUrl:       WORKER + '/lab-records',
     F: {
-      no:'订单编号', client:'客户名称', proj:'项目名称', tag:'实验室名称',
-      contract:'合同额', infoFee:'信息费', labFee:'实验室额',
+      no:'订单编号', client:'实验室名称', proj:'项目名称',
+      contract:'合同额',
       start:'提交日期', end:'预计完成日期', status:'当前状态', note:'备注',
     },
-    tagLabel:   '实验室名称',
-    presetTags: ['SGS','BV','Intertek','TÜV','CTI','华测','广电计量'],
-    storageKey: 'ty_lab_types',
-    orderPfx:   'NBLAB',
+    clientLabel:  '实验室名称',
+    colCount:     9,
+    selectOrderNo: true,
+    noTag:        true,
+    noInfoFee:    true,
+    noLabFee:     true,
+    noProfit:     true,
     records: [], filtered: [], page: 1, editingId: null, colWidths: [],
   },
 };
 
 // ════════════════════════════════════════════════════════════
-//  面板 HTML 构建
+//  面板 HTML 构建（按系统差异生成不同结构）
 // ════════════════════════════════════════════════════════════
 function buildPanel(sys) {
   const k  = sys.key;
+  const cc = sys.colCount;
   const st = STATUS_FLOW.concat(['已作废']).map(s => `<option>${s}</option>`).join('');
+
+  // 表头
+  let thead = `<th>订单编号</th><th>${sys.clientLabel}</th><th>项目名称</th>`;
+  if (!sys.noTag)     thead += `<th>${sys.tagLabel}</th>`;
+  thead += '<th>合同额</th>';
+  if (!sys.noInfoFee) thead += '<th>信息费</th>';
+  if (!sys.noLabFee)  thead += '<th>实验室额</th>';
+  if (!sys.noProfit)  thead += '<th>利润</th>';
+  thead += '<th>提交日期</th><th>预计完成日期</th><th>当前状态</th><th>备注</th><th>操作</th>';
+
+  // 筛选栏 tag 过滤器
+  const tagFilter = sys.noTag ? '' :
+    `<select class="ctrl-select" id="${k}-f-tag" onchange="applyFilters('${k}')">
+       <option value="">全部${sys.tagLabel}</option>
+     </select>`;
+
+  // 弹窗订单编号字段
+  const noField = sys.selectOrderNo
+    ? `<select id="${k}-m-no" onchange="onLabOrderSelect()" style="color:#1b3a6b;font-weight:600;">
+         <option value="">— 请选择认证订单编号 —</option>
+       </select>`
+    : `<input id="${k}-m-no" type="text" readonly style="background:#f8faff;color:#1b3a6b;font-weight:600;cursor:default;">`;
+
+  // 弹窗类型选择行
+  const tagRow = sys.noTag ? '' : `
+    <div class="form-row">
+      <div class="mfg">
+        <label>${sys.tagLabel}</label>
+        <select id="${k}-m-tag-sel" onchange="onTagSelChange('${k}')"></select>
+        <input id="${k}-m-tag-new" type="text" placeholder="输入新${sys.tagLabel}，回车确认"
+               style="display:none;margin-top:.5rem;"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();confirmNewTag('${k}');}">
+      </div>
+      <div class="mfg">
+        <label>当前状态</label>
+        <select id="${k}-m-status">
+          ${STATUS_FLOW.slice(0,-1).map(s => `<option>${s}</option>`).join('')}
+        </select>
+      </div>
+    </div>`;
+
+  // 弹窗金额字段
+  const amountFields = sys.noInfoFee
+    ? `<div class="form-row">
+         <div class="mfg"><label>合同额（元）</label><input id="${k}-m-contract" type="number" min="0" step="0.01" placeholder="0.00"></div>
+         <div class="mfg">
+           <label>当前状态</label>
+           <select id="${k}-m-status">
+             ${STATUS_FLOW.slice(0,-1).map(s => `<option>${s}</option>`).join('')}
+           </select>
+         </div>
+       </div>`
+    : `<div class="form-row-3">
+         <div class="mfg"><label>合同额（元）</label><input id="${k}-m-contract" type="number" min="0" step="0.01" placeholder="0.00"></div>
+         <div class="mfg"><label>信息费（元）</label><input id="${k}-m-info-fee" type="number" min="0" step="0.01" placeholder="0.00"></div>
+         <div class="mfg"><label>实验室额（元）</label><input id="${k}-m-lab-fee" type="number" min="0" step="0.01" placeholder="0.00"></div>
+       </div>`;
+
   document.getElementById('panel-' + k).innerHTML = `
     <main>
       <div class="stats">
@@ -322,26 +389,19 @@ function buildPanel(sys) {
       </div>
       <div class="controls">
         <input class="search-input" id="${k}-search" type="text"
-          placeholder="搜索订单编号、客户名称、项目名称…" oninput="applyFilters('${k}')">
+          placeholder="搜索订单编号、${sys.clientLabel}、项目名称…" oninput="applyFilters('${k}')">
         <select class="ctrl-select" id="${k}-f-status" onchange="applyFilters('${k}')">
           <option value="">全部状态</option>${st}
         </select>
-        <select class="ctrl-select" id="${k}-f-tag" onchange="applyFilters('${k}')">
-          <option value="">全部${sys.tagLabel}</option>
-        </select>
+        ${tagFilter}
         <button class="btn-refresh" onclick="loadData('${k}')" title="从飞书重新拉取数据">↻ 刷新</button>
         <button class="btn-new" onclick="openModal('${k}')">＋ 新建订单</button>
       </div>
       <div class="table-wrap" id="${k}-table-wrap">
         <table>
-          <thead><tr>
-            <th>订单编号</th><th>客户名称</th><th>项目名称</th>
-            <th>${sys.tagLabel}</th><th>合同额</th><th>信息费</th>
-            <th>实验室额</th><th>利润</th><th>提交日期</th>
-            <th>预计完成日期</th><th>当前状态</th><th>备注</th><th>操作</th>
-          </tr></thead>
+          <thead><tr>${thead}</tr></thead>
           <tbody id="${k}-tbody">
-            <tr><td colspan="13" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
+            <tr><td colspan="${cc}" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
           </tbody>
         </table>
         <div class="pagination" id="${k}-pagination"></div>
@@ -353,37 +413,19 @@ function buildPanel(sys) {
         <div class="form-row">
           <div class="mfg">
             <label>订单编号 <span class="req">*</span></label>
-            <input id="${k}-m-no" type="text" readonly style="background:#f8faff;color:#1b3a6b;font-weight:600;cursor:default;">
+            ${noField}
           </div>
           <div class="mfg">
-            <label>客户名称 <span class="req">*</span></label>
-            <input id="${k}-m-client" type="text" placeholder="客户公司名称">
+            <label>${sys.clientLabel} <span class="req">*</span></label>
+            <input id="${k}-m-client" type="text" placeholder="${sys.clientLabel}">
           </div>
         </div>
         <div class="mfg">
           <label>项目名称 <span class="req">*</span></label>
           <input id="${k}-m-proj" type="text" placeholder="产品或项目名称">
         </div>
-        <div class="form-row">
-          <div class="mfg">
-            <label>${sys.tagLabel}</label>
-            <select id="${k}-m-tag-sel" onchange="onTagSelChange('${k}')"></select>
-            <input id="${k}-m-tag-new" type="text" placeholder="输入新${sys.tagLabel}，回车确认"
-                   style="display:none;margin-top:.5rem;"
-                   onkeydown="if(event.key==='Enter'){event.preventDefault();confirmNewTag('${k}');}">
-          </div>
-          <div class="mfg">
-            <label>当前状态</label>
-            <select id="${k}-m-status">
-              ${STATUS_FLOW.slice(0,-1).map(s => `<option>${s}</option>`).join('')}
-            </select>
-          </div>
-        </div>
-        <div class="form-row-3">
-          <div class="mfg"><label>合同额（元）</label><input id="${k}-m-contract" type="number" min="0" step="0.01" placeholder="0.00"></div>
-          <div class="mfg"><label>信息费（元）</label><input id="${k}-m-info-fee" type="number" min="0" step="0.01" placeholder="0.00"></div>
-          <div class="mfg"><label>实验室额（元）</label><input id="${k}-m-lab-fee"  type="number" min="0" step="0.01" placeholder="0.00"></div>
-        </div>
+        ${tagRow}
+        ${amountFields}
         <div class="form-row">
           <div class="mfg"><label>提交日期</label><input id="${k}-m-start" type="date"></div>
           <div class="mfg"><label>预计完成日期</label><input id="${k}-m-end" type="date"></div>
@@ -398,7 +440,7 @@ function buildPanel(sys) {
 }
 
 // ════════════════════════════════════════════════════════════
-//  标签管理（localStorage）
+//  认证类型管理（仅 cert 系统）
 // ════════════════════════════════════════════════════════════
 function getCustomTags(sys) {
   try { return JSON.parse(localStorage.getItem(sys.storageKey) || '[]'); } catch { return []; }
@@ -418,6 +460,7 @@ function saveCustomTag(sys, tag) {
 }
 function refreshTagUI(sysKey, keepVal) {
   const sys  = SYSTEMS[sysKey];
+  if (sys.noTag) return;
   const all  = getAllTags(sys);
   const mSel = document.getElementById(sysKey + '-m-tag-sel');
   if (!mSel) return;
@@ -501,22 +544,22 @@ async function loadData(sysKey) {
         no:       fv(f[sys.F.no]),
         client:   fv(f[sys.F.client]),
         proj:     fv(f[sys.F.proj]),
-        tag:      fv(f[sys.F.tag]),
+        tag:      sys.F.tag     ? fv(f[sys.F.tag])      : '',
         contract: fnv(f[sys.F.contract]),
-        infoFee:  fnv(f[sys.F.infoFee]),
-        labFee:   fnv(f[sys.F.labFee]),
+        infoFee:  sys.F.infoFee ? fnv(f[sys.F.infoFee]) : null,
+        labFee:   sys.F.labFee  ? fnv(f[sys.F.labFee])  : null,
         start:    fd(f[sys.F.start]),
         endTs,    endFmt: endTs ? fdTs(endTs) : '',
         status:   fv(f[sys.F.status]),
         note:     fv(f[sys.F.note]),
       };
     });
-    sys.records.forEach(r => { if (r.tag) saveCustomTag(sys, r.tag); });
+    if (!sys.noTag) sys.records.forEach(r => { if (r.tag) saveCustomTag(sys, r.tag); });
     applyFilters(sysKey);
     renderStats(sysKey);
   } catch (err) {
     document.getElementById(sysKey + '-tbody').innerHTML =
-      `<tr><td colspan="13" class="state-msg" style="color:#dc2626">
+      `<tr><td colspan="${sys.colCount}" class="state-msg" style="color:#dc2626">
         ⚠ ${err.message}<br>
         <small style="color:#aaa;margin-top:.5rem;display:block">
           请检查：飞书应用权限 → 多维表格读取权限是否已开启，且已将应用添加为表格协作者
@@ -529,7 +572,8 @@ function applyFilters(sysKey) {
   const sys    = SYSTEMS[sysKey];
   const q      = document.getElementById(sysKey + '-search').value.trim().toLowerCase();
   const status = document.getElementById(sysKey + '-f-status').value;
-  const tag    = document.getElementById(sysKey + '-f-tag').value;
+  const tagEl  = document.getElementById(sysKey + '-f-tag');
+  const tag    = tagEl ? tagEl.value : '';
   sys.filtered = sys.records.filter(r => {
     const matchQ = !q      || [r.no, r.client, r.proj].some(v => v.toLowerCase().includes(q));
     const matchS = !status || r.status === status;
@@ -550,7 +594,7 @@ function renderTable(sysKey) {
   const rows  = sys.filtered.slice(from, from + PAGE_SIZE);
 
   if (total === 0) {
-    tbody.innerHTML = '<tr><td colspan="13" class="state-msg">暂无订单数据</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="${sys.colCount}" class="state-msg">暂无订单数据</td></tr>`;
     pgEl.style.display = 'none';
     return;
   }
@@ -562,27 +606,28 @@ function renderTable(sysKey) {
     const nearDue = r.endTs && !done && r.endTs > now && r.endTs < now + week;
     const isOver  = r.endTs && !done && r.endTs < now;
     const dueCls  = isOver ? 'overdue' : nearDue ? 'near-due' : '';
+    const stOpts  = [...STATUS_FLOW, '已作废'].map(s =>
+      `<option${s === r.status ? ' selected' : ''}>${s}</option>`).join('');
 
     if (r.id === sys.editingId) {
-      const tagOpts = ['', ...getAllTags(sys)].map(c =>
-        `<option value="${escHtml(c)}"${c === r.tag ? ' selected' : ''}>${c || '请选择'}</option>`
-      ).join('');
-      const stOpts = [...STATUS_FLOW, '已作废'].map(s =>
-        `<option${s === r.status ? ' selected' : ''}>${s}</option>`
-      ).join('');
-      return `<tr class="editing-row">
+      let row = `<tr class="editing-row">
         <td><strong>${r.no || '—'}</strong></td>
-        <td><input class="cell-input" id="${sysKey}-ei-client"   type="text"   value="${escHtml(r.client)}"></td>
-        <td><input class="cell-input" id="${sysKey}-ei-proj"     type="text"   value="${escHtml(r.proj)}"></td>
-        <td><select class="cell-input" id="${sysKey}-ei-tag">${tagOpts}</select></td>
-        <td><input class="cell-input" id="${sysKey}-ei-contract" type="number" min="0" step="0.01" value="${r.contract ?? ''}"></td>
-        <td><input class="cell-input" id="${sysKey}-ei-info-fee" type="number" min="0" step="0.01" value="${r.infoFee  ?? ''}"></td>
-        <td><input class="cell-input" id="${sysKey}-ei-lab-fee"  type="number" min="0" step="0.01" value="${r.labFee   ?? ''}"></td>
-        <td>${fmtProfit(r.contract, r.infoFee, r.labFee)}</td>
-        <td><input class="cell-input" id="${sysKey}-ei-start"    type="date"   value="${r.start}"></td>
-        <td><input class="cell-input" id="${sysKey}-ei-end"      type="date"   value="${r.endFmt}"></td>
+        <td><input class="cell-input" id="${sysKey}-ei-client" type="text" value="${escHtml(r.client)}"></td>
+        <td><input class="cell-input" id="${sysKey}-ei-proj"   type="text" value="${escHtml(r.proj)}"></td>`;
+      if (!sys.noTag) {
+        const tagOpts = ['', ...getAllTags(sys)].map(c =>
+          `<option value="${escHtml(c)}"${c === r.tag ? ' selected' : ''}>${c || '请选择'}</option>`).join('');
+        row += `<td><select class="cell-input" id="${sysKey}-ei-tag">${tagOpts}</select></td>`;
+      }
+      row += `<td><input class="cell-input" id="${sysKey}-ei-contract" type="number" min="0" step="0.01" value="${r.contract ?? ''}"></td>`;
+      if (!sys.noInfoFee) row += `<td><input class="cell-input" id="${sysKey}-ei-info-fee" type="number" min="0" step="0.01" value="${r.infoFee ?? ''}"></td>`;
+      if (!sys.noLabFee)  row += `<td><input class="cell-input" id="${sysKey}-ei-lab-fee"  type="number" min="0" step="0.01" value="${r.labFee  ?? ''}"></td>`;
+      if (!sys.noProfit)  row += `<td>${fmtProfit(r.contract, r.infoFee, r.labFee)}</td>`;
+      row += `
+        <td><input class="cell-input" id="${sysKey}-ei-start"  type="date" value="${r.start}"></td>
+        <td><input class="cell-input" id="${sysKey}-ei-end"    type="date" value="${r.endFmt}"></td>
         <td><select class="cell-input" id="${sysKey}-ei-status">${stOpts}</select></td>
-        <td><input class="cell-input" id="${sysKey}-ei-note"     type="text"   value="${escHtml(r.note)}"></td>
+        <td><input class="cell-input" id="${sysKey}-ei-note"   type="text" value="${escHtml(r.note)}"></td>
         <td>
           <div style="display:flex;gap:4px;flex-wrap:wrap;">
             <button class="btn-act btn-act-next" onclick="saveRowEdit('${sysKey}','${r.id}')">保存</button>
@@ -591,24 +636,27 @@ function renderTable(sysKey) {
           </div>
         </td>
       </tr>`;
+      return row;
     }
 
     const noteText = r.note ? r.note.replace(/"/g, '&quot;') : '';
-    return `<tr>
+    let row = `<tr>
       <td><strong>${r.no || '—'}</strong></td>
       <td>${r.client || '—'}</td>
-      <td>${r.proj   || '—'}</td>
-      <td>${r.tag ? `<span class="cert-tag">${r.tag}</span>` : '—'}</td>
-      <td class="amount-cell">${fmtAmount(r.contract)}</td>
-      <td class="amount-cell">${fmtAmount(r.infoFee)}</td>
-      <td class="amount-cell">${fmtAmount(r.labFee)}</td>
-      <td>${fmtProfit(r.contract, r.infoFee, r.labFee)}</td>
+      <td>${r.proj   || '—'}</td>`;
+    if (!sys.noTag)    row += `<td>${r.tag ? `<span class="cert-tag">${r.tag}</span>` : '—'}</td>`;
+    row += `<td class="amount-cell">${fmtAmount(r.contract)}</td>`;
+    if (!sys.noInfoFee) row += `<td class="amount-cell">${fmtAmount(r.infoFee)}</td>`;
+    if (!sys.noLabFee)  row += `<td class="amount-cell">${fmtAmount(r.labFee)}</td>`;
+    if (!sys.noProfit)  row += `<td>${fmtProfit(r.contract, r.infoFee, r.labFee)}</td>`;
+    row += `
       <td>${r.start  || '—'}</td>
       <td class="${dueCls}">${r.endFmt || '—'}${nearDue ? ' ⚠' : ''}${isOver ? ' 已超期' : ''}</td>
       <td>${r.status ? `<span class="badge s-${r.status}">${r.status}</span>` : '—'}</td>
       <td style="color:#888;" title="${noteText}">${r.note || '—'}</td>
       <td><button class="btn-act btn-act-next" onclick="editRow('${sysKey}','${r.id}')">编辑</button></td>
     </tr>`;
+    return row;
   }).join('');
 
   const tw = document.getElementById(sysKey + '-table-wrap');
@@ -652,8 +700,9 @@ function renderStats(sysKey) {
 }
 
 function showLoading(sysKey) {
+  const sys = SYSTEMS[sysKey];
   document.getElementById(sysKey + '-tbody').innerHTML =
-    '<tr><td colspan="13" class="state-msg"><span class="spinner"></span>加载中…</td></tr>';
+    `<tr><td colspan="${sys.colCount}" class="state-msg"><span class="spinner"></span>加载中…</td></tr>`;
   document.getElementById(sysKey + '-pagination').style.display = 'none';
 }
 
@@ -677,17 +726,42 @@ function generateOrderNo(sysKey) {
   return `${sys.orderPfx}${y}${m}${d}${suffix}${String(maxSeq + 1).padStart(4, '0')}`;
 }
 
+// 实验室系统：选择认证订单号时自动带入项目名称
+function onLabOrderSelect() {
+  const sel = document.getElementById('lab-m-no');
+  const no  = sel.value;
+  if (!no) return;
+  const certRec = SYSTEMS.cert.records.find(r => r.no === no);
+  if (certRec) {
+    document.getElementById('lab-m-proj').value   = certRec.proj   || '';
+    document.getElementById('lab-m-client').value = certRec.client || '';
+  }
+}
+
 function openModal(sysKey) {
-  refreshTagUI(sysKey);
-  document.getElementById(sysKey + '-m-no').value    = generateOrderNo(sysKey);
+  const sys = SYSTEMS[sysKey];
+  if (sys.selectOrderNo) {
+    const sel = document.getElementById(sysKey + '-m-no');
+    const certRecs = SYSTEMS.cert.records;
+    sel.innerHTML = '<option value="">— 请选择认证订单编号 —</option>' +
+      certRecs.map(r =>
+        `<option value="${escHtml(r.no)}">${escHtml(r.no)}${r.proj ? ' — ' + escHtml(r.proj) : ''}</option>`
+      ).join('');
+  } else {
+    document.getElementById(sysKey + '-m-no').value = generateOrderNo(sysKey);
+    refreshTagUI(sysKey);
+  }
   document.getElementById(sysKey + '-m-start').value = today();
   document.getElementById(sysKey + '-modal').classList.add('open');
 }
+
 function closeModal(sysKey) {
   document.getElementById(sysKey + '-modal').classList.remove('open');
-  ['-m-client','-m-proj','-m-note','-m-contract','-m-info-fee','-m-lab-fee','-m-no'].forEach(id => {
-    document.getElementById(sysKey + id).value = '';
-  });
+  const sys = SYSTEMS[sysKey];
+  const clearIds = ['-m-client','-m-proj','-m-note','-m-contract','-m-no'];
+  if (!sys.noInfoFee) clearIds.push('-m-info-fee');
+  if (!sys.noLabFee)  clearIds.push('-m-lab-fee');
+  clearIds.forEach(id => { document.getElementById(sysKey + id).value = ''; });
   const tagSel = document.getElementById(sysKey + '-m-tag-sel');
   const tagNew = document.getElementById(sysKey + '-m-tag-new');
   if (tagSel) tagSel.value = '';
@@ -698,6 +772,7 @@ function closeModal(sysKey) {
   document.getElementById(sysKey + '-btn-save').disabled    = false;
   document.getElementById(sysKey + '-btn-save').textContent = '保存';
 }
+
 function onBgClick(e, sysKey) {
   if (e.target === document.getElementById(sysKey + '-modal')) closeModal(sysKey);
 }
@@ -707,7 +782,9 @@ async function saveOrder(sysKey) {
   const no     = document.getElementById(sysKey + '-m-no').value.trim();
   const client = document.getElementById(sysKey + '-m-client').value.trim();
   const proj   = document.getElementById(sysKey + '-m-proj').value.trim();
-  if (!client || !proj) { alert('请填写客户名称和项目名称'); return; }
+  if (!no)     { alert('请选择或填写订单编号'); return; }
+  if (!client) { alert(`请填写${sys.clientLabel}`); return; }
+  if (!proj)   { alert('请填写项目名称'); return; }
   const btn = document.getElementById(sysKey + '-btn-save');
   btn.disabled = true; btn.textContent = '保存中…';
   try {
@@ -717,18 +794,22 @@ async function saveOrder(sysKey) {
       [sys.F.proj]:   proj,
       [sys.F.status]: document.getElementById(sysKey + '-m-status').value,
     };
-    const tagSel = document.getElementById(sysKey + '-m-tag-sel').value;
-    const tagNew = document.getElementById(sysKey + '-m-tag-new').value.trim();
-    const tag    = tagSel === '__custom__' ? tagNew : tagSel;
-    if (tag) { fields[sys.F.tag] = tag; saveCustomTag(sys, tag); }
-
+    if (!sys.noTag) {
+      const tagSel = document.getElementById(sysKey + '-m-tag-sel').value;
+      const tagNew = document.getElementById(sysKey + '-m-tag-new').value.trim();
+      const tag    = tagSel === '__custom__' ? tagNew : tagSel;
+      if (tag) { fields[sys.F.tag] = tag; saveCustomTag(sys, tag); }
+    }
     const contract = parseFloat(document.getElementById(sysKey + '-m-contract').value);
     if (!isNaN(contract)) fields[sys.F.contract] = contract;
-    const infoFee = parseFloat(document.getElementById(sysKey + '-m-info-fee').value);
-    if (!isNaN(infoFee)) fields[sys.F.infoFee] = infoFee;
-    const labFee = parseFloat(document.getElementById(sysKey + '-m-lab-fee').value);
-    if (!isNaN(labFee)) fields[sys.F.labFee] = labFee;
-
+    if (!sys.noInfoFee) {
+      const infoFee = parseFloat(document.getElementById(sysKey + '-m-info-fee').value);
+      if (!isNaN(infoFee)) fields[sys.F.infoFee] = infoFee;
+    }
+    if (!sys.noLabFee) {
+      const labFee = parseFloat(document.getElementById(sysKey + '-m-lab-fee').value);
+      if (!isNaN(labFee)) fields[sys.F.labFee] = labFee;
+    }
     const start = document.getElementById(sysKey + '-m-start').value;
     if (start) fields[sys.F.start] = new Date(start + 'T00:00:00').getTime();
     const end = document.getElementById(sysKey + '-m-end').value;
@@ -760,23 +841,28 @@ async function saveRowEdit(sysKey, recordId) {
   const sys    = SYSTEMS[sysKey];
   const client = document.getElementById(sysKey + '-ei-client').value.trim();
   const proj   = document.getElementById(sysKey + '-ei-proj').value.trim();
-  if (!client || !proj) { alert('客户名称和项目名称不能为空'); return; }
+  if (!client) { alert(`${sys.clientLabel}不能为空`); return; }
+  if (!proj)   { alert('项目名称不能为空'); return; }
   try {
     const fields = {
       [sys.F.client]: client,
       [sys.F.proj]:   proj,
       [sys.F.status]: document.getElementById(sysKey + '-ei-status').value,
     };
-    const tag = document.getElementById(sysKey + '-ei-tag').value;
-    if (tag) { fields[sys.F.tag] = tag; saveCustomTag(sys, tag); }
-
+    if (!sys.noTag) {
+      const tag = document.getElementById(sysKey + '-ei-tag').value;
+      if (tag) { fields[sys.F.tag] = tag; saveCustomTag(sys, tag); }
+    }
     const contract = parseFloat(document.getElementById(sysKey + '-ei-contract').value);
     if (!isNaN(contract)) fields[sys.F.contract] = contract;
-    const infoFee = parseFloat(document.getElementById(sysKey + '-ei-info-fee').value);
-    if (!isNaN(infoFee)) fields[sys.F.infoFee] = infoFee;
-    const labFee = parseFloat(document.getElementById(sysKey + '-ei-lab-fee').value);
-    if (!isNaN(labFee)) fields[sys.F.labFee] = labFee;
-
+    if (!sys.noInfoFee) {
+      const infoFee = parseFloat(document.getElementById(sysKey + '-ei-info-fee').value);
+      if (!isNaN(infoFee)) fields[sys.F.infoFee] = infoFee;
+    }
+    if (!sys.noLabFee) {
+      const labFee = parseFloat(document.getElementById(sysKey + '-ei-lab-fee').value);
+      if (!isNaN(labFee)) fields[sys.F.labFee] = labFee;
+    }
     const start = document.getElementById(sysKey + '-ei-start').value;
     if (start) fields[sys.F.start] = new Date(start + 'T00:00:00').getTime();
     const end = document.getElementById(sysKey + '-ei-end').value;
@@ -917,7 +1003,7 @@ document.getElementById('h-user').textContent = '👤 ' + sessionStorage.getItem
 
 Object.values(SYSTEMS).forEach(sys => {
   buildPanel(sys);
-  refreshTagUI(sys.key);
+  if (!sys.noTag) refreshTagUI(sys.key);
   loadData(sys.key);
 });
 </script>
