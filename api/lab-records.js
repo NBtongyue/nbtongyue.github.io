@@ -2,7 +2,7 @@ const APP_ID     = 'cli_a97ef41dd9e11bdd';
 const APP_SECRET = 'iYSnc5iLPuiXHsC6eHq0bfIugWiBvXGC';
 const APP_TOKEN  = 'UXnub1zPSaHe9sszFOXcaVCvnrd';
 // 在飞书多维表格中新建"实验室分包订单追踪"数据表后，将其 table_id 填入此处
-const TABLE_ID   = 'LAB_TABLE_ID_PLACEHOLDER';
+const TABLE_ID   = 'tblBLaK88GVKSVq3';
 
 async function getToken() {
   const res = await fetch('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal', {
