@@ -1,5 +1,6 @@
 {
   "rewrites": [
-    { "source": "/records", "destination": "/api/records" }
+    { "source": "/records",     "destination": "/api/records" },
+    { "source": "/lab-records", "destination": "/api/lab-records" }
   ]
 }

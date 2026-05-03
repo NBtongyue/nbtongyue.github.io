@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>订单追踪 — 通跃检测内部系统</title>
+  <title>订单管理 — 通跃检测内部系统</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family:"微软雅黑","Helvetica Neue",Arial,sans-serif; background:#f0f4fa; color:#333; min-height:100vh; }
@@ -30,6 +30,23 @@
       cursor:pointer; font-size:0.84rem; font-family:inherit; transition:background .2s;
     }
     .btn-logout:hover { background:rgba(255,255,255,0.28); }
+
+    /* ── Tab 导航 ── */
+    .tab-nav {
+      background:#fff; border-bottom:2px solid #e8eef8;
+      padding:0 2rem; display:flex; position:sticky; top:60px; z-index:99;
+      box-shadow:0 1px 4px rgba(0,0,0,0.05);
+    }
+    .tab-btn {
+      padding:.85rem 1.6rem; border:none; background:transparent;
+      font-size:.9rem; font-family:inherit; cursor:pointer; color:#666;
+      font-weight:500; border-bottom:3px solid transparent;
+      margin-bottom:-2px; transition:all .2s;
+    }
+    .tab-btn:hover { color:#2563a8; }
+    .tab-btn.active { color:#1b3a6b; border-bottom-color:#1b3a6b; font-weight:700; }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
 
     /* ── 主体 ── */
     main { padding:1.8rem 2rem; max-width:1600px; margin:0 auto; }
@@ -86,7 +103,7 @@
     th {
       padding:0.9rem 1rem; text-align:left;
       font-weight:600; color:#555;
-      border-bottom:2px solid #e8eef8; white-space:nowrap;
+      border-bottom:2px solid #e8eef8; white-space:nowrap; position:relative;
     }
     td { padding:0.85rem 1rem; border-bottom:1px solid #f0f4f8; word-break:break-all; overflow-wrap:break-word; }
     tr:last-child td { border-bottom:none; }
@@ -112,14 +129,13 @@
     .btn-act-del  { background:#fff5f5; color:#dc2626; border-color:#fecaca; }
     .btn-act-del:hover  { background:#fee2e2; }
 
-    /* ── 认证类型标签 ── */
+    /* ── 类型标签 ── */
     .cert-tag {
       display:inline-block; padding:0.15rem 0.55rem; border-radius:4px;
       font-size:0.8rem; font-weight:700; background:#eef2ff; color:#3730a3;
     }
 
     /* ── 列宽调节手柄 ── */
-    th { position:relative; }
     .resize-handle {
       position:absolute; right:0; top:0; height:100%; width:5px;
       cursor:col-resize; background:transparent; user-select:none; z-index:1;
@@ -157,8 +173,7 @@
     /* ── 分页 ── */
     .pagination {
       display:none; justify-content:center; align-items:center;
-      gap:0.4rem; padding:1.1rem;
-      border-top:1px solid #f0f4f8;
+      gap:0.4rem; padding:1.1rem; border-top:1px solid #f0f4f8;
     }
     .pg-btn {
       padding:0.38rem 0.75rem; border:1px solid #e0e7f0;
@@ -216,13 +231,10 @@
       main { padding:1.2rem 1rem; }
       .stats { grid-template-columns:repeat(2,1fr); }
       .h-title { display:none; }
+      .tab-nav { padding:0 1rem; }
     }
     @media(max-width:600px) {
       .form-row-3 { grid-template-columns:1fr; }
-      th:nth-child(5), td:nth-child(5),
-      th:nth-child(6), td:nth-child(6),
-      th:nth-child(7), td:nth-child(7),
-      th:nth-child(11), td:nth-child(11) { display:none; }
     }
   </style>
 </head>
@@ -232,11 +244,10 @@
   if (!sessionStorage.getItem('ty_user')) location.replace('login.html');
 </script>
 
-<!-- 顶部导航 -->
 <header>
   <div class="h-left">
     <div class="h-logo">通跃检测</div>
-    <div class="h-title">认证订单追踪系统</div>
+    <div class="h-title" id="h-tab-title">认证订单追踪系统</div>
   </div>
   <div class="h-right">
     <span class="h-user" id="h-user"></span>
@@ -244,252 +255,206 @@
   </div>
 </header>
 
-<main>
-  <!-- 统计卡片 -->
-  <div class="stats">
-    <div class="stat-card">
-      <div class="num" id="s-total">—</div>
-      <div class="lbl">全部订单</div>
-    </div>
-    <div class="stat-card">
-      <div class="num" id="s-ongoing">—</div>
-      <div class="lbl">进行中</div>
-    </div>
-    <div class="stat-card">
-      <div class="num" id="s-done">—</div>
-      <div class="lbl">已交付</div>
-    </div>
-    <div class="stat-card warn">
-      <div class="num" id="s-due">—</div>
-      <div class="lbl">7 天内到期</div>
-    </div>
-  </div>
+<nav class="tab-nav">
+  <button class="tab-btn active" id="tab-btn-cert" onclick="switchTab('cert')">认证订单追踪</button>
+  <button class="tab-btn"        id="tab-btn-lab"  onclick="switchTab('lab')">实验室分包订单</button>
+</nav>
 
-  <!-- 操作栏 -->
-  <div class="controls">
-    <input class="search-input" id="search" type="text"
-      placeholder="搜索订单编号、客户名称、项目名称…" oninput="applyFilters()">
-    <select class="ctrl-select" id="f-status" onchange="applyFilters()">
-      <option value="">全部状态</option>
-      <option>暂时合同</option>
-      <option>正式合同</option>
-      <option>检测中</option>
-      <option>证书申请中</option>
-      <option>已交付</option>
-      <option>已关闭</option>
-      <option>已作废</option>
-    </select>
-    <select class="ctrl-select" id="f-cert" onchange="applyFilters()">
-      <option value="">全部认证</option>
-    </select>
-    <button class="btn-refresh" onclick="loadData()" title="从飞书重新拉取数据">↻ 刷新</button>
-    <button class="btn-new" onclick="openModal()">＋ 新建订单</button>
-  </div>
-
-  <!-- 数据表格 -->
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>订单编号</th>
-          <th>客户名称</th>
-          <th>项目名称</th>
-          <th>认证类型</th>
-          <th>合同额</th>
-          <th>信息费</th>
-          <th>实验室额</th>
-          <th>利润</th>
-          <th>提交日期</th>
-          <th>预计完成日期</th>
-          <th>当前状态</th>
-          <th>备注</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody id="tbody">
-        <tr><td colspan="13" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
-      </tbody>
-    </table>
-    <div class="pagination" id="pagination"></div>
-  </div>
-</main>
-
-<!-- 新建订单弹窗 -->
-<div class="modal-bg" id="modal" onclick="onBgClick(event)">
-  <div class="modal">
-    <h2>新建订单</h2>
-    <div class="form-row">
-      <div class="mfg">
-        <label>订单编号 <span class="req">*</span></label>
-        <input id="m-no" type="text" readonly style="background:#f8faff;color:#1b3a6b;font-weight:600;cursor:default;">
-      </div>
-      <div class="mfg">
-        <label>客户名称 <span class="req">*</span></label>
-        <input id="m-client" type="text" placeholder="客户公司名称">
-      </div>
-    </div>
-    <div class="mfg">
-      <label>项目名称 <span class="req">*</span></label>
-      <input id="m-proj" type="text" placeholder="产品或项目名称">
-    </div>
-    <div class="form-row">
-      <div class="mfg">
-        <label>认证类型</label>
-        <select id="m-cert-sel" onchange="onCertSelChange()"></select>
-        <input id="m-cert-new" type="text" placeholder="输入新认证类型，回车确认"
-               style="display:none;margin-top:.5rem;"
-               onkeydown="if(event.key==='Enter'){event.preventDefault();confirmNewCert();}">
-      </div>
-      <div class="mfg">
-        <label>当前状态</label>
-        <select id="m-status">
-          <option>暂时合同</option>
-          <option>正式合同</option>
-          <option>检测中</option>
-          <option>证书申请中</option>
-          <option>已交付</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-row-3">
-      <div class="mfg">
-        <label>合同额（元）</label>
-        <input id="m-contract" type="number" min="0" step="0.01" placeholder="0.00">
-      </div>
-      <div class="mfg">
-        <label>信息费（元）</label>
-        <input id="m-info-fee" type="number" min="0" step="0.01" placeholder="0.00">
-      </div>
-      <div class="mfg">
-        <label>实验室额（元）</label>
-        <input id="m-lab-fee" type="number" min="0" step="0.01" placeholder="0.00">
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="mfg">
-        <label>提交日期</label>
-        <input id="m-start" type="date">
-      </div>
-      <div class="mfg">
-        <label>预计完成日期</label>
-        <input id="m-end" type="date">
-      </div>
-    </div>
-    <div class="mfg">
-      <label>备注</label>
-      <textarea id="m-note" placeholder="可选备注信息"></textarea>
-    </div>
-    <div class="modal-btns">
-      <button class="btn-cancel" onclick="closeModal()">取消</button>
-      <button class="btn-save" id="btn-save" onclick="saveOrder()">保存</button>
-    </div>
-  </div>
-</div>
+<div id="panel-cert" class="tab-panel active"></div>
+<div id="panel-lab"  class="tab-panel"></div>
 
 <script>
-// ══════════════════════════════════════════════════════
-//  代理配置
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
+//  系统配置
+// ════════════════════════════════════════════════════════════
 const WORKER = 'https://nbtongyue-github-io.vercel.app';
 
-// 飞书多维表格字段名（与表格列名保持一致）
-const F = {
-  no:       '订单编号',
-  client:   '客户名称',
-  proj:     '项目名称',
-  cert:     '认证类型',
-  contract: '合同额',
-  infoFee:  '信息费',
-  labFee:   '实验室额',
-  start:    '提交日期',
-  end:      '预计完成日期',
-  status:   '当前状态',
-  note:     '备注',
+const STATUS_FLOW = ['暂时合同','正式合同','检测中','证书申请中','已交付','已关闭'];
+const TERMINAL    = new Set(['已关闭','已作废']);
+const PAGE_SIZE   = 20;
+
+const SYSTEMS = {
+  cert: {
+    key:        'cert',
+    name:       '认证订单追踪系统',
+    apiUrl:     WORKER + '/records',
+    F: {
+      no:'订单编号', client:'客户名称', proj:'项目名称', tag:'认证类型',
+      contract:'合同额', infoFee:'信息费', labFee:'实验室额',
+      start:'提交日期', end:'预计完成日期', status:'当前状态', note:'备注',
+    },
+    tagLabel:   '认证类型',
+    presetTags: ['KC','CE','FCC','RoHS','UL'],
+    storageKey: 'ty_cert_types',
+    orderPfx:   'NBTY',
+    records: [], filtered: [], page: 1, editingId: null, colWidths: [],
+  },
+  lab: {
+    key:        'lab',
+    name:       '实验室分包订单系统',
+    apiUrl:     WORKER + '/lab-records',
+    F: {
+      no:'订单编号', client:'客户名称', proj:'项目名称', tag:'分包实验室',
+      contract:'合同额', infoFee:'信息费', labFee:'实验室额',
+      start:'提交日期', end:'预计完成日期', status:'当前状态', note:'备注',
+    },
+    tagLabel:   '分包实验室',
+    presetTags: ['SGS','BV','Intertek','TÜV','CTI','华测','广电计量'],
+    storageKey: 'ty_lab_types',
+    orderPfx:   'NBLAB',
+    records: [], filtered: [], page: 1, editingId: null, colWidths: [],
+  },
 };
 
-// 状态流转顺序
-const STATUS_FLOW = ['暂时合同', '正式合同', '检测中', '证书申请中', '已交付', '已关闭'];
-const TERMINAL    = new Set(['已关闭', '已作废']);
-
-// ── 认证类型管理（localStorage 持久化）──
-const PRESET_CERTS   = ['KC', 'CE', 'FCC', 'RoHS', 'UL'];
-const CERT_STORE_KEY = 'ty_cert_types';
-
-function getCustomCerts() {
-  try { return JSON.parse(localStorage.getItem(CERT_STORE_KEY) || '[]'); } catch { return []; }
+// ════════════════════════════════════════════════════════════
+//  面板 HTML 构建
+// ════════════════════════════════════════════════════════════
+function buildPanel(sys) {
+  const k  = sys.key;
+  const st = STATUS_FLOW.concat(['已作废']).map(s => `<option>${s}</option>`).join('');
+  document.getElementById('panel-' + k).innerHTML = `
+    <main>
+      <div class="stats">
+        <div class="stat-card"><div class="num" id="${k}-s-total">—</div><div class="lbl">全部订单</div></div>
+        <div class="stat-card"><div class="num" id="${k}-s-ongoing">—</div><div class="lbl">进行中</div></div>
+        <div class="stat-card"><div class="num" id="${k}-s-done">—</div><div class="lbl">已交付</div></div>
+        <div class="stat-card warn"><div class="num" id="${k}-s-due">—</div><div class="lbl">7 天内到期</div></div>
+      </div>
+      <div class="controls">
+        <input class="search-input" id="${k}-search" type="text"
+          placeholder="搜索订单编号、客户名称、项目名称…" oninput="applyFilters('${k}')">
+        <select class="ctrl-select" id="${k}-f-status" onchange="applyFilters('${k}')">
+          <option value="">全部状态</option>${st}
+        </select>
+        <select class="ctrl-select" id="${k}-f-tag" onchange="applyFilters('${k}')">
+          <option value="">全部${sys.tagLabel}</option>
+        </select>
+        <button class="btn-refresh" onclick="loadData('${k}')" title="从飞书重新拉取数据">↻ 刷新</button>
+        <button class="btn-new" onclick="openModal('${k}')">＋ 新建订单</button>
+      </div>
+      <div class="table-wrap" id="${k}-table-wrap">
+        <table>
+          <thead><tr>
+            <th>订单编号</th><th>客户名称</th><th>项目名称</th>
+            <th>${sys.tagLabel}</th><th>合同额</th><th>信息费</th>
+            <th>实验室额</th><th>利润</th><th>提交日期</th>
+            <th>预计完成日期</th><th>当前状态</th><th>备注</th><th>操作</th>
+          </tr></thead>
+          <tbody id="${k}-tbody">
+            <tr><td colspan="13" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
+          </tbody>
+        </table>
+        <div class="pagination" id="${k}-pagination"></div>
+      </div>
+    </main>
+    <div class="modal-bg" id="${k}-modal" onclick="onBgClick(event,'${k}')">
+      <div class="modal">
+        <h2>新建${k === 'cert' ? '认证' : '分包'}订单</h2>
+        <div class="form-row">
+          <div class="mfg">
+            <label>订单编号 <span class="req">*</span></label>
+            <input id="${k}-m-no" type="text" readonly style="background:#f8faff;color:#1b3a6b;font-weight:600;cursor:default;">
+          </div>
+          <div class="mfg">
+            <label>客户名称 <span class="req">*</span></label>
+            <input id="${k}-m-client" type="text" placeholder="客户公司名称">
+          </div>
+        </div>
+        <div class="mfg">
+          <label>项目名称 <span class="req">*</span></label>
+          <input id="${k}-m-proj" type="text" placeholder="产品或项目名称">
+        </div>
+        <div class="form-row">
+          <div class="mfg">
+            <label>${sys.tagLabel}</label>
+            <select id="${k}-m-tag-sel" onchange="onTagSelChange('${k}')"></select>
+            <input id="${k}-m-tag-new" type="text" placeholder="输入新${sys.tagLabel}，回车确认"
+                   style="display:none;margin-top:.5rem;"
+                   onkeydown="if(event.key==='Enter'){event.preventDefault();confirmNewTag('${k}');}">
+          </div>
+          <div class="mfg">
+            <label>当前状态</label>
+            <select id="${k}-m-status">
+              ${STATUS_FLOW.slice(0,-1).map(s => `<option>${s}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="form-row-3">
+          <div class="mfg"><label>合同额（元）</label><input id="${k}-m-contract" type="number" min="0" step="0.01" placeholder="0.00"></div>
+          <div class="mfg"><label>信息费（元）</label><input id="${k}-m-info-fee" type="number" min="0" step="0.01" placeholder="0.00"></div>
+          <div class="mfg"><label>实验室额（元）</label><input id="${k}-m-lab-fee"  type="number" min="0" step="0.01" placeholder="0.00"></div>
+        </div>
+        <div class="form-row">
+          <div class="mfg"><label>提交日期</label><input id="${k}-m-start" type="date"></div>
+          <div class="mfg"><label>预计完成日期</label><input id="${k}-m-end" type="date"></div>
+        </div>
+        <div class="mfg"><label>备注</label><textarea id="${k}-m-note" placeholder="可选备注信息"></textarea></div>
+        <div class="modal-btns">
+          <button class="btn-cancel" onclick="closeModal('${k}')">取消</button>
+          <button class="btn-save" id="${k}-btn-save" onclick="saveOrder('${k}')">保存</button>
+        </div>
+      </div>
+    </div>`;
 }
-function getAllCerts() {
-  const custom = getCustomCerts();
-  return [...PRESET_CERTS, ...custom.filter(c => !PRESET_CERTS.includes(c))];
+
+// ════════════════════════════════════════════════════════════
+//  标签管理（localStorage）
+// ════════════════════════════════════════════════════════════
+function getCustomTags(sys) {
+  try { return JSON.parse(localStorage.getItem(sys.storageKey) || '[]'); } catch { return []; }
 }
-function saveCustomCert(cert) {
-  if (!cert || PRESET_CERTS.includes(cert)) return;
-  const custom = getCustomCerts();
-  if (!custom.includes(cert)) {
-    custom.push(cert);
-    localStorage.setItem(CERT_STORE_KEY, JSON.stringify(custom));
-    refreshCertUI();
+function getAllTags(sys) {
+  const custom = getCustomTags(sys);
+  return [...sys.presetTags, ...custom.filter(c => !sys.presetTags.includes(c))];
+}
+function saveCustomTag(sys, tag) {
+  if (!tag || sys.presetTags.includes(tag)) return;
+  const custom = getCustomTags(sys);
+  if (!custom.includes(tag)) {
+    custom.push(tag);
+    localStorage.setItem(sys.storageKey, JSON.stringify(custom));
+    refreshTagUI(sys.key);
   }
 }
-function refreshCertUI(keepVal) {
-  const all = getAllCerts();
-  const mSel = document.getElementById('m-cert-sel');
+function refreshTagUI(sysKey, keepVal) {
+  const sys  = SYSTEMS[sysKey];
+  const all  = getAllTags(sys);
+  const mSel = document.getElementById(sysKey + '-m-tag-sel');
+  if (!mSel) return;
   const mCur = keepVal !== undefined ? keepVal : mSel.value;
   mSel.innerHTML = '<option value="">请选择</option>' +
     all.map(c => `<option value="${c}"${c === mCur ? ' selected' : ''}>${c}</option>`).join('') +
     '<option value="__custom__">＋ 添加新类型…</option>';
-  const fSel = document.getElementById('f-cert');
+  const fSel = document.getElementById(sysKey + '-f-tag');
+  if (!fSel) return;
   const fCur = fSel.value;
-  fSel.innerHTML = '<option value="">全部认证</option>' +
+  fSel.innerHTML = `<option value="">全部${sys.tagLabel}</option>` +
     all.map(c => `<option${c === fCur ? ' selected' : ''}>${c}</option>`).join('');
 }
-
-function onCertSelChange() {
-  const inp = document.getElementById('m-cert-new');
-  if (document.getElementById('m-cert-sel').value === '__custom__') {
-    inp.style.display = 'block';
-    inp.focus();
+function onTagSelChange(sysKey) {
+  const inp = document.getElementById(sysKey + '-m-tag-new');
+  if (document.getElementById(sysKey + '-m-tag-sel').value === '__custom__') {
+    inp.style.display = 'block'; inp.focus();
   } else {
-    inp.style.display = 'none';
-    inp.value = '';
+    inp.style.display = 'none'; inp.value = '';
   }
 }
-
-function confirmNewCert() {
-  const inp = document.getElementById('m-cert-new');
+function confirmNewTag(sysKey) {
+  const inp = document.getElementById(sysKey + '-m-tag-new');
   const val = inp.value.trim();
   if (!val) return;
-  saveCustomCert(val);
-  refreshCertUI(val);
-  inp.style.display = 'none';
-  inp.value = '';
+  saveCustomTag(SYSTEMS[sysKey], val);
+  refreshTagUI(sysKey, val);
+  inp.style.display = 'none'; inp.value = '';
 }
 
-// ══════════════════════════════════════════════════════
-//  全局状态
-// ══════════════════════════════════════════════════════
-let allRecords  = [];
-let filtered    = [];
-const PAGE_SIZE = 20;
-let currentPage = 1;
-let editingId   = null;
-let colWidths   = [];
-
-// ══════════════════════════════════════════════════════
-//  初始化
-// ══════════════════════════════════════════════════════
-document.getElementById('h-user').textContent = '👤 ' + sessionStorage.getItem('ty_user');
-document.getElementById('m-start').value = today();
-refreshCertUI();
-loadData();
-
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 //  飞书 API（通过 Vercel 代理）
-// ══════════════════════════════════════════════════════
-async function fetchAllRecords() {
+// ════════════════════════════════════════════════════════════
+async function fetchAllRecords(apiUrl) {
   let items = [], pageToken = '';
   do {
-    const url = WORKER + '/records' + (pageToken ? '?page_token=' + pageToken : '');
+    const url = apiUrl + (pageToken ? '?page_token=' + pageToken : '');
     const res = await fetch(url);
     const d   = await res.json();
     if (d.code !== 0) throw new Error('读取数据失败：' + d.msg);
@@ -498,66 +463,59 @@ async function fetchAllRecords() {
   } while (pageToken);
   return items;
 }
-
-async function createRecord(fields) {
-  const res = await fetch(WORKER + '/records', {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ fields }),
+async function createRecord(apiUrl, fields) {
+  const res = await fetch(apiUrl, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields }),
   });
   const d = await res.json();
   if (d.code !== 0) throw new Error('保存失败：' + d.msg);
 }
-
-async function updateRecord(recordId, fields) {
-  const res = await fetch(WORKER + '/records', {
-    method:  'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ record_id: recordId, fields }),
+async function updateRecord(apiUrl, recordId, fields) {
+  const res = await fetch(apiUrl, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ record_id: recordId, fields }),
   });
   const d = await res.json();
   if (d.code !== 0) throw new Error('更新失败：' + d.msg);
 }
-
-async function deleteRecord(recordId) {
-  const res = await fetch(WORKER + '/records?record_id=' + encodeURIComponent(recordId), {
-    method: 'DELETE',
-  });
+async function deleteRecord(apiUrl, recordId) {
+  const res = await fetch(apiUrl + '?record_id=' + encodeURIComponent(recordId), { method: 'DELETE' });
   const d = await res.json();
   if (d.code !== 0) throw new Error('删除失败：' + d.msg);
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 //  加载与渲染
-// ══════════════════════════════════════════════════════
-async function loadData() {
-  showLoading();
+// ════════════════════════════════════════════════════════════
+async function loadData(sysKey) {
+  const sys = SYSTEMS[sysKey];
+  showLoading(sysKey);
   try {
-    const items = await fetchAllRecords();
-    allRecords  = items.map(item => {
-      const f = item.fields;
-      const endTs = fts(f[F.end]);
+    const items = await fetchAllRecords(sys.apiUrl);
+    sys.records = items.map(item => {
+      const f     = item.fields;
+      const endTs = fts(f[sys.F.end]);
       return {
         id:       item.record_id,
-        no:       fv(f[F.no]),
-        client:   fv(f[F.client]),
-        proj:     fv(f[F.proj]),
-        cert:     fv(f[F.cert]),
-        contract: fnv(f[F.contract]),
-        infoFee:  fnv(f[F.infoFee]),
-        labFee:   fnv(f[F.labFee]),
-        start:    fd(f[F.start]),
-        endTs,
-        endFmt:   endTs ? fdTs(endTs) : '',
-        status:   fv(f[F.status]),
-        note:     fv(f[F.note]),
+        no:       fv(f[sys.F.no]),
+        client:   fv(f[sys.F.client]),
+        proj:     fv(f[sys.F.proj]),
+        tag:      fv(f[sys.F.tag]),
+        contract: fnv(f[sys.F.contract]),
+        infoFee:  fnv(f[sys.F.infoFee]),
+        labFee:   fnv(f[sys.F.labFee]),
+        start:    fd(f[sys.F.start]),
+        endTs,    endFmt: endTs ? fdTs(endTs) : '',
+        status:   fv(f[sys.F.status]),
+        note:     fv(f[sys.F.note]),
       };
     });
-    allRecords.forEach(r => { if (r.cert) saveCustomCert(r.cert); });
-    applyFilters();
-    renderStats();
+    sys.records.forEach(r => { if (r.tag) saveCustomTag(sys, r.tag); });
+    applyFilters(sysKey);
+    renderStats(sysKey);
   } catch (err) {
-    document.getElementById('tbody').innerHTML =
+    document.getElementById(sysKey + '-tbody').innerHTML =
       `<tr><td colspan="13" class="state-msg" style="color:#dc2626">
         ⚠ ${err.message}<br>
         <small style="color:#aaa;margin-top:.5rem;display:block">
@@ -567,28 +525,29 @@ async function loadData() {
   }
 }
 
-function applyFilters() {
-  const q      = document.getElementById('search').value.trim().toLowerCase();
-  const status = document.getElementById('f-status').value;
-  const cert   = document.getElementById('f-cert').value;
-
-  filtered = allRecords.filter(r => {
-    const matchQ = !q || [r.no, r.client, r.proj].some(v => v.toLowerCase().includes(q));
+function applyFilters(sysKey) {
+  const sys    = SYSTEMS[sysKey];
+  const q      = document.getElementById(sysKey + '-search').value.trim().toLowerCase();
+  const status = document.getElementById(sysKey + '-f-status').value;
+  const tag    = document.getElementById(sysKey + '-f-tag').value;
+  sys.filtered = sys.records.filter(r => {
+    const matchQ = !q      || [r.no, r.client, r.proj].some(v => v.toLowerCase().includes(q));
     const matchS = !status || r.status === status;
-    const matchC = !cert   || r.cert   === cert;
-    return matchQ && matchS && matchC;
+    const matchT = !tag    || r.tag    === tag;
+    return matchQ && matchS && matchT;
   });
-  currentPage = 1;
-  renderTable();
+  sys.page = 1;
+  renderTable(sysKey);
 }
 
-function renderTable() {
-  const tbody = document.getElementById('tbody');
-  const pgEl  = document.getElementById('pagination');
-  const total = filtered.length;
+function renderTable(sysKey) {
+  const sys   = SYSTEMS[sysKey];
+  const tbody = document.getElementById(sysKey + '-tbody');
+  const pgEl  = document.getElementById(sysKey + '-pagination');
+  const total = sys.filtered.length;
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const from  = (currentPage - 1) * PAGE_SIZE;
-  const rows  = filtered.slice(from, from + PAGE_SIZE);
+  const from  = (sys.page - 1) * PAGE_SIZE;
+  const rows  = sys.filtered.slice(from, from + PAGE_SIZE);
 
   if (total === 0) {
     tbody.innerHTML = '<tr><td colspan="13" class="state-msg">暂无订单数据</td></tr>';
@@ -599,36 +558,36 @@ function renderTable() {
   const now  = Date.now();
   const week = 7 * 24 * 3600 * 1000;
   tbody.innerHTML = rows.map(r => {
-    const done    = TERMINAL.has(r.status) || ['已完成', '已交付', '已关闭'].includes(r.status);
+    const done    = TERMINAL.has(r.status) || ['已完成','已交付','已关闭'].includes(r.status);
     const nearDue = r.endTs && !done && r.endTs > now && r.endTs < now + week;
     const isOver  = r.endTs && !done && r.endTs < now;
     const dueCls  = isOver ? 'overdue' : nearDue ? 'near-due' : '';
 
-    if (r.id === editingId) {
-      const certOpts = ['', ...getAllCerts()].map(c =>
-        `<option value="${escHtml(c)}"${c === r.cert ? ' selected' : ''}>${c || '请选择'}</option>`
+    if (r.id === sys.editingId) {
+      const tagOpts = ['', ...getAllTags(sys)].map(c =>
+        `<option value="${escHtml(c)}"${c === r.tag ? ' selected' : ''}>${c || '请选择'}</option>`
       ).join('');
       const stOpts = [...STATUS_FLOW, '已作废'].map(s =>
         `<option${s === r.status ? ' selected' : ''}>${s}</option>`
       ).join('');
       return `<tr class="editing-row">
         <td><strong>${r.no || '—'}</strong></td>
-        <td><input class="cell-input" id="ei-client" type="text" value="${escHtml(r.client)}"></td>
-        <td><input class="cell-input" id="ei-proj"   type="text" value="${escHtml(r.proj)}"></td>
-        <td><select class="cell-input" id="ei-cert">${certOpts}</select></td>
-        <td><input class="cell-input" id="ei-contract" type="number" min="0" step="0.01" value="${r.contract ?? ''}"></td>
-        <td><input class="cell-input" id="ei-info-fee" type="number" min="0" step="0.01" value="${r.infoFee  ?? ''}"></td>
-        <td><input class="cell-input" id="ei-lab-fee"  type="number" min="0" step="0.01" value="${r.labFee   ?? ''}"></td>
+        <td><input class="cell-input" id="${sysKey}-ei-client"   type="text"   value="${escHtml(r.client)}"></td>
+        <td><input class="cell-input" id="${sysKey}-ei-proj"     type="text"   value="${escHtml(r.proj)}"></td>
+        <td><select class="cell-input" id="${sysKey}-ei-tag">${tagOpts}</select></td>
+        <td><input class="cell-input" id="${sysKey}-ei-contract" type="number" min="0" step="0.01" value="${r.contract ?? ''}"></td>
+        <td><input class="cell-input" id="${sysKey}-ei-info-fee" type="number" min="0" step="0.01" value="${r.infoFee  ?? ''}"></td>
+        <td><input class="cell-input" id="${sysKey}-ei-lab-fee"  type="number" min="0" step="0.01" value="${r.labFee   ?? ''}"></td>
         <td>${fmtProfit(r.contract, r.infoFee, r.labFee)}</td>
-        <td><input class="cell-input" id="ei-start" type="date" value="${r.start}"></td>
-        <td><input class="cell-input" id="ei-end"   type="date" value="${r.endFmt}"></td>
-        <td><select class="cell-input" id="ei-status">${stOpts}</select></td>
-        <td><input class="cell-input" id="ei-note" type="text" value="${escHtml(r.note)}"></td>
+        <td><input class="cell-input" id="${sysKey}-ei-start"    type="date"   value="${r.start}"></td>
+        <td><input class="cell-input" id="${sysKey}-ei-end"      type="date"   value="${r.endFmt}"></td>
+        <td><select class="cell-input" id="${sysKey}-ei-status">${stOpts}</select></td>
+        <td><input class="cell-input" id="${sysKey}-ei-note"     type="text"   value="${escHtml(r.note)}"></td>
         <td>
           <div style="display:flex;gap:4px;flex-wrap:wrap;">
-            <button class="btn-act btn-act-next" onclick="saveRowEdit('${r.id}')">保存</button>
-            <button class="btn-act" style="background:#f0f4fa;border-color:#e0e7f0;color:#555;" onclick="cancelRowEdit()">取消</button>
-            <button class="btn-act btn-act-del"  onclick="deleteOrder('${r.id}','${r.no}')">删除</button>
+            <button class="btn-act btn-act-next" onclick="saveRowEdit('${sysKey}','${r.id}')">保存</button>
+            <button class="btn-act" style="background:#f0f4fa;border-color:#e0e7f0;color:#555;" onclick="cancelRowEdit('${sysKey}')">取消</button>
+            <button class="btn-act btn-act-del"  onclick="deleteOrder('${sysKey}','${r.id}','${r.no}')">删除</button>
           </div>
         </td>
       </tr>`;
@@ -636,67 +595,259 @@ function renderTable() {
 
     const noteText = r.note ? r.note.replace(/"/g, '&quot;') : '';
     return `<tr>
-      <td><strong>${r.no     || '—'}</strong></td>
-      <td>${r.client  || '—'}</td>
-      <td>${r.proj    || '—'}</td>
-      <td>${r.cert ? `<span class="cert-tag">${r.cert}</span>` : '—'}</td>
+      <td><strong>${r.no || '—'}</strong></td>
+      <td>${r.client || '—'}</td>
+      <td>${r.proj   || '—'}</td>
+      <td>${r.tag ? `<span class="cert-tag">${r.tag}</span>` : '—'}</td>
       <td class="amount-cell">${fmtAmount(r.contract)}</td>
       <td class="amount-cell">${fmtAmount(r.infoFee)}</td>
       <td class="amount-cell">${fmtAmount(r.labFee)}</td>
       <td>${fmtProfit(r.contract, r.infoFee, r.labFee)}</td>
-      <td>${r.start   || '—'}</td>
+      <td>${r.start  || '—'}</td>
       <td class="${dueCls}">${r.endFmt || '—'}${nearDue ? ' ⚠' : ''}${isOver ? ' 已超期' : ''}</td>
       <td>${r.status ? `<span class="badge s-${r.status}">${r.status}</span>` : '—'}</td>
       <td style="color:#888;" title="${noteText}">${r.note || '—'}</td>
-      <td>
-        <button class="btn-act btn-act-next" onclick="editRow('${r.id}')">编辑</button>
-      </td>
+      <td><button class="btn-act btn-act-next" onclick="editRow('${sysKey}','${r.id}')">编辑</button></td>
     </tr>`;
   }).join('');
-  initResizableColumns();
+
+  const tw = document.getElementById(sysKey + '-table-wrap');
+  if (tw) initResizableColumns(tw.querySelector('table'), sys);
 
   if (pages <= 1) { pgEl.style.display = 'none'; return; }
   pgEl.style.display = 'flex';
-  let html = `<button class="pg-btn" onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>‹ 上一页</button>`;
+  let html = `<button class="pg-btn" onclick="goPage('${sysKey}',${sys.page - 1})" ${sys.page === 1 ? 'disabled' : ''}>‹ 上一页</button>`;
   for (let i = 1; i <= pages; i++) {
-    if (pages > 8 && Math.abs(i - currentPage) > 2 && i !== 1 && i !== pages) {
-      if (i === currentPage - 3 || i === currentPage + 3) html += '<span class="pg-sep">…</span>';
+    if (pages > 8 && Math.abs(i - sys.page) > 2 && i !== 1 && i !== pages) {
+      if (i === sys.page - 3 || i === sys.page + 3) html += '<span class="pg-sep">…</span>';
       continue;
     }
-    html += `<button class="pg-btn ${i === currentPage ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
+    html += `<button class="pg-btn ${i === sys.page ? 'active' : ''}" onclick="goPage('${sysKey}',${i})">${i}</button>`;
   }
-  html += `<button class="pg-btn" onclick="goPage(${currentPage + 1})" ${currentPage === pages ? 'disabled' : ''}>下一页 ›</button>`;
+  html += `<button class="pg-btn" onclick="goPage('${sysKey}',${sys.page + 1})" ${sys.page === pages ? 'disabled' : ''}>下一页 ›</button>`;
   html += `<span class="pg-info">共 ${total} 条</span>`;
   pgEl.innerHTML = html;
 }
 
-function goPage(p) {
-  currentPage = p;
-  renderTable();
-  document.querySelector('.table-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+function goPage(sysKey, p) {
+  const sys = SYSTEMS[sysKey];
+  sys.page = p;
+  renderTable(sysKey);
+  const tw = document.getElementById(sysKey + '-table-wrap');
+  if (tw) tw.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
-function renderStats() {
+function renderStats(sysKey) {
+  const sys  = SYSTEMS[sysKey];
   const now  = Date.now();
   const week = 7 * 24 * 3600 * 1000;
-  const ongoing = ['待提交', '资料审核', '检测中', '证书申请中'];
-  document.getElementById('s-total').textContent   = allRecords.length;
-  document.getElementById('s-ongoing').textContent = allRecords.filter(r => ongoing.includes(r.status)).length;
-  document.getElementById('s-done').textContent    = allRecords.filter(r => ['已交付', '已关闭'].includes(r.status)).length;
-  document.getElementById('s-due').textContent     = allRecords.filter(r =>
-    r.endTs && r.endTs > now && r.endTs < now + week && !TERMINAL.has(r.status) && !['已完成', '已交付', '已关闭'].includes(r.status)
+  const ongoingSet = new Set(['待提交','资料审核','检测中','证书申请中']);
+  document.getElementById(sysKey + '-s-total').textContent   = sys.records.length;
+  document.getElementById(sysKey + '-s-ongoing').textContent = sys.records.filter(r => ongoingSet.has(r.status)).length;
+  document.getElementById(sysKey + '-s-done').textContent    = sys.records.filter(r => ['已交付','已关闭'].includes(r.status)).length;
+  document.getElementById(sysKey + '-s-due').textContent     = sys.records.filter(r =>
+    r.endTs && r.endTs > now && r.endTs < now + week &&
+    !TERMINAL.has(r.status) && !['已完成','已交付','已关闭'].includes(r.status)
   ).length;
 }
 
-function showLoading() {
-  document.getElementById('tbody').innerHTML =
+function showLoading(sysKey) {
+  document.getElementById(sysKey + '-tbody').innerHTML =
     '<tr><td colspan="13" class="state-msg"><span class="spinner"></span>加载中…</td></tr>';
-  document.getElementById('pagination').style.display = 'none';
+  document.getElementById(sysKey + '-pagination').style.display = 'none';
 }
 
-// ══════════════════════════════════════════════════════
-//  字段值解析辅助函数
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
+//  弹窗操作
+// ════════════════════════════════════════════════════════════
+function generateOrderNo(sysKey) {
+  const sys    = SYSTEMS[sysKey];
+  const user   = sessionStorage.getItem('ty_user') || '';
+  const suffix = user === 'mindy' ? 'F' : 'L';
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = pad(now.getMonth() + 1);
+  const d = pad(now.getDate());
+  const regex = new RegExp('^' + sys.orderPfx + '\\d{8}[LF](\\d{4})$');
+  let maxSeq = 20;
+  sys.records.forEach(r => {
+    const match = (r.no || '').match(regex);
+    if (match) { const seq = parseInt(match[1], 10); if (seq > maxSeq) maxSeq = seq; }
+  });
+  return `${sys.orderPfx}${y}${m}${d}${suffix}${String(maxSeq + 1).padStart(4, '0')}`;
+}
+
+function openModal(sysKey) {
+  refreshTagUI(sysKey);
+  document.getElementById(sysKey + '-m-no').value    = generateOrderNo(sysKey);
+  document.getElementById(sysKey + '-m-start').value = today();
+  document.getElementById(sysKey + '-modal').classList.add('open');
+}
+function closeModal(sysKey) {
+  document.getElementById(sysKey + '-modal').classList.remove('open');
+  ['-m-client','-m-proj','-m-note','-m-contract','-m-info-fee','-m-lab-fee','-m-no'].forEach(id => {
+    document.getElementById(sysKey + id).value = '';
+  });
+  const tagSel = document.getElementById(sysKey + '-m-tag-sel');
+  const tagNew = document.getElementById(sysKey + '-m-tag-new');
+  if (tagSel) tagSel.value = '';
+  if (tagNew) { tagNew.style.display = 'none'; tagNew.value = ''; }
+  document.getElementById(sysKey + '-m-status').value  = '暂时合同';
+  document.getElementById(sysKey + '-m-end').value     = '';
+  document.getElementById(sysKey + '-m-start').value   = today();
+  document.getElementById(sysKey + '-btn-save').disabled    = false;
+  document.getElementById(sysKey + '-btn-save').textContent = '保存';
+}
+function onBgClick(e, sysKey) {
+  if (e.target === document.getElementById(sysKey + '-modal')) closeModal(sysKey);
+}
+
+async function saveOrder(sysKey) {
+  const sys    = SYSTEMS[sysKey];
+  const no     = document.getElementById(sysKey + '-m-no').value.trim();
+  const client = document.getElementById(sysKey + '-m-client').value.trim();
+  const proj   = document.getElementById(sysKey + '-m-proj').value.trim();
+  if (!client || !proj) { alert('请填写客户名称和项目名称'); return; }
+  const btn = document.getElementById(sysKey + '-btn-save');
+  btn.disabled = true; btn.textContent = '保存中…';
+  try {
+    const fields = {
+      [sys.F.no]:     no,
+      [sys.F.client]: client,
+      [sys.F.proj]:   proj,
+      [sys.F.status]: document.getElementById(sysKey + '-m-status').value,
+    };
+    const tagSel = document.getElementById(sysKey + '-m-tag-sel').value;
+    const tagNew = document.getElementById(sysKey + '-m-tag-new').value.trim();
+    const tag    = tagSel === '__custom__' ? tagNew : tagSel;
+    if (tag) { fields[sys.F.tag] = tag; saveCustomTag(sys, tag); }
+
+    const contract = parseFloat(document.getElementById(sysKey + '-m-contract').value);
+    if (!isNaN(contract)) fields[sys.F.contract] = contract;
+    const infoFee = parseFloat(document.getElementById(sysKey + '-m-info-fee').value);
+    if (!isNaN(infoFee)) fields[sys.F.infoFee] = infoFee;
+    const labFee = parseFloat(document.getElementById(sysKey + '-m-lab-fee').value);
+    if (!isNaN(labFee)) fields[sys.F.labFee] = labFee;
+
+    const start = document.getElementById(sysKey + '-m-start').value;
+    if (start) fields[sys.F.start] = new Date(start + 'T00:00:00').getTime();
+    const end = document.getElementById(sysKey + '-m-end').value;
+    if (end) fields[sys.F.end] = new Date(end + 'T00:00:00').getTime();
+    const note = document.getElementById(sysKey + '-m-note').value.trim();
+    if (note) fields[sys.F.note] = note;
+
+    await createRecord(sys.apiUrl, fields);
+    closeModal(sysKey);
+    await loadData(sysKey);
+  } catch (err) {
+    alert(err.message);
+    btn.disabled = false; btn.textContent = '保存';
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  行内编辑
+// ════════════════════════════════════════════════════════════
+function editRow(sysKey, id) {
+  SYSTEMS[sysKey].editingId = id;
+  renderTable(sysKey);
+}
+function cancelRowEdit(sysKey) {
+  SYSTEMS[sysKey].editingId = null;
+  renderTable(sysKey);
+}
+async function saveRowEdit(sysKey, recordId) {
+  const sys    = SYSTEMS[sysKey];
+  const client = document.getElementById(sysKey + '-ei-client').value.trim();
+  const proj   = document.getElementById(sysKey + '-ei-proj').value.trim();
+  if (!client || !proj) { alert('客户名称和项目名称不能为空'); return; }
+  try {
+    const fields = {
+      [sys.F.client]: client,
+      [sys.F.proj]:   proj,
+      [sys.F.status]: document.getElementById(sysKey + '-ei-status').value,
+    };
+    const tag = document.getElementById(sysKey + '-ei-tag').value;
+    if (tag) { fields[sys.F.tag] = tag; saveCustomTag(sys, tag); }
+
+    const contract = parseFloat(document.getElementById(sysKey + '-ei-contract').value);
+    if (!isNaN(contract)) fields[sys.F.contract] = contract;
+    const infoFee = parseFloat(document.getElementById(sysKey + '-ei-info-fee').value);
+    if (!isNaN(infoFee)) fields[sys.F.infoFee] = infoFee;
+    const labFee = parseFloat(document.getElementById(sysKey + '-ei-lab-fee').value);
+    if (!isNaN(labFee)) fields[sys.F.labFee] = labFee;
+
+    const start = document.getElementById(sysKey + '-ei-start').value;
+    if (start) fields[sys.F.start] = new Date(start + 'T00:00:00').getTime();
+    const end = document.getElementById(sysKey + '-ei-end').value;
+    if (end) fields[sys.F.end] = new Date(end + 'T00:00:00').getTime();
+    fields[sys.F.note] = document.getElementById(sysKey + '-ei-note').value.trim();
+
+    await updateRecord(sys.apiUrl, recordId, fields);
+    sys.editingId = null;
+    await loadData(sysKey);
+  } catch (err) { alert(err.message); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  删除
+// ════════════════════════════════════════════════════════════
+async function deleteOrder(sysKey, recordId, orderNo) {
+  if (!confirm(`确认永久删除订单 ${orderNo}？删除后无法恢复。`)) return;
+  try {
+    const sys = SYSTEMS[sysKey];
+    await deleteRecord(sys.apiUrl, recordId);
+    sys.editingId = null;
+    await loadData(sysKey);
+  } catch (err) { alert(err.message); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  可调节列宽
+// ════════════════════════════════════════════════════════════
+function initResizableColumns(table, sys) {
+  if (!table) return;
+  const ths = Array.from(table.querySelectorAll('thead th'));
+  if (sys.colWidths.length === ths.length) {
+    ths.forEach((th, i) => { th.style.width = sys.colWidths[i]; });
+  } else {
+    ths.forEach(th => { th.style.width = th.offsetWidth + 'px'; });
+    sys.colWidths = ths.map(th => th.style.width);
+  }
+  table.style.tableLayout = 'fixed';
+  ths.forEach((th, i) => {
+    if (th.querySelector('.resize-handle')) return;
+    const h = document.createElement('div');
+    h.className = 'resize-handle';
+    th.appendChild(h);
+    let x0, w0;
+    h.addEventListener('mousedown', e => {
+      x0 = e.pageX; w0 = th.offsetWidth;
+      h.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      const onMove = e => {
+        const w = Math.max(40, w0 + e.pageX - x0);
+        th.style.width = w + 'px';
+        sys.colWidths[i] = w + 'px';
+      };
+      const onUp = () => {
+        h.classList.remove('dragging');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+      e.preventDefault();
+    });
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+//  共享辅助函数
+// ════════════════════════════════════════════════════════════
 function fv(val) {
   if (val == null) return '';
   if (typeof val === 'string') return val;
@@ -740,204 +891,35 @@ function fd(val) { return val ? fdTs(fts(val) || 0) : ''; }
 function pad(n)  { return String(n).padStart(2, '0'); }
 function today() { return new Date().toISOString().slice(0, 10); }
 
-// ══════════════════════════════════════════════════════
-//  弹窗操作
-// ══════════════════════════════════════════════════════
-function generateOrderNo() {
-  const user   = sessionStorage.getItem('ty_user') || '';
-  const suffix = user === 'mindy' ? 'F' : 'L';
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = pad(now.getMonth() + 1);
-  const d = pad(now.getDate());
-
-  const regex = /^NBTY\d{8}[LF](\d{4})$/;
-  let maxSeq = 20;
-  allRecords.forEach(r => {
-    const match = (r.no || '').match(regex);
-    if (match) {
-      const seq = parseInt(match[1], 10);
-      if (seq > maxSeq) maxSeq = seq;
-    }
+// ════════════════════════════════════════════════════════════
+//  Tab 切换
+// ════════════════════════════════════════════════════════════
+function switchTab(sysKey) {
+  Object.keys(SYSTEMS).forEach(k => {
+    document.getElementById('panel-' + k).classList.toggle('active', k === sysKey);
+    document.getElementById('tab-btn-' + k).classList.toggle('active', k === sysKey);
   });
-
-  return `NBTY${y}${m}${d}${suffix}${String(maxSeq + 1).padStart(4, '0')}`;
+  document.getElementById('h-tab-title').textContent = SYSTEMS[sysKey].name;
 }
 
-function openModal() {
-  document.getElementById('m-no').value = generateOrderNo();
-  document.getElementById('modal').classList.add('open');
-}
-function closeModal() {
-  document.getElementById('modal').classList.remove('open');
-  ['m-no', 'm-client', 'm-proj', 'm-note', 'm-contract', 'm-info-fee', 'm-lab-fee'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-  document.getElementById('m-cert-sel').value = '';
-  document.getElementById('m-cert-new').style.display = 'none';
-  document.getElementById('m-cert-new').value = '';
-  document.getElementById('m-status').value = '暂时合同';
-  document.getElementById('m-end').value    = '';
-  document.getElementById('m-start').value  = today();
-  document.getElementById('btn-save').disabled    = false;
-  document.getElementById('btn-save').textContent = '保存';
-}
-function onBgClick(e) { if (e.target === document.getElementById('modal')) closeModal(); }
-
-async function saveOrder() {
-  const no     = document.getElementById('m-no').value.trim();
-  const client = document.getElementById('m-client').value.trim();
-  const proj   = document.getElementById('m-proj').value.trim();
-  if (!client || !proj) {
-    alert('请填写客户名称和项目名称');
-    return;
-  }
-  const btn = document.getElementById('btn-save');
-  btn.disabled = true; btn.textContent = '保存中…';
-  try {
-    const fields = {
-      [F.no]:     no,
-      [F.client]: client,
-      [F.proj]:   proj,
-      [F.status]: document.getElementById('m-status').value,
-    };
-    const certSel = document.getElementById('m-cert-sel').value;
-    const certNew = document.getElementById('m-cert-new').value.trim();
-    const cert    = certSel === '__custom__' ? certNew : certSel;
-    if (cert) { fields[F.cert] = cert; saveCustomCert(cert); }
-
-    const contract = parseFloat(document.getElementById('m-contract').value);
-    if (!isNaN(contract)) fields[F.contract] = contract;
-    const infoFee = parseFloat(document.getElementById('m-info-fee').value);
-    if (!isNaN(infoFee)) fields[F.infoFee] = infoFee;
-    const labFee = parseFloat(document.getElementById('m-lab-fee').value);
-    if (!isNaN(labFee)) fields[F.labFee] = labFee;
-
-    const start = document.getElementById('m-start').value;
-    if (start) fields[F.start] = new Date(start + 'T00:00:00').getTime();
-    const end = document.getElementById('m-end').value;
-    if (end) fields[F.end] = new Date(end + 'T00:00:00').getTime();
-    const note = document.getElementById('m-note').value.trim();
-    if (note) fields[F.note] = note;
-
-    await createRecord(fields);
-    closeModal();
-    await loadData();
-  } catch (err) {
-    alert(err.message);
-    btn.disabled = false; btn.textContent = '保存';
-  }
-}
-
-// ══════════════════════════════════════════════════════
-//  行内编辑
-// ══════════════════════════════════════════════════════
-function editRow(id) {
-  editingId = id;
-  renderTable();
-}
-function cancelRowEdit() {
-  editingId = null;
-  renderTable();
-}
-
-async function saveRowEdit(recordId) {
-  const client = document.getElementById('ei-client').value.trim();
-  const proj   = document.getElementById('ei-proj').value.trim();
-  if (!client || !proj) { alert('客户名称和项目名称不能为空'); return; }
-  try {
-    const fields = {
-      [F.client]: client,
-      [F.proj]:   proj,
-      [F.status]: document.getElementById('ei-status').value,
-    };
-    const cert = document.getElementById('ei-cert').value;
-    if (cert) { fields[F.cert] = cert; saveCustomCert(cert); }
-
-    const contract = parseFloat(document.getElementById('ei-contract').value);
-    if (!isNaN(contract)) fields[F.contract] = contract;
-    const infoFee = parseFloat(document.getElementById('ei-info-fee').value);
-    if (!isNaN(infoFee)) fields[F.infoFee] = infoFee;
-    const labFee = parseFloat(document.getElementById('ei-lab-fee').value);
-    if (!isNaN(labFee)) fields[F.labFee] = labFee;
-
-    const start = document.getElementById('ei-start').value;
-    if (start) fields[F.start] = new Date(start + 'T00:00:00').getTime();
-    const end = document.getElementById('ei-end').value;
-    if (end) fields[F.end] = new Date(end + 'T00:00:00').getTime();
-    fields[F.note] = document.getElementById('ei-note').value.trim();
-
-    await updateRecord(recordId, fields);
-    editingId = null;
-    await loadData();
-  } catch (err) { alert(err.message); }
-}
-
-// ══════════════════════════════════════════════════════
-//  删除
-// ══════════════════════════════════════════════════════
-async function deleteOrder(recordId, orderNo) {
-  if (!confirm(`确认永久删除订单 ${orderNo}？删除后无法恢复。`)) return;
-  try {
-    await deleteRecord(recordId);
-    editingId = null;
-    await loadData();
-  } catch (err) { alert(err.message); }
-}
-
-// ══════════════════════════════════════════════════════
-//  可调节列宽
-// ══════════════════════════════════════════════════════
-function initResizableColumns() {
-  const table = document.querySelector('table');
-  if (!table) return;
-  const ths = Array.from(table.querySelectorAll('thead th'));
-
-  if (colWidths.length === ths.length) {
-    ths.forEach((th, i) => { th.style.width = colWidths[i]; });
-  } else {
-    ths.forEach(th => { th.style.width = th.offsetWidth + 'px'; });
-    colWidths = ths.map(th => th.style.width);
-  }
-  table.style.tableLayout = 'fixed';
-
-  ths.forEach((th, i) => {
-    if (th.querySelector('.resize-handle')) return;
-    const h = document.createElement('div');
-    h.className = 'resize-handle';
-    th.appendChild(h);
-    let x0, w0;
-    h.addEventListener('mousedown', e => {
-      x0 = e.pageX; w0 = th.offsetWidth;
-      h.classList.add('dragging');
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-      const onMove = e => {
-        const w = Math.max(40, w0 + e.pageX - x0);
-        th.style.width = w + 'px';
-        colWidths[i] = w + 'px';
-      };
-      const onUp = () => {
-        h.classList.remove('dragging');
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onUp);
-      };
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
-      e.preventDefault();
-    });
-  });
-}
-
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 //  退出登录
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
 function logout() {
   sessionStorage.clear();
   location.href = 'login.html';
 }
+
+// ════════════════════════════════════════════════════════════
+//  初始化
+// ════════════════════════════════════════════════════════════
+document.getElementById('h-user').textContent = '👤 ' + sessionStorage.getItem('ty_user');
+
+Object.values(SYSTEMS).forEach(sys => {
+  buildPanel(sys);
+  refreshTagUI(sys.key);
+  loadData(sys.key);
+});
 </script>
 </body>
 </html>
