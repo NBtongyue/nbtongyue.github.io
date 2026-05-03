@@ -727,15 +727,7 @@ function generateOrderNo(sysKey) {
 }
 
 // 实验室系统：选择认证订单号时自动带入项目名称
-function onLabOrderSelect() {
-  const sel = document.getElementById('lab-m-no');
-  const no  = sel.value;
-  if (!no) return;
-  const certRec = SYSTEMS.cert.records.find(r => r.no === no);
-  if (certRec) {
-    document.getElementById('lab-m-proj').value = certRec.proj || '';
-  }
-}
+function onLabOrderSelect() {}
 
 function openModal(sysKey) {
   const sys = SYSTEMS[sysKey];
