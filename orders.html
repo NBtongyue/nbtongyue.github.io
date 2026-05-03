@@ -733,8 +733,7 @@ function onLabOrderSelect() {
   if (!no) return;
   const certRec = SYSTEMS.cert.records.find(r => r.no === no);
   if (certRec) {
-    document.getElementById('lab-m-proj').value   = certRec.proj   || '';
-    document.getElementById('lab-m-client').value = certRec.client || '';
+    document.getElementById('lab-m-proj').value = certRec.proj || '';
   }
 }
 
@@ -744,9 +743,7 @@ function openModal(sysKey) {
     const sel = document.getElementById(sysKey + '-m-no');
     const certRecs = SYSTEMS.cert.records;
     sel.innerHTML = '<option value="">— 请选择认证订单编号 —</option>' +
-      certRecs.map(r =>
-        `<option value="${escHtml(r.no)}">${escHtml(r.no)}${r.proj ? ' — ' + escHtml(r.proj) : ''}</option>`
-      ).join('');
+      certRecs.map(r => `<option value="${escHtml(r.no)}">${escHtml(r.no)}</option>`).join('');
   } else {
     document.getElementById(sysKey + '-m-no').value = generateOrderNo(sysKey);
     refreshTagUI(sysKey);
