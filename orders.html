@@ -265,7 +265,7 @@
 // ════════════════════════════════════════════════════════════
 //  系统配置
 // ════════════════════════════════════════════════════════════
-const WORKER = 'https://nbtongyue-github-io.vercel.app';
+const WORKER = '';
 
 const STATUS_FLOW = ['暂时合同','正式合同','检测中','证书申请中','已交付','已关闭'];
 const TERMINAL    = new Set(['已关闭','已作废']);
@@ -275,7 +275,7 @@ const SYSTEMS = {
   cert: {
     key:          'cert',
     name:         '认证订单追踪系统',
-    apiUrl:       WORKER + '/records',
+    apiUrl:       '/api/records',
     F: {
       no:'订单编号', client:'客户名称', proj:'项目名称', tag:'认证类型',
       contract:'合同额', infoFee:'信息费', labFee:'实验室额',
@@ -297,7 +297,7 @@ const SYSTEMS = {
   lab: {
     key:          'lab',
     name:         '实验室分包订单系统',
-    apiUrl:       WORKER + '/lab-records',
+    apiUrl:       '/api/lab-records',
     F: {
       no:'订单编号', client:'实验室名称', proj:'项目名称',
       contract:'合同额',
@@ -492,13 +492,17 @@ function confirmNewTag(sysKey) {
 }
 
 // ════════════════════════════════════════════════════════════
-//  飞书 API（通过 Vercel 代理）
+//  飞书 API（通过 Cloudflare Worker 代理）
 // ════════════════════════════════════════════════════════════
+function getAuthHeaders() {
+  var token = sessionStorage.getItem('ty_token') || '';
+  return token ? { 'Authorization': 'Bearer ' + token } : {};
+}
 async function fetchAllRecords(apiUrl) {
   let items = [], pageToken = '';
   do {
     const url = apiUrl + (pageToken ? '?page_token=' + pageToken : '');
-    const res = await fetch(url);
+    const res = await fetch(url, { headers: getAuthHeaders() });
     const d   = await res.json();
     if (d.code !== 0) throw new Error('读取数据失败：' + d.msg);
     items     = items.concat(d.data.items || []);
@@ -508,7 +512,8 @@ async function fetchAllRecords(apiUrl) {
 }
 async function createRecord(apiUrl, fields) {
   const res = await fetch(apiUrl, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+    headers: Object.assign({ 'Content-Type': 'application/json' }, getAuthHeaders()),
     body: JSON.stringify({ fields }),
   });
   const d = await res.json();
@@ -516,14 +521,18 @@ async function createRecord(apiUrl, fields) {
 }
 async function updateRecord(apiUrl, recordId, fields) {
   const res = await fetch(apiUrl, {
-    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    method: 'PATCH',
+    headers: Object.assign({ 'Content-Type': 'application/json' }, getAuthHeaders()),
     body: JSON.stringify({ record_id: recordId, fields }),
   });
   const d = await res.json();
   if (d.code !== 0) throw new Error('更新失败：' + d.msg);
 }
 async function deleteRecord(apiUrl, recordId) {
-  const res = await fetch(apiUrl + '?record_id=' + encodeURIComponent(recordId), { method: 'DELETE' });
+  const res = await fetch(apiUrl + '?record_id=' + encodeURIComponent(recordId), {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
   const d = await res.json();
   if (d.code !== 0) throw new Error('删除失败：' + d.msg);
 }
