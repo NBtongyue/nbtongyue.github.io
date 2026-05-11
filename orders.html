@@ -97,7 +97,8 @@
     /* ── 表格 ── */
     .table-wrap {
       background:#fff; border-radius:10px;
-      box-shadow:0 2px 8px rgba(0,0,0,0.06); overflow:hidden;
+      box-shadow:0 2px 8px rgba(0,0,0,0.06); overflow-x:auto;
+      -webkit-overflow-scrolling:touch;
     }
     table { width:100%; border-collapse:collapse; font-size:0.88rem; }
     thead { background:#f8faff; }
@@ -228,6 +229,10 @@
     .btn-save:hover { background:#2563a8; }
     .btn-save:disabled { opacity:.6; cursor:not-allowed; }
 
+    /* ── 付款列折叠 ── */
+    .hide-pay .col-client-pay,
+    .hide-pay .col-lab-pay { display:none; }
+
     /* ── 响应式 ── */
     @media(max-width:900px) {
       main { padding:1.2rem 1rem; }
@@ -334,10 +339,10 @@ function buildPanel(sys) {
   let thead = `<th>订单编号</th><th>${sys.clientLabel}</th><th>项目名称</th>`;
   if (!sys.noTag)     thead += `<th>${sys.tagLabel}</th>`;
   thead += '<th>合同额</th>';
-	  if (!sys.noInfoFee) thead += '<th>客户首付款</th><th>客户二次付款</th><th>客户尾款</th>';
+	  if (!sys.noInfoFee) thead += '<th class="col-client-pay">客户首付款</th><th class="col-client-pay">客户二次付款</th><th class="col-client-pay">客户尾款</th>';
 	  if (!sys.noInfoFee) thead += '<th>信息费</th>';
 	  if (!sys.noLabFee)  thead += '<th>实验室额</th>';
-	  if (!sys.noLabFee)  thead += '<th>实验室首付款</th><th>实验室二次付款</th><th>实验室尾款</th>';
+	  if (!sys.noLabFee)  thead += '<th class="col-lab-pay">实验室首付款</th><th class="col-lab-pay">实验室二次付款</th><th class="col-lab-pay">实验室尾款</th>';
 	  if (!sys.noProfit)  thead += '<th>利润</th>';
   thead += '<th>提交日期</th><th>预计完成日期</th><th>当前状态</th><th>备注</th><th>操作</th>';
 
@@ -405,6 +410,7 @@ function buildPanel(sys) {
         </select>
         ${tagFilter}
         <button class="btn-refresh" onclick="loadData('${k}')" title="从飞书重新拉取数据">↻ 刷新</button>
+        ${!sys.noInfoFee ? `<button class="btn-refresh" id="${k}-btn-toggle-pay" onclick="togglePayColumns('${k}')" title="折叠/展开付款明细列">▼ 付款明细</button>` : ''}
         <button class="btn-new" onclick="openModal('${k}')">＋ 新建订单</button>
       </div>
       <div class="table-wrap" id="${k}-table-wrap">
@@ -645,14 +651,14 @@ function renderTable(sysKey) {
         row += `<td><select class="cell-input" id="${sysKey}-ei-tag">${tagOpts}</select></td>`;
       }
       row += `<td><input class="cell-input" id="${sysKey}-ei-contract" type="number" min="0" step="0.01" value="${r.contract ?? ''}"></td>`;
-      if (!sys.noInfoFee) row += `<td><input class="cell-input" id="${sysKey}-ei-client-pay1" type="number" min="0" step="0.01" value="${r.clientPay1 ?? ''}"></td>`;
-      if (!sys.noInfoFee) row += `<td><input class="cell-input" id="${sysKey}-ei-client-pay2" type="number" min="0" step="0.01" value="${r.clientPay2 ?? ''}"></td>`;
-      if (!sys.noInfoFee) row += `<td><input class="cell-input" id="${sysKey}-ei-client-pay3" type="number" min="0" step="0.01" value="${r.clientPay3 ?? ''}"></td>`;
+      if (!sys.noInfoFee) row += `<td class="col-client-pay"><input class="cell-input" id="${sysKey}-ei-client-pay1" type="number" min="0" step="0.01" value="${r.clientPay1 ?? ''}"></td>`;
+      if (!sys.noInfoFee) row += `<td class="col-client-pay"><input class="cell-input" id="${sysKey}-ei-client-pay2" type="number" min="0" step="0.01" value="${r.clientPay2 ?? ''}"></td>`;
+      if (!sys.noInfoFee) row += `<td class="col-client-pay"><input class="cell-input" id="${sysKey}-ei-client-pay3" type="number" min="0" step="0.01" value="${r.clientPay3 ?? ''}"></td>`;
       if (!sys.noInfoFee) row += `<td><input class="cell-input" id="${sysKey}-ei-info-fee" type="number" min="0" step="0.01" value="${r.infoFee ?? ''}"></td>`;
       if (!sys.noLabFee)  row += `<td><input class="cell-input" id="${sysKey}-ei-lab-fee"  type="number" min="0" step="0.01" value="${r.labFee  ?? ''}"></td>`;
-      if (!sys.noLabFee)  row += `<td><input class="cell-input" id="${sysKey}-ei-lab-pay1" type="number" min="0" step="0.01" value="${r.labPay1 ?? ''}"></td>`;
-      if (!sys.noLabFee)  row += `<td><input class="cell-input" id="${sysKey}-ei-lab-pay2" type="number" min="0" step="0.01" value="${r.labPay2 ?? ''}"></td>`;
-      if (!sys.noLabFee)  row += `<td><input class="cell-input" id="${sysKey}-ei-lab-pay3" type="number" min="0" step="0.01" value="${r.labPay3 ?? ''}"></td>`;
+      if (!sys.noLabFee)  row += `<td class="col-lab-pay"><input class="cell-input" id="${sysKey}-ei-lab-pay1" type="number" min="0" step="0.01" value="${r.labPay1 ?? ''}"></td>`;
+      if (!sys.noLabFee)  row += `<td class="col-lab-pay"><input class="cell-input" id="${sysKey}-ei-lab-pay2" type="number" min="0" step="0.01" value="${r.labPay2 ?? ''}"></td>`;
+      if (!sys.noLabFee)  row += `<td class="col-lab-pay"><input class="cell-input" id="${sysKey}-ei-lab-pay3" type="number" min="0" step="0.01" value="${r.labPay3 ?? ''}"></td>`;
       if (!sys.noProfit)  row += `<td>${fmtProfit(r.contract, r.infoFee, r.labFee)}</td>`;
       row += `
         <td><input class="cell-input" id="${sysKey}-ei-start"  type="date" value="${r.start}"></td>
@@ -677,14 +683,14 @@ function renderTable(sysKey) {
       <td>${r.proj   || '—'}</td>`;
     if (!sys.noTag)    row += `<td>${r.tag ? `<span class="cert-tag">${r.tag}</span>` : '—'}</td>`;
     row += `<td class="amount-cell">${fmtAmount(r.contract)}</td>`;
-    if (!sys.noInfoFee) row += `<td class="amount-cell">${fmtAmount(r.clientPay1)}</td>`;
-    if (!sys.noInfoFee) row += `<td class="amount-cell">${fmtAmount(r.clientPay2)}</td>`;
-    if (!sys.noInfoFee) row += `<td class="amount-cell">${fmtAmount(r.clientPay3)}</td>`;
+    if (!sys.noInfoFee) row += `<td class="amount-cell col-client-pay">${fmtAmount(r.clientPay1)}</td>`;
+    if (!sys.noInfoFee) row += `<td class="amount-cell col-client-pay">${fmtAmount(r.clientPay2)}</td>`;
+    if (!sys.noInfoFee) row += `<td class="amount-cell col-client-pay">${fmtAmount(r.clientPay3)}</td>`;
     if (!sys.noInfoFee) row += `<td class="amount-cell">${fmtAmount(r.infoFee)}</td>`;
     if (!sys.noLabFee)  row += `<td class="amount-cell">${fmtAmount(r.labFee)}</td>`;
-    if (!sys.noLabFee)  row += `<td class="amount-cell">${fmtAmount(r.labPay1)}</td>`;
-    if (!sys.noLabFee)  row += `<td class="amount-cell">${fmtAmount(r.labPay2)}</td>`;
-    if (!sys.noLabFee)  row += `<td class="amount-cell">${fmtAmount(r.labPay3)}</td>`;
+    if (!sys.noLabFee)  row += `<td class="amount-cell col-lab-pay">${fmtAmount(r.labPay1)}</td>`;
+    if (!sys.noLabFee)  row += `<td class="amount-cell col-lab-pay">${fmtAmount(r.labPay2)}</td>`;
+    if (!sys.noLabFee)  row += `<td class="amount-cell col-lab-pay">${fmtAmount(r.labPay3)}</td>`;
     if (!sys.noProfit)  row += `<td>${fmtProfit(r.contract, r.infoFee, r.labFee)}</td>`;
     row += `
       <td>${r.start  || '—'}</td>
@@ -1047,6 +1053,23 @@ function switchTab(sysKey) {
 // ════════════════════════════════════════════════════════════
 //  退出登录
 // ════════════════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════════════════
+//  付款列折叠/展开
+// ════════════════════════════════════════════════════════════
+function togglePayColumns(sysKey) {
+  var tw = document.getElementById(sysKey + '-table-wrap');
+  if (!tw) return;
+  var t = tw.querySelector('table');
+  if (!t) return;
+  var hidden = t.classList.toggle('hide-pay');
+  var btn = document.getElementById(sysKey + '-btn-toggle-pay');
+  if (btn) btn.textContent = hidden ? '▶ 付款明细' : '▼ 付款明细';
+  // re-init column widths after toggle
+  var sys = SYSTEMS[sysKey];
+  sys.colWidths = [];
+  initResizableColumns(t, sys);
+}
 function logout() {
   sessionStorage.clear();
   location.href = 'login.html';
