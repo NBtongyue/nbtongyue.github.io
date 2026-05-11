@@ -53,6 +53,7 @@
 
     /* ── 统计卡片 ── */
     .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.4rem; }
+    .stats-finance { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.4rem; }
     .stat-card {
       background:#fff; border-radius:10px; padding:1.2rem 1.5rem;
       box-shadow:0 2px 8px rgba(0,0,0,0.06);
@@ -119,6 +120,9 @@
     .s-已交付     { background:#dcfce7; color:#16a34a; }
     .s-已关闭     { background:#f1f5f9; color:#64748b; }
     .s-已作废     { background:#fee2e2; color:#991b1b; }
+    .s-已结清     { background:#dcfce7; color:#16a34a; }
+    .s-部分付款   { background:#fef3c7; color:#d97706; }
+    .s-未付款     { background:#fee2e2; color:#991b1b; }
 
     /* ── 操作按钮 ── */
     .btn-act { padding:.22rem .55rem; border-radius:4px; font-size:.76rem; cursor:pointer; font-family:inherit; border:1px solid; transition:background .15s; white-space:nowrap; }
@@ -256,10 +260,12 @@
 <nav class="tab-nav">
   <button class="tab-btn active" id="tab-btn-cert" onclick="switchTab('cert')">认证订单追踪</button>
   <button class="tab-btn"        id="tab-btn-lab"  onclick="switchTab('lab')">实验室分包订单</button>
+  <button class="tab-btn"        id="tab-btn-finance" onclick="switchTab('finance')">财务统计</button>
 </nav>
 
 <div id="panel-cert" class="tab-panel active"></div>
 <div id="panel-lab"  class="tab-panel"></div>
+<div id="panel-finance" class="tab-panel"></div>
 
 <script>
 // ════════════════════════════════════════════════════════════
@@ -280,6 +286,8 @@ const SYSTEMS = {
       no:'订单编号', client:'客户名称', proj:'项目名称', tag:'认证类型',
       contract:'合同额', infoFee:'信息费', labFee:'实验室额',
       start:'提交日期', end:'预计完成日期', status:'当前状态', note:'备注',
+      clientPay1:'客户首付款', clientPay2:'客户二次付款', clientPay3:'客户尾款',
+      labPay1:'实验室首付款', labPay2:'实验室二次付款', labPay3:'实验室尾款',
     },
     clientLabel:  '客户名称',
     tagLabel:     '认证类型',
@@ -561,6 +569,12 @@ async function loadData(sysKey) {
         endTs,    endFmt: endTs ? fdTs(endTs) : '',
         status:   fv(f[sys.F.status]),
         note:     fv(f[sys.F.note]),
+        clientPay1: fnv(f[sys.F.clientPay1]),
+        clientPay2: fnv(f[sys.F.clientPay2]),
+        clientPay3: fnv(f[sys.F.clientPay3]),
+        labPay1: fnv(f[sys.F.labPay1]),
+        labPay2: fnv(f[sys.F.labPay2]),
+        labPay3: fnv(f[sys.F.labPay3]),
       };
     });
     if (!sys.noTag) sys.records.forEach(r => { if (r.tag) saveCustomTag(sys, r.tag); });
@@ -979,10 +993,24 @@ function today() { return new Date().toISOString().slice(0, 10); }
 //  Tab 切换
 // ════════════════════════════════════════════════════════════
 function switchTab(sysKey) {
-  Object.keys(SYSTEMS).forEach(k => {
+  if (sysKey === 'finance') {
+    ['cert','lab'].forEach(k => {
+      document.getElementById('panel-' + k).classList.remove('active');
+      document.getElementById('tab-btn-' + k).classList.remove('active');
+    });
+    document.getElementById('panel-finance').classList.add('active');
+    document.getElementById('tab-btn-finance').classList.add('active');
+    document.getElementById('h-tab-title').textContent = '财务统计';
+    if (!window._finBuilt) { buildFinancePanel(); window._finBuilt = true; }
+    loadFinance();
+    return;
+  }
+  ['cert','lab'].forEach(k => {
     document.getElementById('panel-' + k).classList.toggle('active', k === sysKey);
     document.getElementById('tab-btn-' + k).classList.toggle('active', k === sysKey);
   });
+  document.getElementById('panel-finance').classList.remove('active');
+  document.getElementById('tab-btn-finance').classList.remove('active');
   document.getElementById('h-tab-title').textContent = SYSTEMS[sysKey].name;
 }
 
@@ -1004,6 +1032,126 @@ Object.values(SYSTEMS).forEach(sys => {
   if (!sys.noTag) refreshTagUI(sys.key);
   loadData(sys.key);
 });
+
+// ════════════════════════════════════════════════════════════
+//  财务统计
+// ════════════════════════════════════════════════════════════
+function buildFinancePanel() {
+  document.getElementById('panel-finance').innerHTML = `
+    <main>
+      <div class="stats stats-finance" id="fin-stats"></div>
+      <div class="controls">
+        <input class="search-input" id="fin-search" type="text"
+          placeholder="搜索订单编号、客户名称…" oninput="renderFinance()">
+        <button class="btn-refresh" onclick="loadFinance()">↻ 刷新</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>订单编号</th><th>客户名称</th>
+            <th>合同额</th><th>首付款</th><th>二次付款</th><th>尾款</th>
+            <th>已付合计</th><th>待付金额</th><th>付款状态</th>
+            <th>实验室额</th><th>实验室首付</th><th>实验室二付</th><th>实验室尾款</th>
+            <th>实验室已付</th><th>实验室待付</th><th>实验室状态</th>
+          </tr></thead>
+          <tbody id="fin-tbody">
+            <tr><td colspan="16" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>`;
+}
+
+function loadFinance() {
+  var sys = SYSTEMS.cert;
+  if (sys.records.length === 0) {
+    loadData('cert').then(function() { renderFinance(); });
+  } else {
+    renderFinance();
+  }
+}
+
+function calcPayStatus(total, payments) {
+  var paid = payments.reduce(function(a, b) { return a + (b || 0); }, 0);
+  var remaining = (total || 0) - paid;
+  if (total && total > 0) {
+    if (remaining <= 0) return { paid: paid, remaining: 0, status: '已结清', cls: 's-已结清' };
+    if (paid > 0) return { paid: paid, remaining: remaining, status: '部分付款', cls: 's-部分付款' };
+    return { paid: 0, remaining: remaining, status: '未付款', cls: 's-未付款' };
+  }
+  return { paid: 0, remaining: 0, status: '—', cls: '' };
+}
+
+function renderFinance() {
+  var records = SYSTEMS.cert.records;
+  var q = (document.getElementById('fin-search') || {}).value;
+  q = q ? q.trim().toLowerCase() : '';
+
+  var filtered = records.filter(function(r) {
+    if (!q) return true;
+    return [r.no, r.client].some(function(v) { return v.toLowerCase().indexOf(q) !== -1; });
+  });
+
+  var totalContract = 0, totalClientPaid = 0, totalClientRemain = 0;
+  var totalLab = 0, totalLabPaid = 0, totalLabRemain = 0;
+
+  var rows = filtered.map(function(r) {
+    var client = calcPayStatus(r.contract, [r.clientPay1, r.clientPay2, r.clientPay3]);
+    var lab    = calcPayStatus(r.labFee,    [r.labPay1, r.labPay2, r.labPay3]);
+
+    totalContract    += (r.contract || 0);
+    totalClientPaid  += client.paid;
+    totalClientRemain += client.remaining;
+    totalLab         += (r.labFee || 0);
+    totalLabPaid     += lab.paid;
+    totalLabRemain   += lab.remaining;
+
+    return { r: r, client: client, lab: lab };
+  });
+
+  // stats
+  var statsEl = document.getElementById('fin-stats');
+  if (statsEl) {
+    statsEl.innerHTML =
+      '<div class="stat-card"><div class="num">' + fmtAmount(totalContract) + '</div><div class="lbl">合同总额</div></div>' +
+      '<div class="stat-card"><div class="num" style="color:#16a34a;">' + fmtAmount(totalClientPaid) + '</div><div class="lbl">客户已付</div></div>' +
+      '<div class="stat-card warn"><div class="num">' + fmtAmount(totalClientRemain) + '</div><div class="lbl">客户待付</div></div>' +
+      '<div class="stat-card"><div class="num">' + fmtAmount(totalLab) + '</div><div class="lbl">实验室总额</div></div>' +
+      '<div class="stat-card"><div class="num" style="color:#16a34a;">' + fmtAmount(totalLabPaid) + '</div><div class="lbl">实验室已付</div></div>' +
+      '<div class="stat-card warn"><div class="num">' + fmtAmount(totalLabRemain) + '</div><div class="lbl">实验室待付</div></div>';
+  }
+
+  // table
+  if (filtered.length === 0) {
+    document.getElementById('fin-tbody').innerHTML =
+      '<tr><td colspan="16" class="state-msg">暂无数据</td></tr>';
+    return;
+  }
+
+  document.getElementById('fin-tbody').innerHTML = rows.map(function(row) {
+    var r = row.r, c = row.client, l = row.lab;
+    var crColor = c.remaining > 0 ? 'color:#dc2626;font-weight:600;' : 'color:#16a34a;font-weight:600;';
+    var lrColor = l.remaining > 0 ? 'color:#dc2626;font-weight:600;' : 'color:#16a34a;font-weight:600;';
+    return '<tr>' +
+      '<td><strong>' + (r.no || '—') + '</strong></td>' +
+      '<td>' + (r.client || '—') + '</td>' +
+      '<td class="amount-cell">' + fmtAmount(r.contract) + '</td>' +
+      '<td class="amount-cell">' + fmtAmount(r.clientPay1) + '</td>' +
+      '<td class="amount-cell">' + fmtAmount(r.clientPay2) + '</td>' +
+      '<td class="amount-cell">' + fmtAmount(r.clientPay3) + '</td>' +
+      '<td class="amount-cell" style="font-weight:600;">' + fmtAmount(c.paid) + '</td>' +
+      '<td class="amount-cell" style="' + crColor + '">' + (c.remaining > 0 ? fmtAmount(c.remaining) : '—') + '</td>' +
+      '<td><span class="badge ' + c.cls + '">' + c.status + '</span></td>' +
+      '<td class="amount-cell">' + fmtAmount(r.labFee) + '</td>' +
+      '<td class="amount-cell">' + fmtAmount(r.labPay1) + '</td>' +
+      '<td class="amount-cell">' + fmtAmount(r.labPay2) + '</td>' +
+      '<td class="amount-cell">' + fmtAmount(r.labPay3) + '</td>' +
+      '<td class="amount-cell" style="font-weight:600;">' + fmtAmount(l.paid) + '</td>' +
+      '<td class="amount-cell" style="' + lrColor + '">' + (l.remaining > 0 ? fmtAmount(l.remaining) : '—') + '</td>' +
+      '<td><span class="badge ' + l.cls + '">' + l.status + '</span></td>' +
+      '</tr>';
+  }).join('');
+}
 </script>
 </body>
 </html>
