@@ -1086,7 +1086,7 @@ function togglePayRow(sysKey, recordId) {
   var row = document.getElementById('pay-' + sysKey + '-' + recordId);
   var btn = document.getElementById('exp-' + sysKey + '-' + recordId);
   if (!row) return;
-  if (row.style.display === 'none' || row.style.display === '') {
+  if (row.style.display === 'none') {
     row.style.display = '';
     if (btn) { btn.textContent = '▼'; btn.classList.add('open'); }
   } else {
