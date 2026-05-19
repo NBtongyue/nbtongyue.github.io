@@ -11,35 +11,35 @@
     /* ── 顶部导航 ── */
     header {
       background:linear-gradient(135deg,#1b3a6b,#2563a8);
-      color:#fff; padding:0 2rem; height:60px;
+      color:#fff; padding:0 1.5rem; height:46px;
       display:flex; align-items:center; justify-content:space-between;
       position:sticky; top:0; z-index:100;
       box-shadow:0 2px 8px rgba(0,0,0,0.15);
     }
-    .h-left { display:flex; align-items:center; gap:1rem; }
-    .h-logo { font-size:1rem; font-weight:700; letter-spacing:.02em; }
+    .h-left { display:flex; align-items:center; gap:0.7rem; }
+    .h-logo { font-size:0.92rem; font-weight:700; letter-spacing:.02em; }
     .h-title {
-      font-size:0.88rem; opacity:0.8;
-      border-left:1px solid rgba(255,255,255,0.3); padding-left:1rem;
+      font-size:0.8rem; opacity:0.8;
+      border-left:1px solid rgba(255,255,255,0.3); padding-left:0.7rem;
     }
-    .h-right { display:flex; align-items:center; gap:1rem; font-size:0.88rem; }
+    .h-right { display:flex; align-items:center; gap:0.7rem; font-size:0.8rem; }
     .h-user { opacity:0.85; }
     .btn-logout {
       background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.35);
-      color:#fff; padding:0.3rem 0.9rem; border-radius:5px;
-      cursor:pointer; font-size:0.84rem; font-family:inherit; transition:background .2s;
+      color:#fff; padding:0.2rem 0.6rem; border-radius:5px;
+      cursor:pointer; font-size:0.76rem; font-family:inherit; transition:background .2s;
     }
     .btn-logout:hover { background:rgba(255,255,255,0.28); }
 
     /* ── Tab 导航 ── */
     .tab-nav {
       background:#fff; border-bottom:2px solid #e8eef8;
-      padding:0 2rem; display:flex; position:sticky; top:60px; z-index:99;
+      padding:0 1.5rem; display:flex; position:sticky; top:46px; z-index:99;
       box-shadow:0 1px 4px rgba(0,0,0,0.05);
     }
     .tab-btn {
-      padding:.85rem 1.6rem; border:none; background:transparent;
-      font-size:.9rem; font-family:inherit; cursor:pointer; color:#666;
+      padding:.55rem 1.1rem; border:none; background:transparent;
+      font-size:.82rem; font-family:inherit; cursor:pointer; color:#666;
       font-weight:500; border-bottom:3px solid transparent;
       margin-bottom:-2px; transition:all .2s;
     }
@@ -49,46 +49,46 @@
     .tab-panel.active { display:block; }
 
     /* ── 主体 ── */
-    main { padding:1.8rem 2rem; max-width:1600px; margin:0 auto; }
+    main { padding:1rem 1.5rem; max-width:1600px; margin:0 auto; }
 
     /* ── 统计卡片 ── */
-    .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.4rem; }
-    .stats-finance { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.4rem; }
+    .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:0.7rem; margin-bottom:0.8rem; }
+    .stats-finance { display:grid; grid-template-columns:repeat(3,1fr); gap:0.7rem; margin-bottom:0.8rem; }
     .stat-card {
-      background:#fff; border-radius:10px; padding:1.2rem 1.5rem;
+      background:#fff; border-radius:8px; padding:0.7rem 1rem;
       box-shadow:0 2px 8px rgba(0,0,0,0.06);
     }
-    .stat-card .num { font-size:2rem; font-weight:700; color:#1b3a6b; line-height:1; }
-    .stat-card .lbl { font-size:0.83rem; color:#888; margin-top:0.35rem; }
+    .stat-card .num { font-size:1.5rem; font-weight:700; color:#1b3a6b; line-height:1; }
+    .stat-card .lbl { font-size:0.76rem; color:#888; margin-top:0.2rem; }
     .stat-card.warn .num { color:#f59e0b; }
 
     /* ── 操作栏 ── */
     .controls {
-      background:#fff; border-radius:10px; padding:1rem 1.2rem;
-      margin-bottom:1rem; display:flex; gap:0.7rem; align-items:center;
+      background:#fff; border-radius:8px; padding:0.5rem 0.8rem;
+      margin-bottom:0.6rem; display:flex; gap:0.5rem; align-items:center;
       flex-wrap:wrap; box-shadow:0 2px 8px rgba(0,0,0,0.06);
     }
     .search-input {
-      flex:1; min-width:200px; padding:0.55rem 0.9rem;
-      border:1.5px solid #e0e7f0; border-radius:6px;
-      font-size:0.9rem; font-family:inherit; outline:none; transition:border-color .2s;
+      flex:1; min-width:180px; padding:0.4rem 0.6rem;
+      border:1.5px solid #e0e7f0; border-radius:5px;
+      font-size:0.82rem; font-family:inherit; outline:none; transition:border-color .2s;
     }
     .search-input:focus { border-color:#2563a8; }
     .ctrl-select {
-      padding:0.55rem 0.8rem; border:1.5px solid #e0e7f0; border-radius:6px;
-      font-size:0.9rem; font-family:inherit; background:#fff;
+      padding:0.4rem 0.6rem; border:1.5px solid #e0e7f0; border-radius:5px;
+      font-size:0.82rem; font-family:inherit; background:#fff;
       cursor:pointer; outline:none; color:#333;
     }
     .ctrl-select:focus { border-color:#2563a8; }
     .btn-refresh {
-      padding:0.55rem 1rem; background:#f0f4fa;
-      border:1.5px solid #e0e7f0; border-radius:6px;
-      font-size:0.88rem; cursor:pointer; font-family:inherit; transition:background .2s;
+      padding:0.4rem 0.7rem; background:#f0f4fa;
+      border:1.5px solid #e0e7f0; border-radius:5px;
+      font-size:0.8rem; cursor:pointer; font-family:inherit; transition:background .2s;
     }
     .btn-refresh:hover { background:#e0e7f0; }
     .btn-new {
-      padding:0.55rem 1.2rem; background:#1b3a6b; color:#fff;
-      border:none; border-radius:6px; font-size:0.88rem;
+      padding:0.4rem 0.9rem; background:#1b3a6b; color:#fff;
+      border:none; border-radius:5px; font-size:0.8rem;
       cursor:pointer; font-family:inherit; font-weight:600;
       transition:background .2s; margin-left:auto;
     }
@@ -96,23 +96,23 @@
 
     /* ── 表格 ── */
     .table-wrap {
-      background:#fff; border-radius:10px;
+      background:#fff; border-radius:8px;
       box-shadow:0 2px 8px rgba(0,0,0,0.06); overflow-x:auto;
       -webkit-overflow-scrolling:touch;
     }
-    table { width:100%; border-collapse:collapse; font-size:0.88rem; }
+    table { width:100%; border-collapse:collapse; font-size:0.8rem; }
     thead { background:#f8faff; }
     th {
-      padding:0.9rem 1rem; text-align:left;
-      font-weight:600; color:#555;
+      padding:0.45rem 0.55rem; text-align:left;
+      font-weight:600; color:#555; font-size:0.78rem;
       border-bottom:2px solid #e8eef8; white-space:nowrap; position:relative;
     }
-    td { padding:0.85rem 1rem; border-bottom:1px solid #f0f4f8; word-break:break-all; overflow-wrap:break-word; }
+    td { padding:0.35rem 0.55rem; border-bottom:1px solid #f0f4f8; word-break:break-all; overflow-wrap:break-word; }
     tr:last-child td { border-bottom:none; }
     tr:hover td { background:#fafcff; }
 
     /* ── 状态徽章 ── */
-    .badge { display:inline-block; padding:0.2rem 0.75rem; border-radius:12px; font-size:0.8rem; font-weight:600; }
+    .badge { display:inline-block; padding:0.15rem 0.55rem; border-radius:12px; font-size:0.74rem; font-weight:600; }
     .s-暂时合同   { background:#fef3c7; color:#d97706; }
     .s-正式合同   { background:#dbeafe; color:#1d4ed8; }
     .s-检测中     { background:#ede9fe; color:#7c3aed; }
@@ -134,8 +134,8 @@
 
     /* ── 类型标签 ── */
     .cert-tag {
-      display:inline-block; padding:0.15rem 0.55rem; border-radius:4px;
-      font-size:0.8rem; font-weight:700; background:#eef2ff; color:#3730a3;
+      display:inline-block; padding:0.1rem 0.4rem; border-radius:3px;
+      font-size:0.74rem; font-weight:700; background:#eef2ff; color:#3730a3;
     }
 
     /* ── 列宽调节手柄 ── */
@@ -147,13 +147,13 @@
 
     /* ── 行内编辑 ── */
     .cell-input {
-      width:100%; padding:.28rem .4rem; border:1.5px solid #c7d4e8;
-      border-radius:4px; font-size:.82rem; font-family:inherit;
+      width:100%; padding:.2rem .3rem; border:1.5px solid #c7d4e8;
+      border-radius:3px; font-size:.76rem; font-family:inherit;
       outline:none; background:#fff; box-sizing:border-box; min-width:0;
     }
     .cell-input:focus { border-color:#2563a8; }
     .cell-input[type="number"] { text-align:right; }
-    tr.editing-row td { background:#f0f6ff !important; padding:.35rem .5rem; }
+    tr.editing-row td { background:#f0f6ff !important; padding:.25rem .4rem; }
 
     /* ── 金额单元格 ── */
     .amount-cell { color:#1b3a6b; font-weight:500; }
@@ -161,7 +161,7 @@
     .profit-neg  { color:#dc2626; font-weight:600; white-space:nowrap; }
 
     /* ── 加载 / 空状态 ── */
-    .state-msg { text-align:center; padding:4rem 1rem; color:#aaa; font-size:0.95rem; }
+    .state-msg { text-align:center; padding:2.5rem 1rem; color:#aaa; font-size:0.88rem; }
     .spinner {
       display:inline-block; width:22px; height:22px;
       border:3px solid #e0e7f0; border-top-color:#2563a8;
@@ -176,18 +176,18 @@
     /* ── 分页 ── */
     .pagination {
       display:none; justify-content:center; align-items:center;
-      gap:0.4rem; padding:1.1rem; border-top:1px solid #f0f4f8;
+      gap:0.3rem; padding:0.6rem; border-top:1px solid #f0f4f8;
     }
     .pg-btn {
-      padding:0.38rem 0.75rem; border:1px solid #e0e7f0;
-      border-radius:5px; background:#fff; cursor:pointer;
-      font-size:0.84rem; font-family:inherit; transition:background .2s;
+      padding:0.28rem 0.55rem; border:1px solid #e0e7f0;
+      border-radius:4px; background:#fff; cursor:pointer;
+      font-size:0.78rem; font-family:inherit; transition:background .2s;
     }
     .pg-btn:hover:not(:disabled) { background:#f0f4fa; }
     .pg-btn:disabled { opacity:.4; cursor:not-allowed; }
     .pg-btn.active { background:#1b3a6b; color:#fff; border-color:#1b3a6b; }
-    .pg-sep { color:#ccc; font-size:.84rem; }
-    .pg-info { font-size:.83rem; color:#888; padding:0 .4rem; }
+    .pg-sep { color:#ccc; font-size:.78rem; }
+    .pg-info { font-size:.76rem; color:#888; padding:0 .4rem; }
 
     /* ── 弹窗 ── */
     .modal-bg {
@@ -235,10 +235,10 @@
 
     /* ── 响应式 ── */
     @media(max-width:900px) {
-      main { padding:1.2rem 1rem; }
+      main { padding:0.8rem 0.8rem; }
       .stats { grid-template-columns:repeat(2,1fr); }
       .h-title { display:none; }
-      .tab-nav { padding:0 1rem; }
+      .tab-nav { padding:0 0.8rem; }
     }
     @media(max-width:600px) {
       .form-row-3 { grid-template-columns:1fr; }
@@ -410,11 +410,11 @@ function buildPanel(sys) {
         </select>
         ${tagFilter}
         <button class="btn-refresh" onclick="loadData('${k}')" title="从飞书重新拉取数据">↻ 刷新</button>
-        ${!sys.noInfoFee ? `<button class="btn-refresh" id="${k}-btn-toggle-pay" onclick="togglePayColumns('${k}')" title="折叠/展开付款明细列">▼ 付款明细</button>` : ''}
+        ${!sys.noInfoFee ? `<button class="btn-refresh" id="${k}-btn-toggle-pay" onclick="togglePayColumns('${k}')" title="折叠/展开付款明细列">▶ 付款明细</button>` : ''}
         <button class="btn-new" onclick="openModal('${k}')">＋ 新建订单</button>
       </div>
       <div class="table-wrap" id="${k}-table-wrap">
-        <table>
+        <table class="${!sys.noInfoFee ? 'hide-pay' : ''}">
           <thead><tr>${thead}</tr></thead>
           <tbody id="${k}-tbody">
             <tr><td colspan="${cc}" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
