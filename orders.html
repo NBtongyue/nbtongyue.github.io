@@ -292,8 +292,15 @@
 <div id="panel-cert" class="tab-panel active"></div>
 <div id="panel-lab"  class="tab-panel"></div>
 <div id="panel-finance" class="tab-panel"></div>
+<div id="debug-info" style="position:fixed;bottom:0;right:0;background:#ffeb3b;color:#333;padding:4px 8px;font-size:11px;z-index:9999;font-family:monospace;max-width:300px;word-break:break-all;"></div>
 
 <script>
+function debug(msg) {
+  var el = document.getElementById('debug-info');
+  if (el) el.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+  console.log('DEBUG:', msg);
+}
+
 // ════════════════════════════════════════════════════════════
 //  系统配置
 // ════════════════════════════════════════════════════════════
@@ -581,12 +588,12 @@ async function deleteRecord(apiUrl, recordId) {
 // ════════════════════════════════════════════════════════════
 async function loadData(sysKey) {
   const sys = SYSTEMS[sysKey];
-  console.log('loadData START:', sysKey, 'apiUrl:', sys.apiUrl);
+  debug('loadData START: ' + sysKey);
   showLoading(sysKey);
   try {
-    console.log('loadData: calling fetchAllRecords...');
+    debug('loadData fetchAllRecords: ' + sysKey);
     const items = await fetchAllRecords(sys.apiUrl);
-    console.log('loadData: got', items.length, 'records');
+    debug('loadData got ' + items.length + ' records for ' + sysKey);
     sys.records = items.map(item => {
       const f     = item.fields;
       const endTs = fts(f[sys.F.end]);
@@ -612,9 +619,12 @@ async function loadData(sysKey) {
       };
     });
     if (!sys.noTag) sys.records.forEach(r => { if (r.tag) saveCustomTag(sys, r.tag); });
+    debug('applyFilters + renderTable: ' + sysKey);
     applyFilters(sysKey);
     renderStats(sysKey);
+    debug('loadData DONE: ' + sysKey);
   } catch (err) {
+    debug('loadData ERROR: ' + sysKey + ' ' + err.message);
     console.error('loadData ERROR for', sysKey, ':', err.message, err.stack);
     document.getElementById(sysKey + '-tbody').innerHTML =
       `<tr><td colspan="${sys.colCount}" class="state-msg" style="color:#dc2626">
@@ -653,7 +663,7 @@ function renderTable(sysKey) {
   const rows  = sys.filtered.slice(from, from + PAGE_SIZE);
 
   if (total === 0) {
-    console.log('renderTable: showing empty state');
+    debug('renderTable ' + sysKey + ': 0 results');
     tbody.innerHTML = `<tr><td colspan="${sys.colCount}" class="state-msg">暂无订单数据</td></tr>`;
     pgEl.style.display = 'none';
     return;
@@ -661,7 +671,8 @@ function renderTable(sysKey) {
 
   const now  = Date.now();
   const week = 7 * 24 * 3600 * 1000;
-  console.log('renderTable: building', rows.length, 'rows');
+  debug('renderTable ' + sysKey + ': building ' + rows.length + ' rows');
+  try {
   tbody.innerHTML = rows.map(r => {
     const done    = TERMINAL.has(r.status) || ['已完成','已交付','已关闭'].includes(r.status);
     const nearDue = r.endTs && !done && r.endTs > now && r.endTs < now + week;
@@ -720,8 +731,13 @@ function renderTable(sysKey) {
     </tr>`;
     return row + paySubRow(sysKey, r);
   }).join('');
+  } catch(e) {
+    debug('renderTable ERROR: ' + sysKey + ' ' + e.message);
+    tbody.innerHTML = `<tr><td colspan="${sys.colCount}" class="state-msg" style="color:#dc2626">渲染错误: ${e.message}</td></tr>`;
+    return;
+  }
 
-  console.log('renderTable: innerHTML set, calling initResizableColumns');
+  debug('renderTable ' + sysKey + ': HTML set, init resize');
   const tw = document.getElementById(sysKey + '-table-wrap');
   if (tw) initResizableColumns(tw.querySelector('table'), sys);
   console.log('renderTable: done, pages:', pages);
@@ -1141,10 +1157,10 @@ function logout() {
 //  初始化
 // ════════════════════════════════════════════════════════════
 document.getElementById('h-user').textContent = '👤 ' + sessionStorage.getItem('ty_user');
-console.log('INIT: page loaded, user:', sessionStorage.getItem('ty_user'));
+debug('page init start, user=' + sessionStorage.getItem('ty_user'));
 
 Object.values(SYSTEMS).forEach(sys => {
-  console.log('INIT: building panel for', sys.key);
+  debug('buildPanel: ' + sys.key);
   buildPanel(sys);
   if (!sys.noTag) refreshTagUI(sys.key);
   console.log('INIT: calling loadData for', sys.key);
