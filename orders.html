@@ -538,8 +538,11 @@ async function fetchAllRecords(apiUrl) {
   let items = [], pageToken = '';
   do {
     const url = apiUrl + (pageToken ? '?page_token=' + pageToken : '');
+    console.log('fetchAllRecords: fetching', url);
     const res = await fetch(url, { headers: getAuthHeaders() });
+    console.log('fetchAllRecords: response status', res.status);
     const d   = await res.json();
+    console.log('fetchAllRecords: response code', d.code);
     if (d.code !== 0) throw new Error('读取数据失败：' + d.msg);
     items     = items.concat(d.data.items || []);
     pageToken = d.data.has_more ? d.data.page_token : '';
@@ -578,9 +581,12 @@ async function deleteRecord(apiUrl, recordId) {
 // ════════════════════════════════════════════════════════════
 async function loadData(sysKey) {
   const sys = SYSTEMS[sysKey];
+  console.log('loadData START:', sysKey, 'apiUrl:', sys.apiUrl);
   showLoading(sysKey);
   try {
+    console.log('loadData: calling fetchAllRecords...');
     const items = await fetchAllRecords(sys.apiUrl);
+    console.log('loadData: got', items.length, 'records');
     sys.records = items.map(item => {
       const f     = item.fields;
       const endTs = fts(f[sys.F.end]);
@@ -609,6 +615,7 @@ async function loadData(sysKey) {
     applyFilters(sysKey);
     renderStats(sysKey);
   } catch (err) {
+    console.error('loadData ERROR for', sysKey, ':', err.message, err.stack);
     document.getElementById(sysKey + '-tbody').innerHTML =
       `<tr><td colspan="${sys.colCount}" class="state-msg" style="color:#dc2626">
         ⚠ ${err.message}<br>
@@ -640,11 +647,13 @@ function renderTable(sysKey) {
   const tbody = document.getElementById(sysKey + '-tbody');
   const pgEl  = document.getElementById(sysKey + '-pagination');
   const total = sys.filtered.length;
+  console.log('renderTable:', sysKey, 'total:', total, 'tbody:', !!tbody);
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const from  = (sys.page - 1) * PAGE_SIZE;
   const rows  = sys.filtered.slice(from, from + PAGE_SIZE);
 
   if (total === 0) {
+    console.log('renderTable: showing empty state');
     tbody.innerHTML = `<tr><td colspan="${sys.colCount}" class="state-msg">暂无订单数据</td></tr>`;
     pgEl.style.display = 'none';
     return;
@@ -652,6 +661,7 @@ function renderTable(sysKey) {
 
   const now  = Date.now();
   const week = 7 * 24 * 3600 * 1000;
+  console.log('renderTable: building', rows.length, 'rows');
   tbody.innerHTML = rows.map(r => {
     const done    = TERMINAL.has(r.status) || ['已完成','已交付','已关闭'].includes(r.status);
     const nearDue = r.endTs && !done && r.endTs > now && r.endTs < now + week;
@@ -711,8 +721,10 @@ function renderTable(sysKey) {
     return row + paySubRow(sysKey, r);
   }).join('');
 
+  console.log('renderTable: innerHTML set, calling initResizableColumns');
   const tw = document.getElementById(sysKey + '-table-wrap');
   if (tw) initResizableColumns(tw.querySelector('table'), sys);
+  console.log('renderTable: done, pages:', pages);
 
   if (pages <= 1) { pgEl.style.display = 'none'; return; }
   pgEl.style.display = 'flex';
@@ -1129,10 +1141,13 @@ function logout() {
 //  初始化
 // ════════════════════════════════════════════════════════════
 document.getElementById('h-user').textContent = '👤 ' + sessionStorage.getItem('ty_user');
+console.log('INIT: page loaded, user:', sessionStorage.getItem('ty_user'));
 
 Object.values(SYSTEMS).forEach(sys => {
+  console.log('INIT: building panel for', sys.key);
   buildPanel(sys);
   if (!sys.noTag) refreshTagUI(sys.key);
+  console.log('INIT: calling loadData for', sys.key);
   loadData(sys.key);
 });
 
