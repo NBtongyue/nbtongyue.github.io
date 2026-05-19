@@ -302,6 +302,7 @@ const WORKER = '';
 const STATUS_FLOW = ['暂时合同','正式合同','检测中','证书申请中','已交付','已关闭'];
 const TERMINAL    = new Set(['已关闭','已作废']);
 const PAGE_SIZE   = 20;
+var FIN_COL_WIDTHS = [];
 
 const SYSTEMS = {
   cert: {
@@ -691,7 +692,7 @@ function renderTable(sysKey) {
 
     const noteText = r.note ? r.note.replace(/"/g, '&quot;') : '';
     let row = `<tr>
-      <td><button class="exp-btn" id="exp-${sysKey}-${r.id}" onclick="togglePayRow('${sysKey}','${r.id}')" title="展开/收起付款明细">▶</button></td>
+      <td>${!sys.noInfoFee ? `<button class="exp-btn" id="exp-${sysKey}-${r.id}" onclick="togglePayRow('${sysKey}','${r.id}')" title="展开/收起付款明细">▶</button>` : ''}</td>
           <td><strong>${r.no || '—'}</strong></td>
       <td>${r.client || '—'}</td>
       <td>${r.proj   || '—'}</td>`;
@@ -1253,7 +1254,8 @@ function renderFinance() {
       '<td><span class="badge ' + l.cls + '">' + l.status + '</span></td>' +
       '</tr>';
   }).join('');
+  var ft = document.querySelector('#panel-finance table');
+  if (ft) initResizableColumns(ft, { colWidths: FIN_COL_WIDTHS });
 }
-</script>
 </body>
 </html>
