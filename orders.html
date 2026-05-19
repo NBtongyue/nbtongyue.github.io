@@ -229,9 +229,30 @@
     .btn-save:hover { background:#2563a8; }
     .btn-save:disabled { opacity:.6; cursor:not-allowed; }
 
-    /* ── 付款列折叠 ── */
-    .hide-pay .col-client-pay,
-    .hide-pay .col-lab-pay { display:none; }
+    /* ── 付款展开面板 ── */
+    .pay-detail-row td { padding:0; border-bottom:1px solid #e8eef8; background:#fafbfd; }
+    .pay-detail-card {
+      display:flex; gap:1.5rem; padding:0.6rem 1rem; flex-wrap:wrap;
+    }
+    .pay-group { flex:1; min-width:260px; }
+    .pay-group-title {
+      font-size:0.76rem; font-weight:700; color:#1b3a6b;
+      margin-bottom:0.35rem; padding-bottom:0.25rem; border-bottom:1px dashed #d0d8e8;
+    }
+    .pay-items { display:flex; gap:0.8rem; flex-wrap:wrap; align-items:center; }
+    .pay-item { font-size:0.76rem; color:#666; white-space:nowrap; }
+    .pay-item strong { color:#333; }
+    .pay-item.pay-total { font-weight:600; }
+    .pay-item.pay-remain strong { color:#dc2626; }
+    .pay-item.pay-done strong { color:#16a34a; }
+    .exp-btn {
+      display:inline-flex; align-items:center; justify-content:center;
+      width:20px; height:20px; border-radius:3px; border:1px solid #d0d8e8;
+      background:#f8faff; cursor:pointer; font-size:0.7rem; color:#888;
+      transition:all .15s; line-height:1; padding:0;
+    }
+    .exp-btn:hover { background:#e0e8f8; color:#1b3a6b; border-color:#2563a8; }
+    .exp-btn.open { background:#1b3a6b; color:#fff; border-color:#1b3a6b; }
 
     /* ── 响应式 ── */
     @media(max-width:900px) {
@@ -299,7 +320,7 @@ const SYSTEMS = {
     presetTags:   ['KC','CE','FCC','RoHS','UL'],
     storageKey:   'ty_cert_types',
     orderPfx:     'NBTY',
-    colCount:     19,
+    colCount:     14,
     selectOrderNo: false,
     noTag:        false,
     noInfoFee:    false,
@@ -336,13 +357,11 @@ function buildPanel(sys) {
   const st = STATUS_FLOW.concat(['已作废']).map(s => `<option>${s}</option>`).join('');
 
   // 表头
-  let thead = `<th>订单编号</th><th>${sys.clientLabel}</th><th>项目名称</th>`;
+  let thead = `<th style="width:28px;"></th><th>订单编号</th><th>${sys.clientLabel}</th><th>项目名称</th>`;
   if (!sys.noTag)     thead += `<th>${sys.tagLabel}</th>`;
   thead += '<th>合同额</th>';
-	  if (!sys.noInfoFee) thead += '<th class="col-client-pay">客户首付款</th><th class="col-client-pay">客户二次付款</th><th class="col-client-pay">客户尾款</th>';
 	  if (!sys.noInfoFee) thead += '<th>信息费</th>';
 	  if (!sys.noLabFee)  thead += '<th>实验室额</th>';
-	  if (!sys.noLabFee)  thead += '<th class="col-lab-pay">实验室首付款</th><th class="col-lab-pay">实验室二次付款</th><th class="col-lab-pay">实验室尾款</th>';
 	  if (!sys.noProfit)  thead += '<th>利润</th>';
   thead += '<th>提交日期</th><th>预计完成日期</th><th>当前状态</th><th>备注</th><th>操作</th>';
 
@@ -410,11 +429,11 @@ function buildPanel(sys) {
         </select>
         ${tagFilter}
         <button class="btn-refresh" onclick="loadData('${k}')" title="从飞书重新拉取数据">↻ 刷新</button>
-        ${!sys.noInfoFee ? `<button class="btn-refresh" id="${k}-btn-toggle-pay" onclick="togglePayColumns('${k}')" title="折叠/展开付款明细列">▶ 付款明细</button>` : ''}
+        ${!sys.noInfoFee ? `<button class="btn-refresh" onclick="expandAllPay('${k}')" title="展开全部付款明细">⊞ 展开付款</button><button class="btn-refresh" onclick="collapseAllPay('${k}')" title="收起全部付款明细">⊟ 收起</button>` : ''}
         <button class="btn-new" onclick="openModal('${k}')">＋ 新建订单</button>
       </div>
       <div class="table-wrap" id="${k}-table-wrap">
-        <table class="${!sys.noInfoFee ? 'hide-pay' : ''}">
+        <table>
           <thead><tr>${thead}</tr></thead>
           <tbody id="${k}-tbody">
             <tr><td colspan="${cc}" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
@@ -651,14 +670,8 @@ function renderTable(sysKey) {
         row += `<td><select class="cell-input" id="${sysKey}-ei-tag">${tagOpts}</select></td>`;
       }
       row += `<td><input class="cell-input" id="${sysKey}-ei-contract" type="number" min="0" step="0.01" value="${r.contract ?? ''}"></td>`;
-      if (!sys.noInfoFee) row += `<td class="col-client-pay"><input class="cell-input" id="${sysKey}-ei-client-pay1" type="number" min="0" step="0.01" value="${r.clientPay1 ?? ''}"></td>`;
-      if (!sys.noInfoFee) row += `<td class="col-client-pay"><input class="cell-input" id="${sysKey}-ei-client-pay2" type="number" min="0" step="0.01" value="${r.clientPay2 ?? ''}"></td>`;
-      if (!sys.noInfoFee) row += `<td class="col-client-pay"><input class="cell-input" id="${sysKey}-ei-client-pay3" type="number" min="0" step="0.01" value="${r.clientPay3 ?? ''}"></td>`;
       if (!sys.noInfoFee) row += `<td><input class="cell-input" id="${sysKey}-ei-info-fee" type="number" min="0" step="0.01" value="${r.infoFee ?? ''}"></td>`;
       if (!sys.noLabFee)  row += `<td><input class="cell-input" id="${sysKey}-ei-lab-fee"  type="number" min="0" step="0.01" value="${r.labFee  ?? ''}"></td>`;
-      if (!sys.noLabFee)  row += `<td class="col-lab-pay"><input class="cell-input" id="${sysKey}-ei-lab-pay1" type="number" min="0" step="0.01" value="${r.labPay1 ?? ''}"></td>`;
-      if (!sys.noLabFee)  row += `<td class="col-lab-pay"><input class="cell-input" id="${sysKey}-ei-lab-pay2" type="number" min="0" step="0.01" value="${r.labPay2 ?? ''}"></td>`;
-      if (!sys.noLabFee)  row += `<td class="col-lab-pay"><input class="cell-input" id="${sysKey}-ei-lab-pay3" type="number" min="0" step="0.01" value="${r.labPay3 ?? ''}"></td>`;
       if (!sys.noProfit)  row += `<td>${fmtProfit(r.contract, r.infoFee, r.labFee)}</td>`;
       row += `
         <td><input class="cell-input" id="${sysKey}-ei-start"  type="date" value="${r.start}"></td>
@@ -673,24 +686,19 @@ function renderTable(sysKey) {
           </div>
         </td>
       </tr>`;
-      return row;
+      return row + paySubRow(sysKey, r);
     }
 
     const noteText = r.note ? r.note.replace(/"/g, '&quot;') : '';
     let row = `<tr>
-      <td><strong>${r.no || '—'}</strong></td>
+      <td><button class="exp-btn" id="exp-${sysKey}-${r.id}" onclick="togglePayRow('${sysKey}','${r.id}')" title="展开/收起付款明细">▶</button></td>
+          <td><strong>${r.no || '—'}</strong></td>
       <td>${r.client || '—'}</td>
       <td>${r.proj   || '—'}</td>`;
     if (!sys.noTag)    row += `<td>${r.tag ? `<span class="cert-tag">${r.tag}</span>` : '—'}</td>`;
     row += `<td class="amount-cell">${fmtAmount(r.contract)}</td>`;
-    if (!sys.noInfoFee) row += `<td class="amount-cell col-client-pay">${fmtAmount(r.clientPay1)}</td>`;
-    if (!sys.noInfoFee) row += `<td class="amount-cell col-client-pay">${fmtAmount(r.clientPay2)}</td>`;
-    if (!sys.noInfoFee) row += `<td class="amount-cell col-client-pay">${fmtAmount(r.clientPay3)}</td>`;
     if (!sys.noInfoFee) row += `<td class="amount-cell">${fmtAmount(r.infoFee)}</td>`;
     if (!sys.noLabFee)  row += `<td class="amount-cell">${fmtAmount(r.labFee)}</td>`;
-    if (!sys.noLabFee)  row += `<td class="amount-cell col-lab-pay">${fmtAmount(r.labPay1)}</td>`;
-    if (!sys.noLabFee)  row += `<td class="amount-cell col-lab-pay">${fmtAmount(r.labPay2)}</td>`;
-    if (!sys.noLabFee)  row += `<td class="amount-cell col-lab-pay">${fmtAmount(r.labPay3)}</td>`;
     if (!sys.noProfit)  row += `<td>${fmtProfit(r.contract, r.infoFee, r.labFee)}</td>`;
     row += `
       <td>${r.start  || '—'}</td>
@@ -699,7 +707,7 @@ function renderTable(sysKey) {
       <td style="color:#888;" title="${noteText}">${r.note || '—'}</td>
       <td><button class="btn-act btn-act-next" onclick="editRow('${sysKey}','${r.id}')">编辑</button></td>
     </tr>`;
-    return row;
+    return row + paySubRow(sysKey, r);
   }).join('');
 
   const tw = document.getElementById(sysKey + '-table-wrap');
@@ -718,6 +726,43 @@ function renderTable(sysKey) {
   html += `<button class="pg-btn" onclick="goPage('${sysKey}',${sys.page + 1})" ${sys.page === pages ? 'disabled' : ''}>下一页 ›</button>`;
   html += `<span class="pg-info">共 ${total} 条</span>`;
   pgEl.innerHTML = html;
+}
+
+function paySubRow(sysKey, r) {
+  var sys = SYSTEMS[sysKey];
+  if (sys.noInfoFee) return '';
+  var cp = calcPayStatus(r.contract, [r.clientPay1, r.clientPay2, r.clientPay3]);
+  var lp = calcPayStatus(r.labFee,    [r.labPay1, r.labPay2, r.labPay3]);
+  var crColor = cp.remaining > 0 ? 'pay-remain' : 'pay-done';
+  var lrColor = lp.remaining > 0 ? 'pay-remain' : 'pay-done';
+  return `<tr class="pay-detail-row" id="pay-${sysKey}-${r.id}" style="display:none">
+    <td colspan="${sys.colCount}">
+      <div class="pay-detail-card">
+        <div class="pay-group">
+          <div class="pay-group-title">客户付款</div>
+          <div class="pay-items">
+            <span class="pay-item">首付 <strong>${fmtAmount(r.clientPay1)}</strong></span>
+            <span class="pay-item">二付 <strong>${fmtAmount(r.clientPay2)}</strong></span>
+            <span class="pay-item">尾款 <strong>${fmtAmount(r.clientPay3)}</strong></span>
+            <span class="pay-item ${crColor}">已付 <strong>${fmtAmount(cp.paid)}</strong></span>
+            <span class="pay-item ${crColor}">待付 <strong>${fmtAmount(cp.remaining > 0 ? cp.remaining : 0)}</strong></span>
+            <span class="badge ${cp.cls}">${cp.status}</span>
+          </div>
+        </div>
+        <div class="pay-group">
+          <div class="pay-group-title">实验室付款</div>
+          <div class="pay-items">
+            <span class="pay-item">首付 <strong>${fmtAmount(r.labPay1)}</strong></span>
+            <span class="pay-item">二付 <strong>${fmtAmount(r.labPay2)}</strong></span>
+            <span class="pay-item">尾款 <strong>${fmtAmount(r.labPay3)}</strong></span>
+            <span class="pay-item ${lrColor}">已付 <strong>${fmtAmount(lp.paid)}</strong></span>
+            <span class="pay-item ${lrColor}">待付 <strong>${fmtAmount(lp.remaining > 0 ? lp.remaining : 0)}</strong></span>
+            <span class="badge ${lp.cls}">${lp.status}</span>
+          </div>
+        </div>
+      </div>
+    </td>
+  </tr>`;
 }
 
 function goPage(sysKey, p) {
@@ -891,26 +936,10 @@ async function saveRowEdit(sysKey, recordId) {
       const infoFee = parseFloat(document.getElementById(sysKey + '-ei-info-fee').value);
       if (!isNaN(infoFee)) fields[sys.F.infoFee] = infoFee;
     }
-      if (!sys.noInfoFee) {
-        const cp1 = parseFloat(document.getElementById(sysKey + '-ei-client-pay1').value);
-        if (!isNaN(cp1)) fields[sys.F.clientPay1] = cp1;
-        const cp2 = parseFloat(document.getElementById(sysKey + '-ei-client-pay2').value);
-        if (!isNaN(cp2)) fields[sys.F.clientPay2] = cp2;
-        const cp3 = parseFloat(document.getElementById(sysKey + '-ei-client-pay3').value);
-        if (!isNaN(cp3)) fields[sys.F.clientPay3] = cp3;
-      }
     if (!sys.noLabFee) {
       const labFee = parseFloat(document.getElementById(sysKey + '-ei-lab-fee').value);
       if (!isNaN(labFee)) fields[sys.F.labFee] = labFee;
     }
-      if (!sys.noLabFee) {
-        const lp1 = parseFloat(document.getElementById(sysKey + '-ei-lab-pay1').value);
-        if (!isNaN(lp1)) fields[sys.F.labPay1] = lp1;
-        const lp2 = parseFloat(document.getElementById(sysKey + '-ei-lab-pay2').value);
-        if (!isNaN(lp2)) fields[sys.F.labPay2] = lp2;
-        const lp3 = parseFloat(document.getElementById(sysKey + '-ei-lab-pay3').value);
-        if (!isNaN(lp3)) fields[sys.F.labPay3] = lp3;
-      }
     const start = document.getElementById(sysKey + '-ei-start').value;
     if (start) fields[sys.F.start] = new Date(start + 'T00:00:00').getTime();
     const end = document.getElementById(sysKey + '-ei-end').value;
@@ -1051,25 +1080,45 @@ function switchTab(sysKey) {
 }
 
 // ════════════════════════════════════════════════════════════
-//  退出登录
+//  付款明细展开/折叠
 // ════════════════════════════════════════════════════════════
+function togglePayRow(sysKey, recordId) {
+  var row = document.getElementById('pay-' + sysKey + '-' + recordId);
+  var btn = document.getElementById('exp-' + sysKey + '-' + recordId);
+  if (!row) return;
+  if (row.style.display === 'none' || row.style.display === '') {
+    row.style.display = '';
+    if (btn) { btn.textContent = '▼'; btn.classList.add('open'); }
+  } else {
+    row.style.display = 'none';
+    if (btn) { btn.textContent = '▶'; btn.classList.remove('open'); }
+  }
+}
+
+function expandAllPay(sysKey) {
+  var sys = SYSTEMS[sysKey];
+  if (sys.noInfoFee) return;
+  sys.filtered.forEach(function(r) {
+    var row = document.getElementById('pay-' + sysKey + '-' + r.id);
+    var btn = document.getElementById('exp-' + sysKey + '-' + r.id);
+    if (row) row.style.display = '';
+    if (btn) { btn.textContent = '▼'; btn.classList.add('open'); }
+  });
+}
+function collapseAllPay(sysKey) {
+  var sys = SYSTEMS[sysKey];
+  if (sys.noInfoFee) return;
+  sys.filtered.forEach(function(r) {
+    var row = document.getElementById('pay-' + sysKey + '-' + r.id);
+    var btn = document.getElementById('exp-' + sysKey + '-' + r.id);
+    if (row) row.style.display = 'none';
+    if (btn) { btn.textContent = '▶'; btn.classList.remove('open'); }
+  });
+}
 
 // ════════════════════════════════════════════════════════════
-//  付款列折叠/展开
+//  退出登录
 // ════════════════════════════════════════════════════════════
-function togglePayColumns(sysKey) {
-  var tw = document.getElementById(sysKey + '-table-wrap');
-  if (!tw) return;
-  var t = tw.querySelector('table');
-  if (!t) return;
-  var hidden = t.classList.toggle('hide-pay');
-  var btn = document.getElementById(sysKey + '-btn-toggle-pay');
-  if (btn) btn.textContent = hidden ? '▶ 付款明细' : '▼ 付款明细';
-  // re-init column widths after toggle
-  var sys = SYSTEMS[sysKey];
-  sys.colWidths = [];
-  initResizableColumns(t, sys);
-}
 function logout() {
   sessionStorage.clear();
   location.href = 'login.html';
