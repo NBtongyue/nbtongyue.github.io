@@ -1197,12 +1197,7 @@ function buildFinancePanel() {
 }
 
 function loadFinance() {
-  var sys = SYSTEMS.cert;
-  if (sys.records.length === 0) {
-    loadData('cert').then(function() { renderFinance(); });
-  } else {
-    renderFinance();
-  }
+  loadData('cert').then(function() { renderFinance(); });
 }
 
 function calcPayStatus(total, payments) {
