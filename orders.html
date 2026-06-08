@@ -306,8 +306,8 @@ function debug(msg) {
 // ════════════════════════════════════════════════════════════
 const WORKER = '';
 
-const STATUS_FLOW = ['暂时合同','正式合同','检测中','证书申请中','已交付','已关闭'];
-const TERMINAL    = new Set(['已关闭','已作废']);
+const STATUS_FLOW = ['暂时合同','正式合同','检测中','证书申请中','已交付'];
+const TERMINAL    = new Set(['已作废']);
 const PAGE_SIZE   = 20;
 var FIN_COL_WIDTHS = [];
 
@@ -399,7 +399,7 @@ function buildPanel(sys) {
       <div class="mfg">
         <label>当前状态</label>
         <select id="${k}-m-status">
-          ${STATUS_FLOW.slice(0,-1).map(s => `<option>${s}</option>`).join('')}
+          ${STATUS_FLOW.map(s => `<option>${s}</option>`).join('')}
         </select>
       </div>
     </div>`;
@@ -411,7 +411,7 @@ function buildPanel(sys) {
          <div class="mfg">
            <label>当前状态</label>
            <select id="${k}-m-status">
-             ${STATUS_FLOW.slice(0,-1).map(s => `<option>${s}</option>`).join('')}
+             ${STATUS_FLOW.map(s => `<option>${s}</option>`).join('')}
            </select>
          </div>
        </div>`
@@ -674,7 +674,7 @@ function renderTable(sysKey) {
   debug('renderTable ' + sysKey + ': building ' + rows.length + ' rows');
   try {
   tbody.innerHTML = rows.map(r => {
-    const done    = TERMINAL.has(r.status) || ['已完成','已交付','已关闭'].includes(r.status);
+    const done    = TERMINAL.has(r.status) || ['已完成','已交付'].includes(r.status);
     const nearDue = r.endTs && !done && r.endTs > now && r.endTs < now + week;
     const isOver  = r.endTs && !done && r.endTs < now;
     const dueCls  = isOver ? 'overdue' : nearDue ? 'near-due' : '';
@@ -809,10 +809,10 @@ function renderStats(sysKey) {
   const ongoingSet = new Set(['待提交','资料审核','检测中','证书申请中']);
   document.getElementById(sysKey + '-s-total').textContent   = sys.records.length;
   document.getElementById(sysKey + '-s-ongoing').textContent = sys.records.filter(r => ongoingSet.has(r.status)).length;
-  document.getElementById(sysKey + '-s-done').textContent    = sys.records.filter(r => ['已交付','已关闭'].includes(r.status)).length;
+  document.getElementById(sysKey + '-s-done').textContent    = sys.records.filter(r => ['已交付'].includes(r.status)).length;
   document.getElementById(sysKey + '-s-due').textContent     = sys.records.filter(r =>
     r.endTs && r.endTs > now && r.endTs < now + week &&
-    !TERMINAL.has(r.status) && !['已完成','已交付','已关闭'].includes(r.status)
+    !TERMINAL.has(r.status) && !['已完成','已交付'].includes(r.status)
   ).length;
 }
 
