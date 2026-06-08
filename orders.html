@@ -1222,7 +1222,7 @@ function renderFinance() {
   q = q ? q.trim().toLowerCase() : '';
 
   // 只统计正式合同及之后状态（排除暂时合同、已作废）
-  var VALID_FINANCE_STATUS = ['正式合同','检测中','证书申请中','已交付','已关闭'];
+  var VALID_FINANCE_STATUS = ['正式合同','检测中','证书申请中','已交付'];
   var filtered = records.filter(function(r) {
     if (VALID_FINANCE_STATUS.indexOf(r.status) === -1) return false;
     if (!q) return true;
