@@ -278,7 +278,7 @@
     <div class="h-title" id="h-tab-title">认证订单追踪系统</div>
   </div>
   <div class="h-right">
-    <button class="btn-logout" onclick="refreshAll()" title="从飞书重新拉取全部数据">↻ 刷新数据</button>
+    <button id="btn-refresh-all" class="btn-logout" onclick="refreshAll()" title="从飞书重新拉取全部数据">↻ 刷新数据</button>
     <span class="h-user" id="h-user"></span>
     <button class="btn-logout" onclick="logout()">退出登录</button>
   </div>
@@ -1167,7 +1167,7 @@ function collapseAllPay(sysKey) {
 //  全局刷新
 // ════════════════════════════════════════════════════════════
 async function refreshAll() {
-  var btn = document.querySelector('.h-right .btn-logout');
+  var btn = document.getElementById('btn-refresh-all');
   var orig = btn.textContent;
   btn.textContent = '刷新中…';
   btn.disabled = true;
