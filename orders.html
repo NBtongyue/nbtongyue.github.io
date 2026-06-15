@@ -53,7 +53,7 @@
 
     /* ── 统计卡片 ── */
     .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:0.7rem; margin-bottom:0.8rem; }
-    .stats-finance { display:grid; grid-template-columns:repeat(3,1fr); gap:0.7rem; margin-bottom:0.8rem; }
+    .stats-finance { display:grid; grid-template-columns:repeat(4,1fr); gap:0.7rem; margin-bottom:0.8rem; }
     .stat-card {
       background:#fff; border-radius:8px; padding:0.7rem 1rem;
       box-shadow:0 2px 8px rgba(0,0,0,0.06);
@@ -1183,13 +1183,13 @@ function buildFinancePanel() {
         <table>
           <thead><tr>
             <th>订单编号</th><th>客户名称</th>
-            <th>合同额</th><th>首付款</th><th>二次付款</th><th>尾款</th>
+            <th>合同额</th><th>信息费</th><th>利润</th><th>首付款</th><th>二次付款</th><th>尾款</th>
             <th>已付合计</th><th>待付金额</th><th>付款状态</th>
             <th>实验室额</th><th>实验室首付</th><th>实验室二付</th><th>实验室尾款</th>
             <th>实验室已付</th><th>实验室待付</th><th>实验室状态</th>
           </tr></thead>
           <tbody id="fin-tbody">
-            <tr><td colspan="16" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
+            <tr><td colspan="18" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
           </tbody>
         </table>
       </div>
@@ -1197,7 +1197,21 @@ function buildFinancePanel() {
 }
 
 function loadFinance() {
-  loadData('cert').then(function() { renderFinance(); });
+  debug('loadFinance START');
+  var certSys = SYSTEMS.cert;
+  // 避免重复加载：如果已有数据直接渲染
+  if (certSys.records && certSys.records.length > 0) {
+    debug('loadFinance: using cached cert data, ' + certSys.records.length + ' records');
+    renderFinance();
+    return;
+  }
+  loadData('cert').then(function() {
+    debug('loadFinance: cert data loaded, rendering finance');
+    renderFinance();
+  }).catch(function(err) {
+    debug('loadFinance ERROR: ' + err.message);
+    console.error('loadFinance error:', err);
+  });
 }
 
 function calcPayStatus(total, payments) {
@@ -1224,21 +1238,26 @@ function renderFinance() {
     return [r.no, r.client].some(function(v) { return v.toLowerCase().indexOf(q) !== -1; });
   });
 
-  var totalContract = 0, totalClientPaid = 0, totalClientRemain = 0;
+  var totalContract = 0, totalInfoFee = 0, totalProfit = 0;
+  var totalClientPaid = 0, totalClientRemain = 0;
   var totalLab = 0, totalLabPaid = 0, totalLabRemain = 0;
 
   var rows = filtered.map(function(r) {
     var client = calcPayStatus(r.contract, [r.clientPay1, r.clientPay2, r.clientPay3]);
     var lab    = calcPayStatus(r.labFee,    [r.labPay1, r.labPay2, r.labPay3]);
+    var infoFee = (r.infoFee || 0);
+    var profit  = (r.contract || 0) - infoFee - (r.labFee || 0);
 
     totalContract    += (r.contract || 0);
+    totalInfoFee     += infoFee;
+    totalProfit      += profit;
     totalClientPaid  += client.paid;
     totalClientRemain += client.remaining;
     totalLab         += (r.labFee || 0);
     totalLabPaid     += lab.paid;
     totalLabRemain   += lab.remaining;
 
-    return { r: r, client: client, lab: lab };
+    return { r: r, client: client, lab: lab, infoFee: infoFee, profit: profit };
   });
 
   // stats
@@ -1250,13 +1269,15 @@ function renderFinance() {
       '<div class="stat-card warn"><div class="num">' + fmtAmount(totalClientRemain) + '</div><div class="lbl">客户待付</div></div>' +
       '<div class="stat-card"><div class="num">' + fmtAmount(totalLab) + '</div><div class="lbl">实验室总额</div></div>' +
       '<div class="stat-card"><div class="num" style="color:#16a34a;">' + fmtAmount(totalLabPaid) + '</div><div class="lbl">实验室已付</div></div>' +
-      '<div class="stat-card warn"><div class="num">' + fmtAmount(totalLabRemain) + '</div><div class="lbl">实验室待付</div></div>';
+      '<div class="stat-card warn"><div class="num">' + fmtAmount(totalLabRemain) + '</div><div class="lbl">实验室待付</div></div>' +
+      '<div class="stat-card"><div class="num">' + fmtAmount(totalInfoFee) + '</div><div class="lbl">信息费总额</div></div>' +
+      '<div class="stat-card"><div class="num" style="color:' + (totalProfit >= 0 ? '#065f46' : '#dc2626') + ';">' + fmtAmount(totalProfit) + '</div><div class="lbl">利润总额</div></div>';
   }
 
   // table
   if (filtered.length === 0) {
     document.getElementById('fin-tbody').innerHTML =
-      '<tr><td colspan="16" class="state-msg">暂无数据</td></tr>';
+      '<tr><td colspan="18" class="state-msg">暂无数据</td></tr>';
     return;
   }
 
@@ -1268,6 +1289,8 @@ function renderFinance() {
       '<td><strong>' + (r.no || '—') + '</strong></td>' +
       '<td>' + (r.client || '—') + '</td>' +
       '<td class="amount-cell">' + fmtAmount(r.contract) + '</td>' +
+      '<td class="amount-cell">' + fmtAmount(row.infoFee) + '</td>' +
+      '<td class="amount-cell" style="color:' + (row.profit >= 0 ? '#065f46' : '#dc2626') + ';font-weight:600;">' + fmtAmount(row.profit) + '</td>' +
       '<td class="amount-cell">' + fmtAmount(r.clientPay1) + '</td>' +
       '<td class="amount-cell">' + fmtAmount(r.clientPay2) + '</td>' +
       '<td class="amount-cell">' + fmtAmount(r.clientPay3) + '</td>' +
