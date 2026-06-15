@@ -1408,7 +1408,7 @@ function loadVoid() {
             '<td>' + (r.start || '—') + '</td>' +
             '<td>' + (r.endFmt || '—') + '</td>' +
             '<td style="color:#888;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escHtml(r.note || '') + '">' + (r.note || '—') + '</td>' +
-            '<td><button class="btn-act btn-act-next" onclick="restoreOrder('cert','' + r.id + '','' + (r.no || '') + '')">恢复</button></td>' +
+            '<td><button class="btn-act btn-act-next" onclick="restoreOrder(\'cert\',\'' + r.id + '\',\'' + (r.no || '') + '\')">恢复</button></td>' +
             '</tr>';
         }).join('');
       }
@@ -1429,7 +1429,7 @@ function loadVoid() {
             '<td>' + (r.start || '—') + '</td>' +
             '<td>' + (r.endFmt || '—') + '</td>' +
             '<td style="color:#888;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escHtml(r.note || '') + '">' + (r.note || '—') + '</td>' +
-            '<td><button class="btn-act btn-act-next" onclick="restoreOrder('lab','' + r.id + '','' + (r.no || '') + '')">恢复</button></td>' +
+            '<td><button class="btn-act btn-act-next" onclick="restoreOrder(\'lab\',\'' + r.id + '\',\'' + (r.no || '') + '\')">恢复</button></td>' +
             '</tr>';
         }).join('');
       }
