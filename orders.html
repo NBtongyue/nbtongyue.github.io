@@ -290,13 +290,11 @@
   <button class="tab-btn active" id="tab-btn-cert" onclick="switchTab('cert')">认证订单追踪</button>
   <button class="tab-btn"        id="tab-btn-lab"  onclick="switchTab('lab')">实验室分包订单</button>
   <button class="tab-btn"        id="tab-btn-finance" onclick="switchTab('finance')">财务统计</button>
-  <button class="tab-btn"        id="tab-btn-void" onclick="switchTab('void')">已作废</button>
 </nav>
 
 <div id="panel-cert" class="tab-panel active"></div>
 <div id="panel-lab"  class="tab-panel"></div>
 <div id="panel-finance" class="tab-panel"></div>
-<div id="panel-void" class="tab-panel"></div>
 <div id="debug-info" style="position:fixed;bottom:0;right:0;background:#ffeb3b;color:#333;padding:4px 8px;font-size:11px;z-index:9999;font-family:monospace;max-width:300px;word-break:break-all;"></div>
 
 <script>
@@ -1093,7 +1091,7 @@ function today() { return new Date().toISOString().slice(0, 10); }
 // ════════════════════════════════════════════════════════════
 function switchTab(sysKey) {
   if (sysKey === 'finance') {
-    ['cert','lab','void'].forEach(k => {
+    ['cert','lab'].forEach(k => {
       document.getElementById('panel-' + k).classList.remove('active');
       document.getElementById('tab-btn-' + k).classList.remove('active');
     });
@@ -1104,26 +1102,12 @@ function switchTab(sysKey) {
     loadFinance();
     return;
   }
-  if (sysKey === 'void') {
-    ['cert','lab','finance'].forEach(k => {
-      document.getElementById('panel-' + k).classList.remove('active');
-      document.getElementById('tab-btn-' + k).classList.remove('active');
-    });
-    document.getElementById('panel-void').classList.add('active');
-    document.getElementById('tab-btn-void').classList.add('active');
-    document.getElementById('h-tab-title').textContent = '已作废订单';
-    if (!window._voidBuilt) { buildVoidPanel(); window._voidBuilt = true; }
-    loadVoid();
-    return;
-  }
   ['cert','lab'].forEach(k => {
     document.getElementById('panel-' + k).classList.toggle('active', k === sysKey);
     document.getElementById('tab-btn-' + k).classList.toggle('active', k === sysKey);
   });
   document.getElementById('panel-finance').classList.remove('active');
   document.getElementById('tab-btn-finance').classList.remove('active');
-  document.getElementById('panel-void').classList.remove('active');
-  document.getElementById('tab-btn-void').classList.remove('active');
   document.getElementById('h-tab-title').textContent = SYSTEMS[sysKey].name;
 }
 
@@ -1329,139 +1313,6 @@ function renderFinance() {
   if (ft) initResizableColumns(ft, { colWidths: FIN_COL_WIDTHS });
 }
 
-// ════════════════════════════════════════════════════════════
-//  已作废订单
-// ════════════════════════════════════════════════════════════
-function buildVoidPanel() {
-  document.getElementById('panel-void').innerHTML = `
-    <main>
-      <div class="stats" id="void-stats"></div>
-      <div class="controls">
-        <button class="btn-refresh" onclick="loadVoid()">↻ 刷新</button>
-      </div>
-      <div style="margin-bottom:1.2rem;">
-        <h3 style="font-size:0.9rem;color:#1b3a6b;margin-bottom:0.5rem;padding-left:0.2rem;">认证订单 - 已作废</h3>
-        <div class="table-wrap">
-          <table>
-            <thead><tr>
-              <th>订单编号</th><th>客户名称</th><th>项目名称</th><th>认证类型</th>
-              <th>合同额</th><th>提交日期</th><th>预计完成日期</th><th>备注</th><th>操作</th>
-            </tr></thead>
-            <tbody id="void-cert-tbody">
-              <tr><td colspan="9" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div>
-        <h3 style="font-size:0.9rem;color:#1b3a6b;margin-bottom:0.5rem;padding-left:0.2rem;">实验室订单 - 已作废</h3>
-        <div class="table-wrap">
-          <table>
-            <thead><tr>
-              <th>订单编号</th><th>实验室名称</th><th>项目名称</th>
-              <th>合同额</th><th>提交日期</th><th>预计完成日期</th><th>备注</th><th>操作</th>
-            </tr></thead>
-            <tbody id="void-lab-tbody">
-              <tr><td colspan="8" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </main>`;
-}
-
-function loadVoid() {
-  var certSys = SYSTEMS.cert;
-  var labSys  = SYSTEMS.lab;
-  var needCert = !certSys.records || certSys.records.length === 0;
-  var needLab  = !labSys.records || labSys.records.length === 0;
-
-  function renderVoid() {
-    var certVoid = certSys.records.filter(function(r) { return r.status === '已作废'; });
-    var labVoid  = labSys.records.filter(function(r) { return r.status === '已作废'; });
-
-    // Stats
-    var statsEl = document.getElementById('void-stats');
-    if (statsEl) {
-      statsEl.innerHTML =
-        '<div class="stat-card"><div class="num">' + (certVoid.length + labVoid.length) + '</div><div class="lbl">已作废订单合计</div></div>' +
-        '<div class="stat-card"><div class="num">' + certVoid.length + '</div><div class="lbl">认证已作废</div></div>' +
-        '<div class="stat-card"><div class="num">' + labVoid.length + '</div><div class="lbl">实验室已作废</div></div>' +
-        '<div class="stat-card warn"><div class="num">' +
-          certVoid.reduce(function(s, r) { return s + (r.contract || 0); }, 0).toLocaleString('zh-CN') +
-        '</div><div class="lbl">作废合同额合计（元）</div></div>';
-    }
-
-    // Cert void table
-    var certTbody = document.getElementById('void-cert-tbody');
-    if (certTbody) {
-      if (certVoid.length === 0) {
-        certTbody.innerHTML = '<tr><td colspan="9" class="state-msg">暂无已作废的认证订单</td></tr>';
-      } else {
-        certTbody.innerHTML = certVoid.map(function(r) {
-          return '<tr>' +
-            '<td><strong>' + (r.no || '—') + '</strong></td>' +
-            '<td>' + (r.client || '—') + '</td>' +
-            '<td>' + (r.proj || '—') + '</td>' +
-            '<td>' + (r.tag ? '<span class="cert-tag">' + r.tag + '</span>' : '—') + '</td>' +
-            '<td class="amount-cell">' + fmtAmount(r.contract) + '</td>' +
-            '<td>' + (r.start || '—') + '</td>' +
-            '<td>' + (r.endFmt || '—') + '</td>' +
-            '<td style="color:#888;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escHtml(r.note || '') + '">' + (r.note || '—') + '</td>' +
-            '<td><button class="btn-act btn-act-next" onclick="restoreOrder(\'cert\',\'' + r.id + '\',\'' + (r.no || '') + '\')">恢复</button></td>' +
-            '</tr>';
-        }).join('');
-      }
-    }
-
-    // Lab void table
-    var labTbody = document.getElementById('void-lab-tbody');
-    if (labTbody) {
-      if (labVoid.length === 0) {
-        labTbody.innerHTML = '<tr><td colspan="8" class="state-msg">暂无已作废的实验室订单</td></tr>';
-      } else {
-        labTbody.innerHTML = labVoid.map(function(r) {
-          return '<tr>' +
-            '<td><strong>' + (r.no || '—') + '</strong></td>' +
-            '<td>' + (r.client || '—') + '</td>' +
-            '<td>' + (r.proj || '—') + '</td>' +
-            '<td class="amount-cell">' + fmtAmount(r.contract) + '</td>' +
-            '<td>' + (r.start || '—') + '</td>' +
-            '<td>' + (r.endFmt || '—') + '</td>' +
-            '<td style="color:#888;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escHtml(r.note || '') + '">' + (r.note || '—') + '</td>' +
-            '<td><button class="btn-act btn-act-next" onclick="restoreOrder(\'lab\',\'' + r.id + '\',\'' + (r.no || '') + '\')">恢复</button></td>' +
-            '</tr>';
-        }).join('');
-      }
-    }
-  }
-
-  // Load data if needed, then render
-  var promises = [];
-  if (needCert) promises.push(loadData('cert'));
-  if (needLab)  promises.push(loadData('lab'));
-
-  if (promises.length > 0) {
-    Promise.all(promises).then(renderVoid).catch(function(err) {
-      debug('loadVoid ERROR: ' + err.message);
-    });
-  } else {
-    renderVoid();
-  }
-}
-
-async function restoreOrder(sysKey, recordId, orderNo) {
-  if (!confirm('确认将订单 ' + orderNo + ' 恢复为"暂时合同"状态？')) return;
-  var sys = SYSTEMS[sysKey];
-  try {
-    await updateRecord(sys.apiUrl, recordId, { [sys.F.status]: '暂时合同' });
-    await loadData(sysKey);
-    loadVoid();
-    // Also refresh the main tab stats if visible
-    renderStats(sysKey);
-    applyFilters(sysKey);
-  } catch (err) { alert('恢复失败：' + err.message); }
-}
 
 </script>
 </body>
