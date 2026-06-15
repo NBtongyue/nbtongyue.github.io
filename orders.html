@@ -364,7 +364,7 @@ const SYSTEMS = {
 function buildPanel(sys) {
   const k  = sys.key;
   const cc = sys.colCount;
-  const st = STATUS_FLOW.concat(['已作废']).map(s => `<option>${s}</option>`).join('');
+  const st = STATUS_FLOW.map(s => `<option>${s}</option>`).join('');
 
   // 表头
   let thead = `<th style="width:28px;"></th><th>订单编号</th><th>${sys.clientLabel}</th><th>项目名称</th>`;
@@ -645,6 +645,7 @@ function applyFilters(sysKey) {
   const tagEl  = document.getElementById(sysKey + '-f-tag');
   const tag    = tagEl ? tagEl.value : '';
   sys.filtered = sys.records.filter(r => {
+    if (r.status === '已作废') return false;
     const matchQ = !q      || [r.no, r.client, r.proj].some(v => v.toLowerCase().includes(q));
     const matchS = !status || r.status === status;
     const matchT = !tag    || r.tag    === tag;
@@ -809,7 +810,7 @@ function renderStats(sysKey) {
   const now  = Date.now();
   const week = 7 * 24 * 3600 * 1000;
   const ongoingSet = new Set(['待提交','资料审核','检测中','证书申请中']);
-  document.getElementById(sysKey + '-s-total').textContent   = sys.records.length;
+  document.getElementById(sysKey + '-s-total').textContent   = sys.records.filter(r => r.status !== '已作废').length;
   document.getElementById(sysKey + '-s-ongoing').textContent = sys.records.filter(r => ongoingSet.has(r.status)).length;
   document.getElementById(sysKey + '-s-done').textContent    = sys.records.filter(r => ['已交付'].includes(r.status)).length;
   document.getElementById(sysKey + '-s-due').textContent     = sys.records.filter(r =>
