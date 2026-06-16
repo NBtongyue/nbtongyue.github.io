@@ -1411,36 +1411,43 @@ async function saveFinanceEdit(recordId) {
   try {
     var fields = {};
     var v;
+    var localUpdates = {};  // 同步更新本地记录
 
     v = parseFloat(document.getElementById('fin-ei-contract').value);
-    if (!isNaN(v)) fields[sys.F.contract] = v;
+    if (!isNaN(v)) { fields[sys.F.contract] = v; localUpdates.contract = v; }
     v = parseFloat(document.getElementById('fin-ei-info-fee').value);
-    if (!isNaN(v)) fields[sys.F.infoFee] = v;
+    if (!isNaN(v)) { fields[sys.F.infoFee] = v; localUpdates.infoFee = v; }
     v = parseFloat(document.getElementById('fin-ei-cp1').value);
-    if (!isNaN(v)) fields[sys.F.clientPay1] = v;
+    if (!isNaN(v)) { fields[sys.F.clientPay1] = v; localUpdates.clientPay1 = v; }
     v = parseFloat(document.getElementById('fin-ei-cp2').value);
-    if (!isNaN(v)) fields[sys.F.clientPay2] = v;
+    if (!isNaN(v)) { fields[sys.F.clientPay2] = v; localUpdates.clientPay2 = v; }
     v = parseFloat(document.getElementById('fin-ei-cp3').value);
-    if (!isNaN(v)) fields[sys.F.clientPay3] = v;
+    if (!isNaN(v)) { fields[sys.F.clientPay3] = v; localUpdates.clientPay3 = v; }
     v = parseFloat(document.getElementById('fin-ei-lab-fee').value);
-    if (!isNaN(v)) fields[sys.F.labFee] = v;
+    if (!isNaN(v)) { fields[sys.F.labFee] = v; localUpdates.labFee = v; }
     v = parseFloat(document.getElementById('fin-ei-lp1').value);
-    if (!isNaN(v)) fields[sys.F.labPay1] = v;
+    if (!isNaN(v)) { fields[sys.F.labPay1] = v; localUpdates.labPay1 = v; }
     v = parseFloat(document.getElementById('fin-ei-lp2').value);
-    if (!isNaN(v)) fields[sys.F.labPay2] = v;
+    if (!isNaN(v)) { fields[sys.F.labPay2] = v; localUpdates.labPay2 = v; }
     v = parseFloat(document.getElementById('fin-ei-lp3').value);
-    if (!isNaN(v)) fields[sys.F.labPay3] = v;
+    if (!isNaN(v)) { fields[sys.F.labPay3] = v; localUpdates.labPay3 = v; }
     v = parseFloat(document.getElementById('fin-ei-cli-inv').value);
-    if (!isNaN(v)) fields[sys.F.clientInvoice] = v;
+    if (!isNaN(v)) { fields[sys.F.clientInvoice] = v; localUpdates.clientInvoice = v; }
     v = parseFloat(document.getElementById('fin-ei-lab-inv').value);
-    if (!isNaN(v)) fields[sys.F.labInvoice] = v;
+    if (!isNaN(v)) { fields[sys.F.labInvoice] = v; localUpdates.labInvoice = v; }
     v = parseFloat(document.getElementById('fin-ei-info-inv').value);
-    if (!isNaN(v)) fields[sys.F.infoFeeInvoice] = v;
+    if (!isNaN(v)) { fields[sys.F.infoFeeInvoice] = v; localUpdates.infoFeeInvoice = v; }
 
+    // 先更新飞书
     await updateRecord(sys.apiUrl, recordId, fields);
+
+    // 立即更新本地内存中的记录，绕过飞书读取延迟
+    var rec = sys.records.find(function(r) { return r.id === recordId; });
+    if (rec) {
+      Object.keys(localUpdates).forEach(function(k) { rec[k] = localUpdates[k]; });
+    }
+
     editingFinanceId = null;
-    // 强制重新从飞书加载数据，避免使用缓存
-    await loadData('cert');
     renderFinance();
   } catch (err) {
     alert('保存失败: ' + err.message);
