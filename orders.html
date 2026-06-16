@@ -295,7 +295,7 @@
 <div id="panel-lab"  class="tab-panel"></div>
 <div id="panel-finance" class="tab-panel"></div>
 <div id="panel-void" class="tab-panel"></div>
-<div id="debug-info" style="position:fixed;bottom:0;right:0;background:#ffeb3b;color:#333;padding:4px 8px;font-size:11px;z-index:9999;font-family:monospace;max-width:300px;word-break:break-all;"></div>
+<div id="debug-info" style="display:none;position:fixed;bottom:0;right:0;background:#ffeb3b;color:#333;padding:4px 8px;font-size:11px;z-index:9999;font-family:monospace;max-width:300px;word-break:break-all;"></div>
 
 <script>
 function debug(msg) {
@@ -325,6 +325,7 @@ const SYSTEMS = {
       start:'提交日期', end:'预计完成日期', status:'当前状态', note:'备注',
       clientPay1:'客户首付款', clientPay2:'客户二次付款', clientPay3:'客户尾款',
       labPay1:'实验室首付款', labPay2:'实验室二次付款', labPay3:'实验室尾款',
+      clientInvoice:'客户发票额', labInvoice:'实验室发票', infoFeeInvoice:'信息费发票',
     },
     clientLabel:  '客户名称',
     tagLabel:     '认证类型',
@@ -619,6 +620,9 @@ async function loadData(sysKey) {
         labPay1: fnv(f[sys.F.labPay1]),
         labPay2: fnv(f[sys.F.labPay2]),
         labPay3: fnv(f[sys.F.labPay3]),
+        clientInvoice: fnv(f[sys.F.clientInvoice]),
+        labInvoice:    fnv(f[sys.F.labInvoice]),
+        infoFeeInvoice: fnv(f[sys.F.infoFeeInvoice]),
       };
     });
     if (!sys.noTag) sys.records.forEach(r => { if (r.tag) saveCustomTag(sys, r.tag); });
@@ -1224,9 +1228,10 @@ function buildFinancePanel() {
             <th>已付合计</th><th>待付金额</th><th>付款状态</th>
             <th>实验室额</th><th>实验室首付</th><th>实验室二付</th><th>实验室尾款</th>
             <th>实验室已付</th><th>实验室待付</th><th>实验室状态</th>
+            <th>客户发票额</th><th>实验室发票</th><th>信息费发票</th>
           </tr></thead>
           <tbody id="fin-tbody">
-            <tr><td colspan="18" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
+            <tr><td colspan="21" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
           </tbody>
         </table>
       </div>
@@ -1278,6 +1283,7 @@ function renderFinance() {
   var totalContract = 0, totalInfoFee = 0, totalProfit = 0;
   var totalClientPaid = 0, totalClientRemain = 0;
   var totalLab = 0, totalLabPaid = 0, totalLabRemain = 0;
+  var totalClientInvoice = 0, totalLabInvoice = 0, totalInfoFeeInvoice = 0;
 
   var rows = filtered.map(function(r) {
     var client = calcPayStatus(r.contract, [r.clientPay1, r.clientPay2, r.clientPay3]);
@@ -1293,6 +1299,9 @@ function renderFinance() {
     totalLab         += (r.labFee || 0);
     totalLabPaid     += lab.paid;
     totalLabRemain   += lab.remaining;
+    totalClientInvoice  += (r.clientInvoice || 0);
+    totalLabInvoice     += (r.labInvoice || 0);
+    totalInfoFeeInvoice += (r.infoFeeInvoice || 0);
 
     return { r: r, client: client, lab: lab, infoFee: infoFee, profit: profit };
   });
@@ -1308,13 +1317,16 @@ function renderFinance() {
       '<div class="stat-card"><div class="num" style="color:#16a34a;">' + fmtAmount(totalLabPaid) + '</div><div class="lbl">实验室已付</div></div>' +
       '<div class="stat-card warn"><div class="num">' + fmtAmount(totalLabRemain) + '</div><div class="lbl">实验室待付</div></div>' +
       '<div class="stat-card"><div class="num">' + fmtAmount(totalInfoFee) + '</div><div class="lbl">信息费总额</div></div>' +
-      '<div class="stat-card"><div class="num" style="color:' + (totalProfit >= 0 ? '#065f46' : '#dc2626') + ';">' + fmtAmount(totalProfit) + '</div><div class="lbl">利润总额</div></div>';
+      '<div class="stat-card"><div class="num" style="color:' + (totalProfit >= 0 ? '#065f46' : '#dc2626') + ';">' + fmtAmount(totalProfit) + '</div><div class="lbl">利润总额</div></div>' +
+      '<div class="stat-card"><div class="num">' + fmtAmount(totalClientInvoice) + '</div><div class="lbl">客户发票额</div></div>' +
+      '<div class="stat-card"><div class="num">' + fmtAmount(totalLabInvoice) + '</div><div class="lbl">实验室发票</div></div>' +
+      '<div class="stat-card"><div class="num">' + fmtAmount(totalInfoFeeInvoice) + '</div><div class="lbl">信息费发票</div></div>';
   }
 
   // table
   if (filtered.length === 0) {
     document.getElementById('fin-tbody').innerHTML =
-      '<tr><td colspan="18" class="state-msg">暂无数据</td></tr>';
+      '<tr><td colspan="21" class="state-msg">暂无数据</td></tr>';
     return;
   }
 
@@ -1341,6 +1353,9 @@ function renderFinance() {
       '<td class="amount-cell" style="font-weight:600;">' + fmtAmount(l.paid) + '</td>' +
       '<td class="amount-cell" style="' + lrColor + '">' + (l.remaining > 0 ? fmtAmount(l.remaining) : '—') + '</td>' +
       '<td><span class="badge ' + l.cls + '">' + l.status + '</span></td>' +
+      '<td class="amount-cell">' + fmtAmount(r.clientInvoice) + '</td>' +
+      '<td class="amount-cell">' + fmtAmount(r.labInvoice) + '</td>' +
+      '<td class="amount-cell">' + fmtAmount(r.infoFeeInvoice) + '</td>' +
       '</tr>';
   }).join('');
   var ft = document.querySelector('#panel-finance table');
