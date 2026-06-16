@@ -1449,10 +1449,7 @@ async function saveFinanceEdit(recordId) {
 
     editingFinanceId = null;
     renderFinance();
-    // 调试：确认本地记录是否已更新
-    var msg = '保存成功！本地记录: clientInvoice=' + rec.clientInvoice + ' labInvoice=' + rec.labInvoice + ' infoFeeInvoice=' + rec.infoFeeInvoice;
-    debug(msg);
-    alert(msg);
+    debug('save OK: clientInvoice=' + rec.clientInvoice + ' labInvoice=' + rec.labInvoice + ' infoFeeInvoice=' + rec.infoFeeInvoice);
   } catch (err) {
     alert('保存失败: ' + err.message);
   }
