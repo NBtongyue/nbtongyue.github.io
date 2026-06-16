@@ -1439,7 +1439,9 @@ async function saveFinanceEdit(recordId) {
 
     await updateRecord(sys.apiUrl, recordId, fields);
     editingFinanceId = null;
-    await loadFinance();
+    // 强制重新从飞书加载数据，避免使用缓存
+    await loadData('cert');
+    renderFinance();
   } catch (err) {
     alert('保存失败: ' + err.message);
   }
