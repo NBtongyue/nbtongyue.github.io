@@ -1228,10 +1228,10 @@ function buildFinancePanel() {
             <th>已付合计</th><th>待付金额</th><th>付款状态</th>
             <th>实验室额</th><th>实验室首付</th><th>实验室二付</th><th>实验室尾款</th>
             <th>实验室已付</th><th>实验室待付</th><th>实验室状态</th>
-            <th>客户发票额</th><th>实验室发票</th><th>信息费发票</th>
+            <th>客户发票额</th><th>实验室发票</th><th>信息费发票</th><th>操作</th>
           </tr></thead>
           <tbody id="fin-tbody">
-            <tr><td colspan="21" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
+            <tr><td colspan="22" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
           </tbody>
         </table>
       </div>
@@ -1266,6 +1266,8 @@ function calcPayStatus(total, payments) {
   }
   return { paid: 0, remaining: 0, status: '—', cls: '' };
 }
+
+var editingFinanceId = null;
 
 function renderFinance() {
   var records = SYSTEMS.cert.records;
@@ -1326,7 +1328,7 @@ function renderFinance() {
   // table
   if (filtered.length === 0) {
     document.getElementById('fin-tbody').innerHTML =
-      '<tr><td colspan="21" class="state-msg">暂无数据</td></tr>';
+      '<tr><td colspan="22" class="state-msg">暂无数据</td></tr>';
     return;
   }
 
@@ -1334,6 +1336,37 @@ function renderFinance() {
     var r = row.r, c = row.client, l = row.lab;
     var crColor = c.remaining > 0 ? 'color:#dc2626;font-weight:600;' : 'color:#16a34a;font-weight:600;';
     var lrColor = l.remaining > 0 ? 'color:#dc2626;font-weight:600;' : 'color:#16a34a;font-weight:600;';
+
+    if (r.id === editingFinanceId) {
+      return '<tr class="editing-row">' +
+        '<td><strong>' + (r.no || '—') + '</strong></td>' +
+        '<td>' + (r.client || '—') + '</td>' +
+        '<td><input class="cell-input" id="fin-ei-contract" type="number" min="0" step="0.01" value="' + (r.contract ?? '') + '"></td>' +
+        '<td><input class="cell-input" id="fin-ei-info-fee" type="number" min="0" step="0.01" value="' + (r.infoFee ?? '') + '"></td>' +
+        '<td class="amount-cell" style="color:' + (row.profit >= 0 ? '#065f46' : '#dc2626') + ';font-weight:600;">' + fmtAmount(row.profit) + '</td>' +
+        '<td><input class="cell-input" id="fin-ei-cp1" type="number" min="0" step="0.01" value="' + (r.clientPay1 ?? '') + '"></td>' +
+        '<td><input class="cell-input" id="fin-ei-cp2" type="number" min="0" step="0.01" value="' + (r.clientPay2 ?? '') + '"></td>' +
+        '<td><input class="cell-input" id="fin-ei-cp3" type="number" min="0" step="0.01" value="' + (r.clientPay3 ?? '') + '"></td>' +
+        '<td class="amount-cell" style="font-weight:600;">' + fmtAmount(c.paid) + '</td>' +
+        '<td class="amount-cell" style="' + crColor + '">' + (c.remaining > 0 ? fmtAmount(c.remaining) : '—') + '</td>' +
+        '<td><span class="badge ' + c.cls + '">' + c.status + '</span></td>' +
+        '<td><input class="cell-input" id="fin-ei-lab-fee" type="number" min="0" step="0.01" value="' + (r.labFee ?? '') + '"></td>' +
+        '<td><input class="cell-input" id="fin-ei-lp1" type="number" min="0" step="0.01" value="' + (r.labPay1 ?? '') + '"></td>' +
+        '<td><input class="cell-input" id="fin-ei-lp2" type="number" min="0" step="0.01" value="' + (r.labPay2 ?? '') + '"></td>' +
+        '<td><input class="cell-input" id="fin-ei-lp3" type="number" min="0" step="0.01" value="' + (r.labPay3 ?? '') + '"></td>' +
+        '<td class="amount-cell" style="font-weight:600;">' + fmtAmount(l.paid) + '</td>' +
+        '<td class="amount-cell" style="' + lrColor + '">' + (l.remaining > 0 ? fmtAmount(l.remaining) : '—') + '</td>' +
+        '<td><span class="badge ' + l.cls + '">' + l.status + '</span></td>' +
+        '<td><input class="cell-input" id="fin-ei-cli-inv" type="number" min="0" step="0.01" value="' + (r.clientInvoice ?? '') + '"></td>' +
+        '<td><input class="cell-input" id="fin-ei-lab-inv" type="number" min="0" step="0.01" value="' + (r.labInvoice ?? '') + '"></td>' +
+        '<td><input class="cell-input" id="fin-ei-info-inv" type="number" min="0" step="0.01" value="' + (r.infoFeeInvoice ?? '') + '"></td>' +
+        '<td><div style="display:flex;gap:4px;flex-wrap:wrap;">' +
+        '<button class="btn-act btn-act-next" onclick="saveFinanceEdit(\'' + r.id + '\')">保存</button>' +
+        '<button class="btn-act" style="background:#f0f4fa;border-color:#e0e7f0;color:#555;" onclick="cancelFinanceEdit()">取消</button>' +
+        '</div></td>' +
+        '</tr>';
+    }
+
     return '<tr>' +
       '<td><strong>' + (r.no || '—') + '</strong></td>' +
       '<td>' + (r.client || '—') + '</td>' +
@@ -1356,10 +1389,60 @@ function renderFinance() {
       '<td class="amount-cell">' + fmtAmount(r.clientInvoice) + '</td>' +
       '<td class="amount-cell">' + fmtAmount(r.labInvoice) + '</td>' +
       '<td class="amount-cell">' + fmtAmount(r.infoFeeInvoice) + '</td>' +
+      '<td><button class="btn-act btn-act-next" onclick="editFinanceRow(\'' + r.id + '\')">编辑</button></td>' +
       '</tr>';
   }).join('');
   var ft = document.querySelector('#panel-finance table');
   if (ft) initResizableColumns(ft, { colWidths: FIN_COL_WIDTHS });
+}
+
+function editFinanceRow(id) {
+  editingFinanceId = id;
+  renderFinance();
+}
+
+function cancelFinanceEdit() {
+  editingFinanceId = null;
+  renderFinance();
+}
+
+async function saveFinanceEdit(recordId) {
+  var sys = SYSTEMS.cert;
+  try {
+    var fields = {};
+    var v;
+
+    v = parseFloat(document.getElementById('fin-ei-contract').value);
+    if (!isNaN(v)) fields[sys.F.contract] = v;
+    v = parseFloat(document.getElementById('fin-ei-info-fee').value);
+    if (!isNaN(v)) fields[sys.F.infoFee] = v;
+    v = parseFloat(document.getElementById('fin-ei-cp1').value);
+    if (!isNaN(v)) fields[sys.F.clientPay1] = v;
+    v = parseFloat(document.getElementById('fin-ei-cp2').value);
+    if (!isNaN(v)) fields[sys.F.clientPay2] = v;
+    v = parseFloat(document.getElementById('fin-ei-cp3').value);
+    if (!isNaN(v)) fields[sys.F.clientPay3] = v;
+    v = parseFloat(document.getElementById('fin-ei-lab-fee').value);
+    if (!isNaN(v)) fields[sys.F.labFee] = v;
+    v = parseFloat(document.getElementById('fin-ei-lp1').value);
+    if (!isNaN(v)) fields[sys.F.labPay1] = v;
+    v = parseFloat(document.getElementById('fin-ei-lp2').value);
+    if (!isNaN(v)) fields[sys.F.labPay2] = v;
+    v = parseFloat(document.getElementById('fin-ei-lp3').value);
+    if (!isNaN(v)) fields[sys.F.labPay3] = v;
+    v = parseFloat(document.getElementById('fin-ei-cli-inv').value);
+    if (!isNaN(v)) fields[sys.F.clientInvoice] = v;
+    v = parseFloat(document.getElementById('fin-ei-lab-inv').value);
+    if (!isNaN(v)) fields[sys.F.labInvoice] = v;
+    v = parseFloat(document.getElementById('fin-ei-info-inv').value);
+    if (!isNaN(v)) fields[sys.F.infoFeeInvoice] = v;
+
+    await updateRecord(sys.apiUrl, recordId, fields);
+    editingFinanceId = null;
+    await loadFinance();
+  } catch (err) {
+    alert('保存失败: ' + err.message);
+  }
 }
 
 
