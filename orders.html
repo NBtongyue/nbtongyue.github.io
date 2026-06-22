@@ -94,6 +94,49 @@
     }
     .btn-new:hover { background:#2563a8; }
 
+    /* ── 综合筛选栏 ── */
+    .filter-bar {
+      background:#fff; border-radius:8px; padding:0.6rem 0.8rem;
+      margin-bottom:0.6rem; display:flex; gap:0.5rem; align-items:flex-end;
+      flex-wrap:wrap; box-shadow:0 2px 8px rgba(0,0,0,0.06);
+    }
+    .filter-group {
+      display:flex; flex-direction:column; gap:0.2rem; min-width:110px;
+    }
+    .filter-group.wide { min-width:180px; }
+    .filter-label {
+      font-size:0.72rem; color:#888; font-weight:500; white-space:nowrap;
+    }
+    .filter-range {
+      display:flex; align-items:center; gap:0.25rem;
+    }
+    .filter-range .filter-input { flex:1; min-width:70px; }
+    .filter-range span { color:#aaa; font-size:0.78rem; flex-shrink:0; }
+    .filter-input {
+      padding:0.38rem 0.5rem; border:1.5px solid #e0e7f0; border-radius:5px;
+      font-size:0.8rem; font-family:inherit; outline:none; background:#fff;
+      transition:border-color .2s; color:#333;
+    }
+    .filter-input:focus { border-color:#2563a8; }
+    .filter-input[type="number"] { width:85px; }
+    .filter-input[type="date"] { width:120px; }
+    .filter-select {
+      padding:0.38rem 0.5rem; border:1.5px solid #e0e7f0; border-radius:5px;
+      font-size:0.8rem; font-family:inherit; background:#fff; cursor:pointer;
+      outline:none; color:#333; min-width:90px; transition:border-color .2s;
+    }
+    .filter-select:focus { border-color:#2563a8; }
+    .filter-search {
+      flex:1.5; min-width:160px;
+    }
+    .filter-search .filter-input { width:100%; }
+    .filter-reset {
+      padding:0.38rem 0.6rem; background:#f0f4fa; border:1.5px solid #e0e7f0;
+      border-radius:5px; font-size:0.78rem; cursor:pointer; font-family:inherit;
+      color:#888; white-space:nowrap; transition:background .2s; align-self:flex-end;
+    }
+    .filter-reset:hover { background:#e0e7f0; color:#555; }
+
     /* ── 表格 ── */
     .table-wrap {
       background:#fff; border-radius:8px;
@@ -260,6 +303,9 @@
       .stats { grid-template-columns:repeat(2,1fr); }
       .h-title { display:none; }
       .tab-nav { padding:0 0.8rem; }
+      .filter-group { min-width:90px; }
+      .filter-group.wide { min-width:130px; }
+      .filter-input[type="date"] { width:105px; }
     }
     @media(max-width:600px) {
       .form-row-3 { grid-template-columns:1fr; }
@@ -366,7 +412,6 @@ const SYSTEMS = {
 function buildPanel(sys) {
   const k  = sys.key;
   const cc = sys.colCount;
-  const st = STATUS_FLOW.map(s => `<option>${s}</option>`).join('');
 
   // 表头
   let thead = `<th style="width:28px;"></th><th>订单编号</th><th>${sys.clientLabel}</th><th>项目名称</th>`;
@@ -376,12 +421,6 @@ function buildPanel(sys) {
 	  if (!sys.noLabFee)  thead += '<th>实验室额</th>';
 	  if (!sys.noProfit)  thead += '<th>利润</th>';
   thead += '<th>提交日期</th><th>预计完成日期</th><th>当前状态</th><th>备注</th><th>操作</th>';
-
-  // 筛选栏 tag 过滤器
-  const tagFilter = sys.noTag ? '' :
-    `<select class="ctrl-select" id="${k}-f-tag" onchange="applyFilters('${k}')">
-       <option value="">全部${sys.tagLabel}</option>
-     </select>`;
 
   // 弹窗订单编号字段
   const noField = sys.selectOrderNo
@@ -433,13 +472,8 @@ function buildPanel(sys) {
         <div class="stat-card"><div class="num" id="${k}-s-done">—</div><div class="lbl">已交付</div></div>
         <div class="stat-card warn"><div class="num" id="${k}-s-due">—</div><div class="lbl">7 天内到期</div></div>
       </div>
+      ${buildFilterBarHTML(k)}
       <div class="controls">
-        <input class="search-input" id="${k}-search" type="text"
-          placeholder="搜索订单编号、${sys.clientLabel}、项目名称…" oninput="applyFilters('${k}')">
-        <select class="ctrl-select" id="${k}-f-status" onchange="applyFilters('${k}')">
-          <option value="">全部状态</option>${st}
-        </select>
-        ${tagFilter}
         <button class="btn-refresh" onclick="loadData('${k}')" title="从飞书重新拉取数据">↻ 刷新</button>
         ${!sys.noInfoFee ? `<button class="btn-refresh" onclick="expandAllPay('${k}')" title="展开全部付款明细">⊞ 展开付款</button><button class="btn-refresh" onclick="collapseAllPay('${k}')" title="收起全部付款明细">⊟ 收起</button>` : ''}
         <button class="btn-new" onclick="openModal('${k}')">＋ 新建订单</button>
@@ -626,6 +660,7 @@ async function loadData(sysKey) {
       };
     });
     if (!sys.noTag) sys.records.forEach(r => { if (r.tag) saveCustomTag(sys, r.tag); });
+    refreshFilterDropdowns(sysKey);
     debug('applyFilters + renderTable: ' + sysKey);
     applyFilters(sysKey);
     renderStats(sysKey);
@@ -645,19 +680,297 @@ async function loadData(sysKey) {
 
 function applyFilters(sysKey) {
   const sys    = SYSTEMS[sysKey];
-  const q      = document.getElementById(sysKey + '-search').value.trim().toLowerCase();
-  const status = document.getElementById(sysKey + '-f-status').value;
-  const tagEl  = document.getElementById(sysKey + '-f-tag');
-  const tag    = tagEl ? tagEl.value : '';
+  const q      = (document.getElementById(sysKey + '-search') || {}).value || '';
+  const qLower = q.trim().toLowerCase();
+
+  // 日期范围
+  const dateFrom = (document.getElementById(sysKey + '-f-date-from') || {}).value || '';
+  const dateTo   = (document.getElementById(sysKey + '-f-date-to') || {}).value || '';
+
+  // 金额范围
+  const amtMinEl = document.getElementById(sysKey + '-f-amount-min');
+  const amtMaxEl = document.getElementById(sysKey + '-f-amount-max');
+  const amtMin = amtMinEl && amtMinEl.value !== '' ? parseFloat(amtMinEl.value) : null;
+  const amtMax = amtMaxEl && amtMaxEl.value !== '' ? parseFloat(amtMaxEl.value) : null;
+
+  // 客户/实验室名称
+  const clientEl = document.getElementById(sysKey + '-f-client');
+  const client   = clientEl ? clientEl.value : '';
+
+  // 状态
+  const statusEl = document.getElementById(sysKey + '-f-status');
+  const status   = statusEl ? statusEl.value : '';
+
+  // 认证类型
+  const tagEl = document.getElementById(sysKey + '-f-tag');
+  const tag   = tagEl ? tagEl.value : '';
+
+  // 付款状态（动态计算）
+  const payEl = document.getElementById(sysKey + '-f-pay-status');
+  const payStatus = payEl ? payEl.value : '';
+
   sys.filtered = sys.records.filter(r => {
     if (r.status === '已作废') return false;
-    const matchQ = !q      || [r.no, r.client, r.proj].some(v => v.toLowerCase().includes(q));
-    const matchS = !status || r.status === status;
-    const matchT = !tag    || r.tag    === tag;
-    return matchQ && matchS && matchT;
+
+    if (qLower && ![r.no, r.client, r.proj].some(v => v.toLowerCase().includes(qLower)))
+      return false;
+
+    if (dateFrom && r.start < dateFrom) return false;
+    if (dateTo   && r.start > dateTo)   return false;
+
+    if (amtMin !== null && !isNaN(amtMin) && (r.contract || 0) < amtMin) return false;
+    if (amtMax !== null && !isNaN(amtMax) && (r.contract || 0) > amtMax) return false;
+
+    if (client && r.client !== client) return false;
+
+    if (status && r.status !== status) return false;
+
+    if (tag && r.tag !== tag) return false;
+
+    if (payStatus && !sys.noInfoFee) {
+      const cp = calcPayStatus(r.contract, [r.clientPay1, r.clientPay2, r.clientPay3]);
+      if (cp.status !== payStatus) return false;
+    }
+
+    return true;
   });
   sys.page = 1;
   renderTable(sysKey);
+}
+
+// ════════════════════════════════════════════════════════════
+//  综合筛选栏 HTML 生成
+// ════════════════════════════════════════════════════════════
+function buildFilterBarHTML(sysKey) {
+  const sys = SYSTEMS[sysKey];
+  const k   = sysKey;
+  const st  = STATUS_FLOW.map(s => `<option value="${s}">${s}</option>`).join('');
+
+  // 客户/实验室下拉
+  const clientLabel = sys.clientLabel;
+  const clientDropdown = `<select class="filter-select" id="${k}-f-client" onchange="applyFilters('${k}')"><option value="">全部${clientLabel}</option></select>`;
+
+  // 认证类型下拉（仅 cert）
+  const tagDropdown = sys.noTag ? '' :
+    `<div class="filter-group">
+      <span class="filter-label">${sys.tagLabel}</span>
+      <select class="filter-select" id="${k}-f-tag" onchange="applyFilters('${k}')">
+        <option value="">全部${sys.tagLabel}</option>
+      </select>
+    </div>`;
+
+  // 付款状态下拉（仅 cert）
+  const payDropdown = sys.noInfoFee ? '' :
+    `<div class="filter-group">
+      <span class="filter-label">付款状态</span>
+      <select class="filter-select" id="${k}-f-pay-status" onchange="applyFilters('${k}')">
+        <option value="">全部</option>
+        <option value="已结清">已结清</option>
+        <option value="部分付款">部分付款</option>
+        <option value="未付款">未付款</option>
+      </select>
+    </div>`;
+
+  return `<div class="filter-bar" id="${k}-filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">提交日期</span>
+      <div class="filter-range">
+        <input type="date" class="filter-input" id="${k}-f-date-from" onchange="applyFilters('${k}')">
+        <span>~</span>
+        <input type="date" class="filter-input" id="${k}-f-date-to" onchange="applyFilters('${k}')">
+      </div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">合同额</span>
+      <div class="filter-range">
+        <input type="number" class="filter-input" id="${k}-f-amount-min" placeholder="最低" onchange="applyFilters('${k}')">
+        <span>~</span>
+        <input type="number" class="filter-input" id="${k}-f-amount-max" placeholder="最高" onchange="applyFilters('${k}')">
+      </div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">${clientLabel}</span>
+      ${clientDropdown}
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">当前状态</span>
+      <select class="filter-select" id="${k}-f-status" onchange="applyFilters('${k}')">
+        <option value="">全部状态</option>${st}
+      </select>
+    </div>
+    ${tagDropdown}
+    ${payDropdown}
+    <div class="filter-group filter-search">
+      <span class="filter-label">搜索</span>
+      <input class="filter-input" id="${k}-search" type="text"
+        placeholder="搜索订单编号、${clientLabel}、项目名称…" oninput="applyFilters('${k}')">
+    </div>
+    <button class="filter-reset" onclick="resetFilters('${k}')" title="清空所有筛选条件">✕ 重置</button>
+  </div>`;
+}
+
+function buildFinanceFilterBarHTML() {
+  return `<div class="filter-bar" id="fin-filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">提交日期</span>
+      <div class="filter-range">
+        <input type="date" class="filter-input" id="fin-f-date-from" onchange="renderFinance()">
+        <span>~</span>
+        <input type="date" class="filter-input" id="fin-f-date-to" onchange="renderFinance()">
+      </div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">合同额</span>
+      <div class="filter-range">
+        <input type="number" class="filter-input" id="fin-f-amount-min" placeholder="最低" onchange="renderFinance()">
+        <span>~</span>
+        <input type="number" class="filter-input" id="fin-f-amount-max" placeholder="最高" onchange="renderFinance()">
+      </div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">客户名称</span>
+      <select class="filter-select" id="fin-f-client" onchange="renderFinance()">
+        <option value="">全部客户</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">客户付款</span>
+      <select class="filter-select" id="fin-f-client-pay-status" onchange="renderFinance()">
+        <option value="">全部</option>
+        <option value="已结清">已结清</option>
+        <option value="部分付款">部分付款</option>
+        <option value="未付款">未付款</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">实验室付款</span>
+      <select class="filter-select" id="fin-f-lab-pay-status" onchange="renderFinance()">
+        <option value="">全部</option>
+        <option value="已结清">已结清</option>
+        <option value="部分付款">部分付款</option>
+        <option value="未付款">未付款</option>
+      </select>
+    </div>
+    <div class="filter-group filter-search">
+      <span class="filter-label">搜索</span>
+      <input class="filter-input" id="fin-search" type="text"
+        placeholder="搜索订单编号、客户名称…" oninput="renderFinance()">
+    </div>
+    <button class="filter-reset" onclick="resetFilters('finance')" title="清空所有筛选条件">✕ 重置</button>
+  </div>`;
+}
+
+function buildVoidFilterBarHTML() {
+  return `<div class="filter-bar" id="void-filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">提交日期</span>
+      <div class="filter-range">
+        <input type="date" class="filter-input" id="void-f-date-from" onchange="renderVoidFiltered()">
+        <span>~</span>
+        <input type="date" class="filter-input" id="void-f-date-to" onchange="renderVoidFiltered()">
+      </div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">合同额</span>
+      <div class="filter-range">
+        <input type="number" class="filter-input" id="void-f-amount-min" placeholder="最低" onchange="renderVoidFiltered()">
+        <span>~</span>
+        <input type="number" class="filter-input" id="void-f-amount-max" placeholder="最高" onchange="renderVoidFiltered()">
+      </div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">客户/实验室</span>
+      <select class="filter-select" id="void-f-name" onchange="renderVoidFiltered()">
+        <option value="">全部</option>
+      </select>
+    </div>
+    <div class="filter-group filter-search">
+      <span class="filter-label">搜索</span>
+      <input class="filter-input" id="void-search" type="text"
+        placeholder="搜索订单编号、客户名称…" oninput="renderVoidFiltered()">
+    </div>
+    <button class="filter-reset" onclick="resetFilters('void')" title="清空所有筛选条件">✕ 重置</button>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+//  筛选下拉框动态填充
+// ════════════════════════════════════════════════════════════
+function refreshFilterDropdowns(sysKey) {
+  const sys = SYSTEMS[sysKey];
+  const el  = document.getElementById(sysKey + '-f-client');
+  if (!el) return;
+  const cur = el.value;
+  const names = [...new Set(sys.records
+    .filter(r => r.status !== '已作废' && r.client)
+    .map(r => r.client))]
+    .sort();
+  el.innerHTML = `<option value="">全部${sys.clientLabel}</option>` +
+    names.map(n => `<option value="${escHtml(n)}"${n === cur ? ' selected' : ''}>${escHtml(n)}</option>`).join('');
+
+  // 同时刷新认证类型下拉
+  if (!sys.noTag) refreshTagUI(sysKey);
+}
+
+function refreshFinanceFilterDropdowns() {
+  const el = document.getElementById('fin-f-client');
+  if (!el) return;
+  const cur = el.value;
+  const records = SYSTEMS.cert.records || [];
+  const VALID = ['正式合同','检测中','证书申请中','已交付'];
+  const names = [...new Set(records
+    .filter(r => VALID.indexOf(r.status) !== -1 && r.client)
+    .map(r => r.client))]
+    .sort();
+  el.innerHTML = '<option value="">全部客户</option>' +
+    names.map(n => `<option value="${escHtml(n)}"${n === cur ? ' selected' : ''}>${escHtml(n)}</option>`).join('');
+}
+
+function refreshVoidFilterDropdowns() {
+  const el = document.getElementById('void-f-name');
+  if (!el) return;
+  const cur = el.value;
+  const certNames = (SYSTEMS.cert.records || [])
+    .filter(r => r.status === '已作废' && r.client).map(r => r.client);
+  const labNames  = (SYSTEMS.lab.records || [])
+    .filter(r => r.status === '已作废' && r.client).map(r => r.client);
+  const names = [...new Set([...certNames, ...labNames])].sort();
+  el.innerHTML = '<option value="">全部</option>' +
+    names.map(n => `<option value="${escHtml(n)}"${n === cur ? ' selected' : ''}>${escHtml(n)}</option>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+//  重置筛选条件
+// ════════════════════════════════════════════════════════════
+function resetFilters(sysKey) {
+  if (sysKey === 'finance') {
+    ['fin-f-date-from','fin-f-date-to','fin-f-amount-min','fin-f-amount-max'].forEach(function(id) {
+      var el = document.getElementById(id); if (el) el.value = '';
+    });
+    ['fin-f-client','fin-f-client-pay-status','fin-f-lab-pay-status'].forEach(function(id) {
+      var el = document.getElementById(id); if (el) el.selectedIndex = 0;
+    });
+    var s = document.getElementById('fin-search'); if (s) s.value = '';
+    renderFinance();
+  } else if (sysKey === 'void') {
+    ['void-f-date-from','void-f-date-to','void-f-amount-min','void-f-amount-max'].forEach(function(id) {
+      var el = document.getElementById(id); if (el) el.value = '';
+    });
+    var n = document.getElementById('void-f-name'); if (n) n.selectedIndex = 0;
+    var s = document.getElementById('void-search'); if (s) s.value = '';
+    renderVoidFiltered();
+  } else {
+    ['-f-date-from','-f-date-to','-f-amount-min','-f-amount-max'].forEach(function(suf) {
+      var el = document.getElementById(sysKey + suf); if (el) el.value = '';
+    });
+    ['-f-client','-f-status','-f-pay-status'].forEach(function(suf) {
+      var el = document.getElementById(sysKey + suf); if (el) el.selectedIndex = 0;
+    });
+    var tagEl = document.getElementById(sysKey + '-f-tag');
+    if (tagEl) tagEl.selectedIndex = 0;
+    var s = document.getElementById(sysKey + '-search'); if (s) s.value = '';
+    applyFilters(sysKey);
+  }
 }
 
 function renderTable(sysKey) {
@@ -1215,9 +1528,8 @@ function buildFinancePanel() {
   document.getElementById('panel-finance').innerHTML = `
     <main>
       <div class="stats stats-finance" id="fin-stats"></div>
+      ${buildFinanceFilterBarHTML()}
       <div class="controls">
-        <input class="search-input" id="fin-search" type="text"
-          placeholder="搜索订单编号、客户名称…" oninput="renderFinance()">
         <button class="btn-refresh" onclick="loadFinance()">↻ 刷新</button>
       </div>
       <div class="table-wrap">
@@ -1244,11 +1556,13 @@ function loadFinance() {
   // 避免重复加载：如果已有数据直接渲染
   if (certSys.records && certSys.records.length > 0) {
     debug('loadFinance: using cached cert data, ' + certSys.records.length + ' records');
+    refreshFinanceFilterDropdowns();
     renderFinance();
     return;
   }
   loadData('cert').then(function() {
     debug('loadFinance: cert data loaded, rendering finance');
+    refreshFinanceFilterDropdowns();
     renderFinance();
   }).catch(function(err) {
     debug('loadFinance ERROR: ' + err.message);
@@ -1274,12 +1588,36 @@ function renderFinance() {
   var q = (document.getElementById('fin-search') || {}).value;
   q = q ? q.trim().toLowerCase() : '';
 
+  // 筛选栏输入
+  var dateFrom  = (document.getElementById('fin-f-date-from') || {}).value || '';
+  var dateTo    = (document.getElementById('fin-f-date-to') || {}).value || '';
+  var amtMinEl  = document.getElementById('fin-f-amount-min');
+  var amtMaxEl  = document.getElementById('fin-f-amount-max');
+  var amtMin    = amtMinEl && amtMinEl.value !== '' ? parseFloat(amtMinEl.value) : null;
+  var amtMax    = amtMaxEl && amtMaxEl.value !== '' ? parseFloat(amtMaxEl.value) : null;
+  var client    = (document.getElementById('fin-f-client') || {}).value || '';
+  var clientPay = (document.getElementById('fin-f-client-pay-status') || {}).value || '';
+  var labPay    = (document.getElementById('fin-f-lab-pay-status') || {}).value || '';
+
   // 只统计正式合同及之后状态（排除暂时合同、已作废）
   var VALID_FINANCE_STATUS = ['正式合同','检测中','证书申请中','已交付'];
   var filtered = records.filter(function(r) {
     if (VALID_FINANCE_STATUS.indexOf(r.status) === -1) return false;
-    if (!q) return true;
-    return [r.no, r.client].some(function(v) { return v.toLowerCase().indexOf(q) !== -1; });
+    if (q && ![r.no, r.client].some(function(v) { return v.toLowerCase().indexOf(q) !== -1; })) return false;
+    if (dateFrom && r.start < dateFrom) return false;
+    if (dateTo   && r.start > dateTo)   return false;
+    if (amtMin !== null && !isNaN(amtMin) && (r.contract || 0) < amtMin) return false;
+    if (amtMax !== null && !isNaN(amtMax) && (r.contract || 0) > amtMax) return false;
+    if (client && r.client !== client) return false;
+    if (clientPay) {
+      var cp = calcPayStatus(r.contract, [r.clientPay1, r.clientPay2, r.clientPay3]);
+      if (cp.status !== clientPay) return false;
+    }
+    if (labPay) {
+      var lp = calcPayStatus(r.labFee, [r.labPay1, r.labPay2, r.labPay3]);
+      if (lp.status !== labPay) return false;
+    }
+    return true;
   });
 
   var totalContract = 0, totalInfoFee = 0, totalProfit = 0;
@@ -1463,6 +1801,7 @@ function buildVoidPanel() {
   document.getElementById('panel-void').innerHTML = ''
     + '<main>'
     + '<div class="stats" id="void-stats"></div>'
+    + buildVoidFilterBarHTML()
     + '<div class="controls">'
     + '<button class="btn-refresh" onclick="loadVoid()">↻ 刷新</button>'
     + '</div>'
@@ -1499,61 +1838,9 @@ function loadVoid() {
   var needCert = !certSys.records || certSys.records.length === 0;
   var needLab  = !labSys.records || labSys.records.length === 0;
 
-  function renderVoid() {
-    var certVoid = certSys.records.filter(function(r) { return r.status === '已作废'; });
-    var labVoid  = labSys.records.filter(function(r) { return r.status === '已作废'; });
-
-    var statsEl = document.getElementById('void-stats');
-    if (statsEl) {
-      statsEl.innerHTML =
-        '<div class="stat-card"><div class="num">' + (certVoid.length + labVoid.length) + '</div><div class="lbl">已作废订单合计</div></div>' +
-        '<div class="stat-card"><div class="num">' + certVoid.length + '</div><div class="lbl">认证已作废</div></div>' +
-        '<div class="stat-card"><div class="num">' + labVoid.length + '</div><div class="lbl">实验室已作废</div></div>' +
-        '<div class="stat-card warn"><div class="num">¥' +
-          certVoid.reduce(function(s, r) { return s + (r.contract || 0); }, 0).toLocaleString('zh-CN') +
-        '</div><div class="lbl">作废合同额合计</div></div>';
-    }
-
-    var certTbody = document.getElementById('void-cert-tbody');
-    if (certTbody) {
-      if (certVoid.length === 0) {
-        certTbody.innerHTML = '<tr><td colspan="9" class="state-msg">暂无已作废的认证订单</td></tr>';
-      } else {
-        certTbody.innerHTML = certVoid.map(function(r) {
-          return '<tr>'
-            + '<td><strong>' + (r.no || '—') + '</strong></td>'
-            + '<td>' + (r.client || '—') + '</td>'
-            + '<td>' + (r.proj || '—') + '</td>'
-            + '<td>' + (r.tag ? '<span class="cert-tag">' + r.tag + '</span>' : '—') + '</td>'
-            + '<td class="amount-cell">' + fmtAmount(r.contract) + '</td>'
-            + '<td>' + (r.start || '—') + '</td>'
-            + '<td>' + (r.endFmt || '—') + '</td>'
-            + '<td style="color:#888;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escHtml(r.note || '') + '">' + (r.note || '—') + '</td>'
-            + '<td><button class="btn-act btn-act-next" onclick="restoreOrder(\'cert\',\'' + r.id + '\',\'' + (r.no || '') + '\')">恢复</button></td>'
-            + '</tr>';
-        }).join('');
-      }
-    }
-
-    var labTbody = document.getElementById('void-lab-tbody');
-    if (labTbody) {
-      if (labVoid.length === 0) {
-        labTbody.innerHTML = '<tr><td colspan="8" class="state-msg">暂无已作废的实验室订单</td></tr>';
-      } else {
-        labTbody.innerHTML = labVoid.map(function(r) {
-          return '<tr>'
-            + '<td><strong>' + (r.no || '—') + '</strong></td>'
-            + '<td>' + (r.client || '—') + '</td>'
-            + '<td>' + (r.proj || '—') + '</td>'
-            + '<td class="amount-cell">' + fmtAmount(r.contract) + '</td>'
-            + '<td>' + (r.start || '—') + '</td>'
-            + '<td>' + (r.endFmt || '—') + '</td>'
-            + '<td style="color:#888;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escHtml(r.note || '') + '">' + (r.note || '—') + '</td>'
-            + '<td><button class="btn-act btn-act-next" onclick="restoreOrder(\'lab\',\'' + r.id + '\',\'' + (r.no || '') + '\')">恢复</button></td>'
-            + '</tr>';
-        }).join('');
-      }
-    }
+  function proceed() {
+    refreshVoidFilterDropdowns();
+    renderVoidFiltered();
   }
 
   var promises = [];
@@ -1561,11 +1848,95 @@ function loadVoid() {
   if (needLab)  promises.push(loadData('lab'));
 
   if (promises.length > 0) {
-    Promise.all(promises).then(renderVoid).catch(function(err) {
+    Promise.all(promises).then(proceed).catch(function(err) {
       debug('loadVoid ERROR: ' + err.message);
     });
   } else {
-    renderVoid();
+    proceed();
+  }
+}
+
+function renderVoidFiltered() {
+  var certSys = SYSTEMS.cert;
+  var labSys  = SYSTEMS.lab;
+
+  // 读取筛选栏输入
+  var q = (document.getElementById('void-search') || {}).value || '';
+  var qLower = q.trim().toLowerCase();
+  var dateFrom = (document.getElementById('void-f-date-from') || {}).value || '';
+  var dateTo   = (document.getElementById('void-f-date-to') || {}).value || '';
+  var amtMinEl = document.getElementById('void-f-amount-min');
+  var amtMaxEl = document.getElementById('void-f-amount-max');
+  var amtMin = amtMinEl && amtMinEl.value !== '' ? parseFloat(amtMinEl.value) : null;
+  var amtMax = amtMaxEl && amtMaxEl.value !== '' ? parseFloat(amtMaxEl.value) : null;
+  var nameVal = (document.getElementById('void-f-name') || {}).value || '';
+
+  function filterVoid(list) {
+    return list.filter(function(r) {
+      if (r.status !== '已作废') return false;
+      if (qLower && ![r.no, r.client, r.proj].some(function(v) { return v.toLowerCase().indexOf(qLower) !== -1; })) return false;
+      if (dateFrom && r.start < dateFrom) return false;
+      if (dateTo   && r.start > dateTo)   return false;
+      if (amtMin !== null && !isNaN(amtMin) && (r.contract || 0) < amtMin) return false;
+      if (amtMax !== null && !isNaN(amtMax) && (r.contract || 0) > amtMax) return false;
+      if (nameVal && r.client !== nameVal) return false;
+      return true;
+    });
+  }
+
+  var certVoid = filterVoid(certSys.records);
+  var labVoid  = filterVoid(labSys.records);
+
+  var statsEl = document.getElementById('void-stats');
+  if (statsEl) {
+    statsEl.innerHTML =
+      '<div class="stat-card"><div class="num">' + (certVoid.length + labVoid.length) + '</div><div class="lbl">已作废订单合计</div></div>' +
+      '<div class="stat-card"><div class="num">' + certVoid.length + '</div><div class="lbl">认证已作废</div></div>' +
+      '<div class="stat-card"><div class="num">' + labVoid.length + '</div><div class="lbl">实验室已作废</div></div>' +
+      '<div class="stat-card warn"><div class="num">¥' +
+        certVoid.reduce(function(s, r) { return s + (r.contract || 0); }, 0).toLocaleString('zh-CN') +
+      '</div><div class="lbl">作废合同额合计</div></div>';
+  }
+
+  var certTbody = document.getElementById('void-cert-tbody');
+  if (certTbody) {
+    if (certVoid.length === 0) {
+      certTbody.innerHTML = '<tr><td colspan="9" class="state-msg">暂无已作废的认证订单</td></tr>';
+    } else {
+      certTbody.innerHTML = certVoid.map(function(r) {
+        return '<tr>'
+          + '<td><strong>' + (r.no || '—') + '</strong></td>'
+          + '<td>' + (r.client || '—') + '</td>'
+          + '<td>' + (r.proj || '—') + '</td>'
+          + '<td>' + (r.tag ? '<span class="cert-tag">' + r.tag + '</span>' : '—') + '</td>'
+          + '<td class="amount-cell">' + fmtAmount(r.contract) + '</td>'
+          + '<td>' + (r.start || '—') + '</td>'
+          + '<td>' + (r.endFmt || '—') + '</td>'
+          + '<td style="color:#888;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escHtml(r.note || '') + '">' + (r.note || '—') + '</td>'
+          + '<td><button class="btn-act btn-act-next" onclick="restoreOrder(\'cert\',\'' + r.id + '\',\'' + (r.no || '') + '\')">恢复</button></td>'
+          + '</tr>';
+      }).join('');
+    }
+  }
+
+  var labTbody = document.getElementById('void-lab-tbody');
+  if (labTbody) {
+    if (labVoid.length === 0) {
+      labTbody.innerHTML = '<tr><td colspan="8" class="state-msg">暂无已作废的实验室订单</td></tr>';
+    } else {
+      labTbody.innerHTML = labVoid.map(function(r) {
+        return '<tr>'
+          + '<td><strong>' + (r.no || '—') + '</strong></td>'
+          + '<td>' + (r.client || '—') + '</td>'
+          + '<td>' + (r.proj || '—') + '</td>'
+          + '<td class="amount-cell">' + fmtAmount(r.contract) + '</td>'
+          + '<td>' + (r.start || '—') + '</td>'
+          + '<td>' + (r.endFmt || '—') + '</td>'
+          + '<td style="color:#888;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escHtml(r.note || '') + '">' + (r.note || '—') + '</td>'
+          + '<td><button class="btn-act btn-act-next" onclick="restoreOrder(\'lab\',\'' + r.id + '\',\'' + (r.no || '') + '\')">恢复</button></td>'
+          + '</tr>';
+      }).join('');
+    }
   }
 }
 
