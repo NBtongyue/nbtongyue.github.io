@@ -343,7 +343,7 @@
 <div id="panel-finance" class="tab-panel"></div>
 <div id="panel-ledger" class="tab-panel"></div>
 <div id="panel-void" class="tab-panel"></div>
-<div id="debug-info" style="display:none;position:fixed;bottom:0;right:0;background:#ffeb3b;color:#333;padding:4px 8px;font-size:11px;z-index:9999;font-family:monospace;max-width:300px;word-break:break-all;"></div>
+<div id="debug-info" style="display:block;position:fixed;bottom:0;right:0;background:#ffeb3b;color:#333;padding:4px 8px;font-size:11px;z-index:9999;font-family:monospace;max-width:400px;word-break:break-all;"></div>
 
 <script>
 function debug(msg) {
@@ -1430,8 +1430,13 @@ function switchTab(sysKey) {
     document.getElementById('panel-ledger').classList.add('active');
     document.getElementById('tab-btn-ledger').classList.add('active');
     document.getElementById('h-tab-title').textContent = '账本统计';
-    if (!window._ledgerBuilt) { buildLedgerPanel(); window._ledgerBuilt = true; }
-    loadLedger();
+    try {
+      if (!window._ledgerBuilt) { buildLedgerPanel(); window._ledgerBuilt = true; }
+      loadLedger();
+    } catch(e) {
+      debug('ledger switch error: ' + e.message);
+      document.getElementById('panel-ledger').innerHTML = '<main><div class="state-msg" style="color:#dc2626;">初始化失败：' + e.message + '</div></main>';
+    }
     return;
   }
   if (sysKey === 'void') {
@@ -2011,17 +2016,28 @@ function buildLedgerPanel() {
 
 async function loadLedger() {
   var tbody = document.getElementById('led-tbody');
-  if (!tbody) return;
+  if (!tbody) { debug('led-tbody not found'); return; }
   tbody.innerHTML = '<tr><td colspan="5" class="state-msg"><span class="spinner"></span>加载中…</td></tr>';
 
   try {
+    var token = sessionStorage.getItem('ty_token');
+    debug('ledger token=' + (token ? token.substring(0,20)+'...' : 'null'));
+    if (!token) { logout(); return; }
+
     var all = [];
     var pt = '';
     do {
       var url = '/api/ledger?page_size=500' + (pt ? '&page_token=' + pt : '');
-      var resp = await fetch(url, { headers: { Authorization: 'Bearer ' + sessionStorage.getItem('ty_token') } });
+      debug('ledger fetch: ' + url);
+      var resp = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+      debug('ledger resp status=' + resp.status);
       if (resp.status === 401) { logout(); return; }
       var d = await resp.json();
+      debug('ledger data: ' + JSON.stringify(d).substring(0, 200));
+      if (d.code && d.code !== 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="state-msg" style="color:#dc2626;">飞书API错误：' + (d.msg || d.code) + '</td></tr>';
+        return;
+      }
       if (d.data && d.data.items) {
         all = all.concat(d.data.items);
       }
@@ -2031,7 +2047,7 @@ async function loadLedger() {
     LEDGER_DATA = all.map(function(item) {
       var f = item.fields || {};
       return {
-        id: item.record_id,
+        id: item.record_id || item.id || '',
         date: f['日期'] || '',
         type: f['进出'] || f['类型'] || '',
         category: f['类目'] || '',
@@ -2052,6 +2068,7 @@ async function loadLedger() {
 
     renderLedger();
   } catch (e) {
+    console.error('loadLedger error:', e);
     tbody.innerHTML = '<tr><td colspan="5" class="state-msg" style="color:#dc2626;">加载失败：' + e.message + '</td></tr>';
   }
 }
