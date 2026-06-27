@@ -343,7 +343,7 @@
 <div id="panel-finance" class="tab-panel"></div>
 <div id="panel-ledger" class="tab-panel"></div>
 <div id="panel-void" class="tab-panel"></div>
-<div id="debug-info" style="display:none;position:fixed;bottom:0;right:0;background:#ffeb3b;color:#333;padding:4px 8px;font-size:11px;z-index:9999;font-family:monospace;max-width:400px;word-break:break-all;"></div>
+<div id="debug-info" style="display:block;position:fixed;bottom:0;right:0;background:#ffeb3b;color:#333;padding:4px 8px;font-size:11px;z-index:9999;font-family:monospace;max-width:400px;word-break:break-all;"></div>
 
 <script>
 function debug(msg) {
@@ -2033,9 +2033,13 @@ async function loadLedger() {
       debug('ledger resp status=' + resp.status);
       if (resp.status === 401) { logout(); return; }
       var d = await resp.json();
-      debug('ledger data: ' + JSON.stringify(d).substring(0, 300));
+      debug('ledger status=' + resp.status);
       if (d.data && d.data.items && d.data.items.length > 0) {
-        debug('raw fields: ' + JSON.stringify(d.data.items[0].fields));
+        var first = d.data.items[0].fields;
+        debug('fields: ' + Object.keys(first).join(', '));
+        debug('values: ' + JSON.stringify(first).substring(0, 200));
+      } else {
+        debug('no items, d=' + JSON.stringify(d).substring(0, 200));
       }
       if (d.code && d.code !== 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="state-msg" style="color:#dc2626;">飞书API错误：' + (d.msg || d.code) + '</td></tr>';
