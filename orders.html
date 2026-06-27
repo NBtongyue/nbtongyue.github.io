@@ -2033,7 +2033,10 @@ async function loadLedger() {
       debug('ledger resp status=' + resp.status);
       if (resp.status === 401) { logout(); return; }
       var d = await resp.json();
-      debug('ledger data: ' + JSON.stringify(d).substring(0, 200));
+      debug('ledger data: ' + JSON.stringify(d).substring(0, 300));
+      if (d.data && d.data.items && d.data.items.length > 0) {
+        debug('raw fields: ' + JSON.stringify(d.data.items[0].fields));
+      }
       if (d.code && d.code !== 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="state-msg" style="color:#dc2626;">飞书API错误：' + (d.msg || d.code) + '</td></tr>';
         return;
