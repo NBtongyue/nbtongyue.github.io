@@ -334,12 +334,14 @@
   <button class="tab-btn active" id="tab-btn-cert" onclick="switchTab('cert')">认证订单追踪</button>
   <button class="tab-btn"        id="tab-btn-lab"  onclick="switchTab('lab')">实验室分包订单</button>
   <button class="tab-btn"        id="tab-btn-finance" onclick="switchTab('finance')">财务统计</button>
+  <button class="tab-btn"        id="tab-btn-ledger" onclick="switchTab('ledger')">账本统计</button>
   <button class="tab-btn"        id="tab-btn-void" onclick="switchTab('void')">已作废</button>
 </nav>
 
 <div id="panel-cert" class="tab-panel active"></div>
 <div id="panel-lab"  class="tab-panel"></div>
 <div id="panel-finance" class="tab-panel"></div>
+<div id="panel-ledger" class="tab-panel"></div>
 <div id="panel-void" class="tab-panel"></div>
 <div id="debug-info" style="display:none;position:fixed;bottom:0;right:0;background:#ffeb3b;color:#333;padding:4px 8px;font-size:11px;z-index:9999;font-family:monospace;max-width:300px;word-break:break-all;"></div>
 
@@ -1409,7 +1411,7 @@ function today() { return new Date().toISOString().slice(0, 10); }
 // ════════════════════════════════════════════════════════════
 function switchTab(sysKey) {
   if (sysKey === 'finance') {
-    ['cert','lab','void'].forEach(k => {
+    ['cert','lab','ledger','void'].forEach(k => {
       document.getElementById('panel-' + k).classList.remove('active');
       document.getElementById('tab-btn-' + k).classList.remove('active');
     });
@@ -1420,8 +1422,20 @@ function switchTab(sysKey) {
     loadFinance();
     return;
   }
+  if (sysKey === 'ledger') {
+    ['cert','lab','finance','void'].forEach(k => {
+      document.getElementById('panel-' + k).classList.remove('active');
+      document.getElementById('tab-btn-' + k).classList.remove('active');
+    });
+    document.getElementById('panel-ledger').classList.add('active');
+    document.getElementById('tab-btn-ledger').classList.add('active');
+    document.getElementById('h-tab-title').textContent = '账本统计';
+    if (!window._ledgerBuilt) { buildLedgerPanel(); window._ledgerBuilt = true; }
+    loadLedger();
+    return;
+  }
   if (sysKey === 'void') {
-    ['cert','lab','finance'].forEach(k => {
+    ['cert','lab','finance','ledger'].forEach(k => {
       document.getElementById('panel-' + k).classList.remove('active');
       document.getElementById('tab-btn-' + k).classList.remove('active');
     });
@@ -1438,6 +1452,8 @@ function switchTab(sysKey) {
   });
   document.getElementById('panel-finance').classList.remove('active');
   document.getElementById('tab-btn-finance').classList.remove('active');
+  document.getElementById('panel-ledger').classList.remove('active');
+  document.getElementById('tab-btn-ledger').classList.remove('active');
   document.getElementById('panel-void').classList.remove('active');
   document.getElementById('tab-btn-void').classList.remove('active');
   document.getElementById('h-tab-title').textContent = SYSTEMS[sysKey].name;
@@ -1950,6 +1966,143 @@ async function restoreOrder(sysKey, recordId, orderNo) {
     renderStats(sysKey);
     applyFilters(sysKey);
   } catch (err) { alert('恢复失败：' + err.message); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  账本统计
+// ════════════════════════════════════════════════════════════
+var LEDGER_DATA = [];
+var _ledgerFiltered = [];
+
+function buildLedgerPanel() {
+  document.getElementById('panel-ledger').innerHTML = `
+    <main>
+      <div class="stats" id="ledger-stats">
+        <div class="stat-card"><div class="num" id="led-s-income">—</div><div class="lbl">总收入</div></div>
+        <div class="stat-card"><div class="num" id="led-s-expense">—</div><div class="lbl">总支出</div></div>
+        <div class="stat-card"><div class="num" id="led-s-net">—</div><div class="lbl">净额</div></div>
+        <div class="stat-card"><div class="num" id="led-s-count">—</div><div class="lbl">总笔数</div></div>
+      </div>
+      <div class="controls">
+        <button class="btn-refresh" onclick="loadLedger()">↻ 刷新</button>
+        <select class="ctrl-select" id="led-filter-type" onchange="renderLedger()">
+          <option value="">全部类型</option>
+          <option value="收入">收入</option>
+          <option value="支出">支出</option>
+        </select>
+        <select class="ctrl-select" id="led-filter-cat" onchange="renderLedger()">
+          <option value="">全部类目</option>
+        </select>
+        <input class="search-input" type="month" id="led-filter-month" onchange="renderLedger()" style="width:150px;">
+        <input class="search-input" id="led-search" type="text" placeholder="搜索备注/订单号…" oninput="renderLedger()" style="width:180px;">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>日期</th><th>类型</th><th>类目</th><th>合同额（元）</th><th>备注</th>
+          </tr></thead>
+          <tbody id="led-tbody">
+            <tr><td colspan="5" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>`;
+}
+
+async function loadLedger() {
+  var tbody = document.getElementById('led-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="5" class="state-msg"><span class="spinner"></span>加载中…</td></tr>';
+
+  try {
+    var all = [];
+    var pt = '';
+    do {
+      var url = '/api/ledger?page_size=500' + (pt ? '&page_token=' + pt : '');
+      var resp = await fetch(url, { headers: { Authorization: 'Bearer ' + localStorage.getItem('ty_token') } });
+      if (resp.status === 401) { logout(); return; }
+      var d = await resp.json();
+      if (d.data && d.data.items) {
+        all = all.concat(d.data.items);
+      }
+      pt = (d.data && d.data.has_more) ? d.data.page_token : '';
+    } while (pt);
+
+    LEDGER_DATA = all.map(function(item) {
+      var f = item.fields || {};
+      return {
+        id: item.record_id,
+        date: f['日期'] || '',
+        type: f['进出'] || f['类型'] || '',
+        category: f['类目'] || '',
+        amount: parseFloat(f['合同额'] || f['金额'] || 0) || 0,
+        note: f['备注'] || '',
+        orderNo: f['订单编号'] || '',
+      };
+    });
+
+    // Update category filter
+    var cats = new Set();
+    LEDGER_DATA.forEach(function(r) { if (r.category) cats.add(r.category); });
+    var catSel = document.getElementById('led-filter-cat');
+    if (catSel) {
+      catSel.innerHTML = '<option value="">全部类目</option>' +
+        Array.from(cats).sort().map(function(c) { return '<option>' + c + '</option>'; }).join('');
+    }
+
+    renderLedger();
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="5" class="state-msg" style="color:#dc2626;">加载失败：' + e.message + '</td></tr>';
+  }
+}
+
+function renderLedger() {
+  var type = document.getElementById('led-filter-type')?.value || '';
+  var cat = document.getElementById('led-filter-cat')?.value || '';
+  var month = document.getElementById('led-filter-month')?.value || '';
+  var search = (document.getElementById('led-search')?.value || '').toLowerCase();
+
+  _ledgerFiltered = LEDGER_DATA.filter(function(r) {
+    if (type && r.type !== type) return false;
+    if (cat && r.category !== cat) return false;
+    if (month && !String(r.date).startsWith(month)) return false;
+    if (search) {
+      var hay = (r.note + ' ' + r.orderNo + ' ' + r.category).toLowerCase();
+      if (hay.indexOf(search) === -1) return false;
+    }
+    return true;
+  });
+
+  // Stats
+  var income = 0, expense = 0;
+  _ledgerFiltered.forEach(function(r) {
+    if (r.type === '收入') income += r.amount;
+    else expense += r.amount;
+  });
+  var net = income - expense;
+
+  document.getElementById('led-s-income').textContent = '¥' + income.toLocaleString('zh-CN', { minimumFractionDigits: 2 });
+  document.getElementById('led-s-expense').textContent = '¥' + expense.toLocaleString('zh-CN', { minimumFractionDigits: 2 });
+  document.getElementById('led-s-net').textContent = (net >= 0 ? '¥' : '-¥') + Math.abs(net).toLocaleString('zh-CN', { minimumFractionDigits: 2 });
+  document.getElementById('led-s-net').style.color = net >= 0 ? '#065f46' : '#dc2626';
+  document.getElementById('led-s-count').textContent = _ledgerFiltered.length;
+
+  // Table
+  var tbody = document.getElementById('led-tbody');
+  if (!_ledgerFiltered.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="state-msg">暂无数据</td></tr>';
+    return;
+  }
+  tbody.innerHTML = _ledgerFiltered.map(function(r) {
+    var isIncome = r.type === '收入';
+    return '<tr>'
+      + '<td>' + (r.date || '—') + '</td>'
+      + '<td><span style="color:' + (isIncome ? '#065f46' : '#dc2626') + ';font-weight:600;">' + (r.type || '—') + '</span></td>'
+      + '<td>' + (r.category || '—') + '</td>'
+      + '<td class="amount-cell" style="color:' + (isIncome ? '#065f46' : '#dc2626') + ';">' + (isIncome ? '+' : '-') + '¥' + r.amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 }) + '</td>'
+      + '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escHtml(r.note || '') + '">' + (r.note || '—') + '</td>'
+      + '</tr>';
+  }).join('');
 }
 
 </script>
