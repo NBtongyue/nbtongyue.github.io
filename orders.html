@@ -2019,7 +2019,7 @@ async function loadLedger() {
     var pt = '';
     do {
       var url = '/api/ledger?page_size=500' + (pt ? '&page_token=' + pt : '');
-      var resp = await fetch(url, { headers: { Authorization: 'Bearer ' + localStorage.getItem('ty_token') } });
+      var resp = await fetch(url, { headers: { Authorization: 'Bearer ' + sessionStorage.getItem('ty_token') } });
       if (resp.status === 401) { logout(); return; }
       var d = await resp.json();
       if (d.data && d.data.items) {
