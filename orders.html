@@ -343,7 +343,7 @@
 <div id="panel-finance" class="tab-panel"></div>
 <div id="panel-ledger" class="tab-panel"></div>
 <div id="panel-void" class="tab-panel"></div>
-<div id="debug-info" style="display:block;position:fixed;bottom:0;right:0;background:#ffeb3b;color:#333;padding:4px 8px;font-size:11px;z-index:9999;font-family:monospace;max-width:400px;word-break:break-all;"></div>
+<div id="debug-info" style="display:none;position:fixed;bottom:0;right:0;background:#ffeb3b;color:#333;padding:4px 8px;font-size:11px;z-index:9999;font-family:monospace;max-width:400px;word-break:break-all;"></div>
 
 <script>
 function debug(msg) {
@@ -2016,31 +2016,20 @@ function buildLedgerPanel() {
 
 async function loadLedger() {
   var tbody = document.getElementById('led-tbody');
-  if (!tbody) { debug('led-tbody not found'); return; }
+  if (!tbody) return;
   tbody.innerHTML = '<tr><td colspan="5" class="state-msg"><span class="spinner"></span>加载中…</td></tr>';
 
   try {
     var token = sessionStorage.getItem('ty_token');
-    debug('ledger token=' + (token ? token.substring(0,20)+'...' : 'null'));
     if (!token) { logout(); return; }
 
     var all = [];
     var pt = '';
     do {
       var url = '/api/ledger?page_size=500' + (pt ? '&page_token=' + pt : '');
-      debug('ledger fetch: ' + url);
       var resp = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
-      debug('ledger resp status=' + resp.status);
       if (resp.status === 401) { logout(); return; }
       var d = await resp.json();
-      debug('ledger status=' + resp.status);
-      if (d.data && d.data.items && d.data.items.length > 0) {
-        var first = d.data.items[0].fields;
-        debug('fields: ' + Object.keys(first).join(', '));
-        debug('values: ' + JSON.stringify(first).substring(0, 200));
-      } else {
-        debug('no items, d=' + JSON.stringify(d).substring(0, 200));
-      }
       if (d.code && d.code !== 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="state-msg" style="color:#dc2626;">飞书API错误：' + (d.msg || d.code) + '</td></tr>';
         return;
@@ -2053,20 +2042,8 @@ async function loadLedger() {
 
     LEDGER_DATA = all.map(function(item) {
       var f = item.fields || {};
-      var rawDate = f['日期'];
-      var dateStr = '';
-      if (rawDate) {
-        var ts = typeof rawDate === 'number' ? rawDate : parseInt(rawDate, 10);
-        if (!isNaN(ts) && ts > 0) {
-          if (ts < 1e12) ts = ts * 1000;
-          var d = new Date(ts);
-          if (!isNaN(d.getTime())) {
-            dateStr = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
-          }
-        }
-        if (!dateStr && typeof rawDate === 'string' && rawDate.length <= 10) dateStr = rawDate;
-      }
-      var result = {
+      var dateStr = fd(f['日期']);
+      return {
         id: item.record_id || item.id || '',
         date: dateStr,
         type: f['进出'] || f['类型'] || '',
@@ -2075,9 +2052,7 @@ async function loadLedger() {
         note: f['备注'] || '',
         orderNo: f['订单编号'] || '',
       };
-      return result;
     });
-    debug('sample: ' + JSON.stringify(LEDGER_DATA[0]).substring(0,150));
 
     // Update category filter
     var cats = new Set();
