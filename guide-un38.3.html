@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UN38.3 锂电池运输安全认证指南 — 宁波市通跃检测技术有限公司</title>
+  <meta name="description" content="UN38.3 认证详细指南：锂电池运输安全检测。涵盖认证范围、办理流程、6项测试项目、输出文件、有效期及行业重要性。">
+  <meta property="og:title" content="UN38.3 锂电池运输安全认证指南 — 通跃检测">
+  <meta property="og:description" content="全面解读 UN38.3 认证：锂电池航空运输安全检测的办理流程、测试项目与合规要求。">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="通跃检测技术指南">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: "微软雅黑", "Helvetica Neue", Arial, sans-serif; color: #333; font-size: 16px; background: #f4f7fc; }
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: #fff; border-bottom: 1px solid #e0e0e0;
+      padding: 0 4rem; display: flex;
+      justify-content: space-between; align-items: center;
+      height: 68px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .nav-logo { display: flex; flex-direction: row; align-items: center; gap: 0.7rem; text-decoration: none; }
+    .nav-logo img { height: 46px; width: auto; display: block; }
+    .nav-logo-text { display: flex; flex-direction: column; line-height: 1.3; }
+    .nav-logo-text .cn { font-size: 1rem; font-weight: 700; color: #1b3a6b; }
+    .nav-logo-text .en { font-size: 0.62rem; color: #888; letter-spacing: 0.03em; }
+    .nav-right { display: flex; align-items: center; gap: 1.5rem; }
+    .nav-back { text-decoration: none; color: #1b3a6b; font-size: 0.9rem; font-weight: 600; }
+    .nav-back:hover { color: #2563a8; }
+    .lang-switcher { display: flex; align-items: center; gap: 0.35rem; }
+    .lang-btn { background: none; border: 1px solid #ccc; border-radius: 4px; padding: 0.2rem 0.65rem; font-size: 0.82rem; cursor: pointer; color: #666; font-family: inherit; transition: all 0.2s; }
+    .lang-btn.active { border-color: #1b3a6b; color: #1b3a6b; font-weight: 700; background: #f0f5ff; }
+    .lang-btn:hover { border-color: #1b3a6b; color: #1b3a6b; }
+    .lang-sep { color: #ddd; }
+
+    .page-hero {
+      background: linear-gradient(135deg, #1b3a6b 0%, #2563a8 100%);
+      color: #fff; text-align: center; padding: 4rem 2rem 3rem;
+    }
+    .page-hero .flag { font-size: 2.5rem; margin-bottom: 0.8rem; }
+    .page-hero h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .page-hero p { font-size: 1rem; color: rgba(255,255,255,0.75); }
+
+    .content { max-width: 860px; margin: 2.5rem auto 4rem; padding: 0 1.5rem; }
+
+    .intro-card {
+      background: #fff; border: 1px solid #dde4ef; border-radius: 10px;
+      padding: 1.5rem 1.8rem; margin-bottom: 2rem;
+    }
+    .intro-card h2 { font-size: 1.2rem; color: #1b3a6b; margin-bottom: 0.8rem; }
+    .intro-card p { font-size: 0.9rem; color: #555; line-height: 1.8; }
+
+    .accordion { border: 1px solid #dde4ef; border-radius: 8px; margin-bottom: 0.8rem; background: #fff; overflow: hidden; }
+    .accordion-header {
+      width: 100%; background: none; border: none; text-align: left;
+      padding: 1rem 1.2rem; font-size: 1rem; font-weight: 700; color: #1b3a6b;
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      font-family: inherit;
+    }
+    .accordion-header:hover { background: #f0f5ff; }
+    .accordion-arrow { transition: transform 0.25s; font-style: normal; }
+    .accordion.open .accordion-arrow { transform: rotate(180deg); }
+    .accordion-body { display: none; padding: 0 1.2rem 1.2rem; }
+    .accordion.open .accordion-body { display: block; }
+    .accordion-body p { font-size: 0.9rem; color: #444; line-height: 1.8; margin-bottom: 0.6rem; }
+    .accordion-body ul { padding-left: 1.2rem; margin-bottom: 0.6rem; }
+    .accordion-body ul li { font-size: 0.9rem; color: #444; line-height: 1.8; }
+    .accordion-body .note {
+      background: #fff8e1; border-left: 3px solid #f0c040;
+      padding: 0.7rem 1rem; border-radius: 0 6px 6px 0; margin: 0.8rem 0;
+      font-size: 0.88rem; color: #6b5a00;
+    }
+    .accordion-body .danger {
+      background: #fff0f0; border-left: 3px solid #e04040;
+      padding: 0.7rem 1rem; border-radius: 0 6px 6px 0; margin: 0.8rem 0;
+      font-size: 0.88rem; color: #8b0000;
+    }
+    .accordion-body img {
+      max-width: 100%; border-radius: 8px; border: 1px solid #e0e0e0;
+      margin: 1rem 0; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .cta-card {
+      background: #fff; border: 1px solid #dde4ef; border-radius: 10px;
+      padding: 1.5rem 1.8rem; margin-top: 2rem; text-align: center;
+    }
+    .cta-card h3 { font-size: 1.1rem; color: #1b3a6b; margin-bottom: 0.5rem; }
+    .cta-card p { font-size: 0.9rem; color: #555; line-height: 1.8; }
+    .cta-card .email { color: #2563a8; font-weight: 600; }
+
+    footer { background: #1b3a6b; color: rgba(255,255,255,0.65); text-align: center; padding: 2rem 1rem; font-size: 0.85rem; line-height: 1.8; }
+    footer strong { color: #fff; }
+
+    @media (max-width: 768px) {
+      nav { padding: 0 1.2rem; }
+      .page-hero { padding: 2.5rem 1.2rem 2rem; }
+      .page-hero h1 { font-size: 1.5rem; }
+      .content { margin: 1.5rem auto 2.5rem; padding: 0 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">
+      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='46' height='46' viewBox='0 0 46 46'%3E%3Crect fill='%231b3a6b' width='46' height='46' rx='8'/%3E%3Ctext x='23' y='30' text-anchor='middle' fill='white' font-size='22' font-weight='bold'%3E通%3C/text%3E%3C/svg%3E" alt="logo">
+      <div class="nav-logo-text">
+        <span class="cn">通跃检测</span>
+        <span class="en">TONGYUE TESTING</span>
+      </div>
+    </a>
+    <div class="nav-right">
+      <div class="lang-switcher">
+        <button class="lang-btn active" data-lang="zh" onclick="setLang('zh')">中</button>
+        <span class="lang-sep">|</span>
+        <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+      </div>
+      <a href="index.html" class="nav-back" data-i18n="back">← 返回首页</a>
+    </div>
+  </nav>
+
+  <div class="page-hero">
+    <div class="flag">🔋</div>
+    <h1 data-i18n="hero-h1">UN38.3 锂电池运输安全认证指南</h1>
+    <p data-i18n="hero-p">联合国锂电池运输安全检测 — 航空/海运必备认证</p>
+  </div>
+
+  <div class="content">
+
+    <!-- 简介 -->
+    <div class="intro-card">
+      <h2 data-i18n="intro-title">认证简介</h2>
+      <p data-i18n="intro-text">UN38.3 是联合国《关于危险货物运输的建议书 — 试验和标准手册》第 38.3 章规定的锂电池安全检测标准。其目的是确保锂电池在航空运输过程中的安全性（防火、防爆），适用范围覆盖全球运输链条。所有锂电池产品在空运、海运前，必须通过 UN38.3 测试。</p>
+    </div>
+
+    <!-- 一、什么是 UN38.3 -->
+    <div class="accordion open">
+      <button class="accordion-header" onclick="this.closest('.accordion').classList.toggle('open')">
+        <span data-i18n="sec1-title">一、什么是 UN38.3 认证？</span> <i class="accordion-arrow">▾</i>
+      </button>
+      <div class="accordion-body">
+        <ul>
+          <li data-i18n="sec1-item1"><strong>依据文件：</strong>联合国《关于危险货物运输的建议书 — 试验和标准手册》第 38.3 章。</li>
+          <li data-i18n="sec1-item2"><strong>目的：</strong>确保锂电池在航空运输中的安全性（防火、防爆），适用范围覆盖全球运输链条。</li>
+          <li data-i18n="sec1-item3"><strong>适用对象：</strong>所有含锂电池的产品，包括单独运输的电池（电芯/电池组）以及安装在设备中的电池。</li>
+        </ul>
+        <div class="note" data-i18n="sec1-note">💡 提示：UN38.3 不是产品质量认证，而是运输安全认证。即使产品已有 CE、FCC 等认证，仍需单独通过 UN38.3 测试才能进行航空/海运。</div>
+      </div>
+    </div>
+
+    <!-- 二、产品范围 -->
+    <div class="accordion">
+      <button class="accordion-header" onclick="this.closest('.accordion').classList.toggle('open')">
+        <span data-i18n="sec2-title">二、需 UN38.3 认证的产品范围</span> <i class="accordion-arrow">▾</i>
+      </button>
+      <div class="accordion-body">
+        <ul>
+          <li data-i18n="sec2-item1"><strong>消费电子产品：</strong>手机、笔记本、平板电脑、蓝牙耳机电池</li>
+          <li data-i18n="sec2-item2"><strong>电动工具电池：</strong>电钻、电锯电池</li>
+          <li data-i18n="sec2-item3"><strong>新能源汽车电池：</strong>纯电动/混合动力汽车电池</li>
+          <li data-i18n="sec2-item4"><strong>移动电源：</strong>充电宝</li>
+        </ul>
+        <div class="note" data-i18n="sec2-note">📌 注：锂离子电池是认证主体，金属锂电池因危险性高极少使用。</div>
+      </div>
+    </div>
+
+    <!-- 三、办理流程 -->
+    <div class="accordion">
+      <button class="accordion-header" onclick="this.closest('.accordion').classList.toggle('open')">
+        <span data-i18n="sec3-title">三、UN38.3 认证核心办理流程</span> <i class="accordion-arrow">▾</i>
+      </button>
+      <div class="accordion-body">
+        <ol>
+          <li data-i18n="sec3-step1"><strong>提交申请</strong><br>填写申请表（厂家信息、产品型号、用途等），提供电池规格书（电压、容量、充放电限制电压等参数）。</li>
+          <li data-i18n="sec3-step2"><strong>补充文件（如适用）</strong><br>质量体系文件（ISO 证书、质量手册）、委托书（用于申请运输鉴定书）。</li>
+          <li data-i18n="sec3-step3"><strong>提供样品与包装信息</strong><br>按数量要求寄送电池样品；提供外包装、内包装及打开状态的清晰图片。</li>
+          <li data-i18n="sec3-step4"><strong>实验室测试</strong><br>完成 6 项强制性安全测试（详见第四部分）。</li>
+          <li data-i18n="sec3-step5"><strong>获取报告与证书</strong><br>UN38.3 测试报告 + 空海运鉴定书 + MSDS（化学品安全说明书）。</li>
+        </ol>
+        <img src="un38.3-2.jpg" alt="UN38.3 认证流程" loading="lazy" data-i18n-alt="UN38.3 认证流程">
+      </div>
+    </div>
+
+    <!-- 四、测试项目 -->
+    <div class="accordion">
+      <button class="accordion-header" onclick="this.closest('.accordion').classList.toggle('open')">
+        <span data-i18n="sec4-title">四、测试项目清单（6 项强制性测试）</span> <i class="accordion-arrow">▾</i>
+      </button>
+      <div class="accordion-body">
+        <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin-bottom:1rem;">
+          <thead>
+            <tr style="background:#f0f5ff;">
+              <th style="padding:0.6rem; border:1px solid #dde4ef; text-align:center; width:40px;">#</th>
+              <th style="padding:0.6rem; border:1px solid #dde4ef; text-align:left;">测试项目</th>
+              <th style="padding:0.6rem; border:1px solid #dde4ef; text-align:left;">测试目的</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding:0.5rem; border:1px solid #dde4ef; text-align:center;">1</td>
+              <td style="padding:0.5rem; border:1px solid #dde4ef;">高度模拟试验</td>
+              <td style="padding:0.5rem; border:1px solid #dde4ef;">模拟低压环境（如高空货舱）下的稳定性，验证电池在≤11.6kPa 低压下不会泄漏、排气、起火或爆炸</td>
+            </tr>
+            <tr>
+              <td style="padding:0.5rem; border:1px solid #dde4ef; text-align:center;">2</td>
+              <td style="padding:0.5rem; border:1px solid #dde4ef;">热测试</td>
+              <td style="padding:0.5rem; border:1px solid #dde4ef;">极端温度循环（-40°C 至 +75°C）下的耐受性，验证电池在急剧温度变化下的完整性</td>
+            </tr>
+            <tr>
+              <td style="padding:0.5rem; border:1px solid #dde4ef; text-align:center;">3</td>
+              <td style="padding:0.5rem; border:1px solid #dde4ef;">振动试验</td>
+              <td style="padding:0.5rem; border:1px solid #dde4ef;">模拟运输过程中的持续颠簸，验证电池在7Hz–200Hz 扫频振动下的安全性</td>
+            </tr>
+            <tr>
+              <td style="padding:0.5rem; border:1px solid #dde4ef; text-align:center;">4</td>
+              <td style="padding:0.5rem; border:1px solid #dde4ef;">冲击试验</td>
+              <td style="padding:0.5rem; border:1px solid #dde4ef;">模拟突发撞击（150g/6ms 或 50g/11ms 半正弦波），验证结构完整性</td>
+            </tr>
+            <tr>
+              <td style="padding:0.5rem; border:1px solid #dde4ef; text-align:center;">5</td>
+              <td style="padding:0.5rem; border:1px solid #dde4ef;">外短路试验</td>
+              <td style="padding:0.5rem; border:1px solid #dde4ef;">外部短路（≤0.1Ω）时是否起火/爆炸，验证极端情况下的安全保护</td>
+            </tr>
+            <tr>
+              <td style="padding:0.5rem; border:1px solid #dde4ef; text-align:center;">6</td>
+              <td style="padding:0.5rem; border:1px solid #dde4ef;">强制放电试验</td>
+              <td style="padding:0.5rem; border:1px solid #dde4ef;">过度放电下的安全性，验证电池在串联中单个电芯被强制放电时的表现</td>
+            </tr>
+          </tbody>
+        </table>
+        <img src="un38.3-1.jpg" alt="UN38.3 测试项目与输出文件" loading="lazy" data-i18n-alt="UN38.3 测试项目与输出文件">
+      </div>
+    </div>
+
+    <!-- 五、输出文件 -->
+    <div class="accordion">
+      <button class="accordion-header" onclick="this.closest('.accordion').classList.toggle('open')">
+        <span data-i18n="sec5-title">五、认证输出文件</span> <i class="accordion-arrow">▾</i>
+      </button>
+      <div class="accordion-body">
+        <ul>
+          <li data-i18n="sec5-item1"><strong>UN38.3 测试报告：</strong>核心安全性能证明，证明电池已通过 6 项测试。</li>
+          <li data-i18n="sec5-item2"><strong>货物运输条件鉴定书：</strong>空运/海运必备许可文件，由民航局认可的鉴定机构出具。</li>
+          <li data-i18n="sec5-item3"><strong>MSDS（化学品安全技术说明书）：</strong>成分说明与应急处理指南，包含电池化学组成、危险性及应急措施。</li>
+        </ul>
+        <div class="note" data-i18n="sec5-note">
+          <strong>📌 区别说明：</strong><br>
+          • UN38.3 测试报告 = 安全性能检测报告（证明电池通过运输安全测试）<br>
+          • MSDS = 化学成分与应急处置文件（说明电池是什么、有什么危险、如何处理）<br>
+          • 二者需同时提供，不可互相替代。
+        </div>
+      </div>
+    </div>
+
+    <!-- 六、有效期 -->
+    <div class="accordion">
+      <button class="accordion-header" onclick="this.closest('.accordion').classList.toggle('open')">
+        <span data-i18n="sec6-title">六、有效期与更新要求</span> <i class="accordion-arrow">▾</i>
+      </button>
+      <div class="accordion-body">
+        <ul>
+          <li data-i18n="sec6-item1"><strong>UN38.3 测试报告：</strong>无固定有效期。但产品设计、材料或关键部件变更时，需重新测试。</li>
+          <li data-i18n="sec6-item2"><strong>空海运鉴定书、MSDS：</strong>每年需重新申请，有效期至当年 12 月 31 日。</li>
+          <li data-i18n="sec6-item3"><strong>UN38.3 标准版本：</strong>约 2 年更新一次。2020 年更新至第六版修正版，目前最新版本为 ST/SG/AC.10/11/Rev.7。</li>
+        </ul>
+        <div class="danger" data-i18n="sec6-note">⚠️ 注意：空海运鉴定书和 MSDS 每年必须更新！过期鉴定书将导致货物被航空公司拒运。</div>
+      </div>
+    </div>
+
+    <!-- 七、重要性 -->
+    <div class="accordion">
+      <button class="accordion-header" onclick="this.closest('.accordion').classList.toggle('open')">
+        <span data-i18n="sec7-title">七、UN38.3 认证的重要性</span> <i class="accordion-arrow">▾</i>
+      </button>
+      <div class="accordion-body">
+        <ul>
+          <li data-i18n="sec7-item1"><strong>🔒 运输安全：</strong>显著降低锂电池在运输过程中起火、爆炸的风险，保障人员与财产安全。</li>
+          <li data-i18n="sec7-item2"><strong>📜 法规合规：</strong>全球航空/海运强制要求。IATA（国际航空运输协会）和 IMDG（国际海运危险货物规则）均要求锂电池运输前通过 UN38.3 测试。</li>
+          <li data-i18n="sec7-item3"><strong>🛒 商业准入：</strong>亚马逊自 2020 年起强制要求卖家提供 UN38.3 测试摘要。无认证产品将被航空公司拒运，无法进入国际市场。</li>
+          <li data-i18n="sec7-item4"><strong>🏭 行业门槛：</strong>UN38.3 是电池生产与销售的基本安全标准，是进入全球供应链的必备条件。</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 咨询卡片 -->
+    <div class="cta-card">
+      <h3 data-i18n="cta-title">需要办理 UN38.3 认证？</h3>
+      <p data-i18n="cta-text">通跃检测为您提供一站式 UN38.3 认证服务：<br>👤 Mindy：mindy.liu@nbth-ha.com<br>👤 陆先生：yueping@nbty-ha.com</p>
+    </div>
+
+  </div>
+
+  <footer>
+    <p><strong>宁波市通跃检测技术有限公司</strong></p>
+    <p>Ningbo Tongyue Testing Technology Co., Ltd.</p>
+    <p style="margin-top:0.5rem" data-i18n="footer-rights">&copy; 2026 通跃检测. 保留所有权利.</p>
+  </footer>
+
+  <script>
+    const I18N = {
+      zh: {
+        'back':       '← 返回首页',
+        'hero-h1':    'UN38.3 锂电池运输安全认证指南',
+        'hero-p':     '联合国锂电池运输安全检测 — 航空/海运必备认证',
+        'intro-title':'认证简介',
+        'intro-text': 'UN38.3 是联合国《关于危险货物运输的建议书 — 试验和标准手册》第 38.3 章规定的锂电池安全检测标准。其目的是确保锂电池在航空运输过程中的安全性（防火、防爆），适用范围覆盖全球运输链条。所有锂电池产品在空运、海运前，必须通过 UN38.3 测试。',
+
+        'sec1-title': '一、什么是 UN38.3 认证？',
+        'sec1-item1': '<strong>依据文件：</strong>联合国《关于危险货物运输的建议书 — 试验和标准手册》第 38.3 章。',
+        'sec1-item2': '<strong>目的：</strong>确保锂电池在航空运输中的安全性（防火、防爆），适用范围覆盖全球运输链条。',
+        'sec1-item3': '<strong>适用对象：</strong>所有含锂电池的产品，包括单独运输的电池（电芯/电池组）以及安装在设备中的电池。',
+        'sec1-note': '💡 提示：UN38.3 不是产品质量认证，而是运输安全认证。即使产品已有 CE、FCC 等认证，仍需单独通过 UN38.3 测试才能进行航空/海运。',
+
+        'sec2-title': '二、需 UN38.3 认证的产品范围',
+        'sec2-item1': '<strong>消费电子产品：</strong>手机、笔记本、平板电脑、蓝牙耳机电池',
+        'sec2-item2': '<strong>电动工具电池：</strong>电钻、电锯电池',
+        'sec2-item3': '<strong>新能源汽车电池：</strong>纯电动/混合动力汽车电池',
+        'sec2-item4': '<strong>移动电源：</strong>充电宝',
+        'sec2-note': '📌 注：锂离子电池是认证主体，金属锂电池因危险性高极少使用。',
+
+        'sec3-title': '三、UN38.3 认证核心办理流程',
+        'sec3-step1': '<strong>提交申请</strong><br>填写申请表（厂家信息、产品型号、用途等），提供电池规格书（电压、容量、充放电限制电压等参数）。',
+        'sec3-step2': '<strong>补充文件（如适用）</strong><br>质量体系文件（ISO 证书、质量手册）、委托书（用于申请运输鉴定书）。',
+        'sec3-step3': '<strong>提供样品与包装信息</strong><br>按数量要求寄送电池样品；提供外包装、内包装及打开状态的清晰图片。',
+        'sec3-step4': '<strong>实验室测试</strong><br>完成 6 项强制性安全测试（详见第四部分）。',
+        'sec3-step5': '<strong>获取报告与证书</strong><br>UN38.3 测试报告 + 空海运鉴定书 + MSDS（化学品安全说明书）。',
+
+        'sec4-title': '四、测试项目清单（6 项强制性测试）',
+
+        'sec5-title': '五、认证输出文件',
+        'sec5-item1': '<strong>UN38.3 测试报告：</strong>核心安全性能证明，证明电池已通过 6 项测试。',
+        'sec5-item2': '<strong>货物运输条件鉴定书：</strong>空运/海运必备许可文件，由民航局认可的鉴定机构出具。',
+        'sec5-item3': '<strong>MSDS（化学品安全技术说明书）：</strong>成分说明与应急处理指南，包含电池化学组成、危险性及应急措施。',
+        'sec5-note': '<strong>📌 区别说明：</strong><br>• UN38.3 测试报告 = 安全性能检测报告（证明电池通过运输安全测试）<br>• MSDS = 化学成分与应急处置文件（说明电池是什么、有什么危险、如何处理）<br>• 二者需同时提供，不可互相替代。',
+
+        'sec6-title': '六、有效期与更新要求',
+        'sec6-item1': '<strong>UN38.3 测试报告：</strong>无固定有效期。但产品设计、材料或关键部件变更时，需重新测试。',
+        'sec6-item2': '<strong>空海运鉴定书、MSDS：</strong>每年需重新申请，有效期至当年 12 月 31 日。',
+        'sec6-item3': '<strong>UN38.3 标准版本：</strong>约 2 年更新一次。2020 年更新至第六版修正版，目前最新版本为 ST/SG/AC.10/11/Rev.7。',
+        'sec6-note': '⚠️ 注意：空海运鉴定书和 MSDS 每年必须更新！过期鉴定书将导致货物被航空公司拒运。',
+
+        'sec7-title': '七、UN38.3 认证的重要性',
+        'sec7-item1': '<strong>🔒 运输安全：</strong>显著降低锂电池在运输过程中起火、爆炸的风险，保障人员与财产安全。',
+        'sec7-item2': '<strong>📜 法规合规：</strong>全球航空/海运强制要求。IATA（国际航空运输协会）和 IMDG（国际海运危险货物规则）均要求锂电池运输前通过 UN38.3 测试。',
+        'sec7-item3': '<strong>🛒 商业准入：</strong>亚马逊自 2020 年起强制要求卖家提供 UN38.3 测试摘要。无认证产品将被航空公司拒运，无法进入国际市场。',
+        'sec7-item4': '<strong>🏭 行业门槛：</strong>UN38.3 是电池生产与销售的基本安全标准，是进入全球供应链的必备条件。',
+
+        'cta-title':  '需要办理 UN38.3 认证？',
+        'cta-text':   '通跃检测为您提供一站式 UN38.3 认证服务：<br>👤 Mindy：mindy.liu@nbth-ha.com<br>👤 陆先生：yueping@nbty-ha.com',
+        'footer-rights': '&copy; 2026 通跃检测. 保留所有权利.',
+      },
+      en: {
+        'back':       '← Back to Home',
+        'hero-h1':    'UN38.3 Lithium Battery Transport Safety Guide',
+        'hero-p':     'UN Lithium Battery Transport Safety Testing — Required for Air & Sea Freight',
+        'intro-title':'Overview',
+        'intro-text': 'UN38.3 is the lithium battery safety testing standard specified in Chapter 38.3 of the UN Manual of Tests and Criteria. Its purpose is to ensure the safety of lithium batteries during air transport (fire and explosion prevention), with global applicability across the entire transport chain. All lithium battery products must pass UN38.3 testing before air or sea shipment.',
+
+        'sec1-title': '1. What is UN38.3 Certification?',
+        'sec1-item1': '<strong>Legal Basis:</strong> Chapter 38.3 of the UN Recommendations on the Transport of Dangerous Goods — Manual of Tests and Criteria.',
+        'sec1-item2': '<strong>Purpose:</strong> Ensure lithium battery safety during air transport (fire/explosion prevention), applicable across the global transport chain.',
+        'sec1-item3': '<strong>Scope:</strong> All products containing lithium batteries, including standalone batteries (cells/battery packs) and batteries installed in equipment.',
+        'sec1-note': '💡 Tip: UN38.3 is a transport safety certification, not a product quality certification. Even if products already have CE, FCC, etc., they still need separate UN38.3 testing for air/sea transport.',
+
+        'sec2-title': '2. Products Requiring UN38.3',
+        'sec2-item1': '<strong>Consumer Electronics:</strong> Phones, laptops, tablets, Bluetooth headset batteries',
+        'sec2-item2': '<strong>Power Tool Batteries:</strong> Drill, chainsaw batteries',
+        'sec2-item3': '<strong>EV Batteries:</strong> Pure electric / hybrid vehicle batteries',
+        'sec2-item4': '<strong>Power Banks:</strong> Portable chargers',
+        'sec2-note': '📌 Note: Lithium-ion batteries are the primary certification subject. Lithium metal batteries are rarely used due to higher hazards.',
+
+        'sec3-title': '3. UN38.3 Certification Process',
+        'sec3-step1': '<strong>Submit Application</strong><br>Complete the application form (manufacturer info, product model, usage, etc.) and provide battery specifications (voltage, capacity, charge/discharge limits, etc.).',
+        'sec3-step2': '<strong>Supplementary Documents (if applicable)</strong><br>Quality system documents (ISO certificate, quality manual), authorization letter (for transport condition appraisal).',
+        'sec3-step3': '<strong>Provide Samples & Packaging Info</strong><br>Ship battery samples per quantity requirements; provide clear photos of outer packaging, inner packaging, and unpacked state.',
+        'sec3-step4': '<strong>Laboratory Testing</strong><br>Complete 6 mandatory safety tests (see Section 4).',
+        'sec3-step5': '<strong>Obtain Reports & Certificates</strong><br>UN38.3 Test Report + Air/Sea Transport Appraisal + MSDS (Material Safety Data Sheet).',
+
+        'sec4-title': '4. Test Items (6 Mandatory Tests)',
+
+        'sec5-title': '5. Certification Output Documents',
+        'sec5-item1': '<strong>UN38.3 Test Report:</strong> Core safety performance proof, demonstrating the battery has passed all 6 tests.',
+        'sec5-item2': '<strong>Transport Condition Appraisal:</strong> Essential permit for air/sea freight, issued by CAAC-recognized appraisal agencies.',
+        'sec5-item3': '<strong>MSDS (Material Safety Data Sheet):</strong> Composition description and emergency handling guidelines, covering chemical composition, hazards, and emergency measures.',
+        'sec5-note': '<strong>📌 Key Distinction:</strong><br>• UN38.3 Test Report = Safety performance test report (proves battery passes transport safety tests)<br>• MSDS = Chemical composition & emergency response document (describes battery composition, hazards, and handling)<br>• Both must be provided; they cannot substitute for each other.',
+
+        'sec6-title': '6. Validity & Renewal Requirements',
+        'sec6-item1': '<strong>UN38.3 Test Report:</strong> No fixed expiration. Retesting is required when product design, materials, or key components change.',
+        'sec6-item2': '<strong>Air/Sea Transport Appraisal & MSDS:</strong> Must be renewed annually, valid until December 31 of the current year.',
+        'sec6-item3': '<strong>UN38.3 Standard Revision:</strong> Updated approximately every 2 years. Updated to Rev. 6 Amendment in 2020; latest version is ST/SG/AC.10/11/Rev.7.',
+        'sec6-note': '⚠️ Warning: Air/Sea Transport Appraisals and MSDS must be renewed every year! Expired appraisals will result in cargo rejection by airlines.',
+
+        'sec7-title': '7. Importance of UN38.3 Certification',
+        'sec7-item1': '<strong>🔒 Transport Safety:</strong> Significantly reduces the risk of lithium battery fire and explosion during transport, protecting personnel and property.',
+        'sec7-item2': '<strong>📜 Regulatory Compliance:</strong> Mandatory requirement for global air/sea transport. Both IATA and IMDG require UN38.3 testing before lithium battery transport.',
+        'sec7-item3': '<strong>🛒 Market Access:</strong> Amazon has required UN38.3 test summaries since 2020. Non-certified products will be rejected by airlines and cannot enter international markets.',
+        'sec7-item4': '<strong>🏭 Industry Standard:</strong> UN38.3 is the baseline safety standard for battery production and sales, essential for entering the global supply chain.',
+
+        'cta-title':  'Need UN38.3 Certification?',
+        'cta-text':   'Tongyue Testing provides one-stop UN38.3 certification services:<br>👤 Mindy: mindy.liu@nbth-ha.com',
+        'footer-rights': '&copy; 2026 Tongyue Testing. All Rights Reserved.',
+      }
+    };
+
+    function setLang(lang) {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (I18N[lang] && I18N[lang][key] !== undefined) el.innerHTML = I18N[lang][key];
+      });
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+      });
+      localStorage.setItem('lang', lang);
+    }
+
+    (function() {
+      const saved = localStorage.getItem('lang') || 'zh';
+      if (saved === 'en') setLang('en');
+    })();
+  </script>
+
+</body>
+</html>

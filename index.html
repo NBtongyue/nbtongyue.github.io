@@ -178,20 +178,31 @@
     
     /* ── 技术指南 ── */
     #guide { background: #f4f7fc; }
+    .guide-wrap { max-width: 1000px; margin: 0 auto; }
+    .guide-category { margin-bottom: 2.5rem; }
+    .guide-category:last-child { margin-bottom: 0; }
+    .guide-cat-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1b3a6b;
+      margin-bottom: 1rem;
+      padding-left: 0.3rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .guide-cat-title .icon { font-size: 1.3rem; }
     .guide-grid {
       display: flex;
       flex-wrap: wrap;
-      gap: 1.5rem;
-      justify-content: center;
-      max-width: 900px;
-      margin: 0 auto;
+      gap: 1.2rem;
     }
     .guide-card {
       background: #fff;
       border: 1px solid #dde4ef;
       border-radius: 10px;
-      padding: 2rem 2rem 1.5rem;
-      width: 220px;
+      padding: 1.6rem 1.5rem 1.3rem;
+      width: 185px;
       text-align: center;
       text-decoration: none;
       color: inherit;
@@ -199,14 +210,23 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.4rem;
     }
     a.guide-card:hover { box-shadow: 0 8px 24px rgba(27,58,107,0.12); transform: translateY(-3px); }
-    .guide-coming { opacity: 0.5; cursor: default; }
-    .guide-flag { font-size: 2.5rem; }
-    .guide-card h3 { font-size: 1.05rem; color: #1b3a6b; font-weight: 700; }
-    .guide-card p { font-size: 0.85rem; color: #777; line-height: 1.5; }
-    .guide-more { font-size: 0.85rem; color: #2563a8; font-weight: 600; margin-top: 0.3rem; }
+    .guide-coming { opacity: 0.45; cursor: default; pointer-events: none; }
+    .guide-flag { font-size: 2rem; }
+    .guide-card h3 { font-size: 0.95rem; color: #1b3a6b; font-weight: 700; }
+    .guide-card p { font-size: 0.8rem; color: #888; line-height: 1.4; }
+    .guide-more { font-size: 0.8rem; color: #2563a8; font-weight: 600; margin-top: 0.2rem; }
+    .guide-card .tag {
+      display: inline-block;
+      background: #e8f0fb;
+      color: #1b3a6b;
+      font-size: 0.7rem;
+      padding: 0.15rem 0.55rem;
+      border-radius: 3px;
+      font-weight: 600;
+    }
 
     /* ── 页脚 ── */
 
@@ -305,8 +325,8 @@
       .adv-item { padding: 1.2rem 0.5rem; }
 
       /* 技术指南：2 列 */
-      .guide-grid { gap: 1rem; }
-      .guide-card { width: calc(50% - 0.5rem); padding: 1.5rem 1rem; }
+      .guide-grid { gap: 0.8rem; }
+      .guide-card { width: calc(50% - 0.4rem); padding: 1.2rem 0.8rem; }
 
       /* 联系：单列 */
       .contact-wrap { grid-template-columns: 1fr; }
@@ -439,23 +459,162 @@
       <div class="divider"></div>
       <p data-i18n="guide-sub">各国认证法规解读，助您快速了解合规要求</p>
     </div>
-    <div class="guide-grid">
-      <a href="korea.html" class="guide-card">
-        <div class="guide-flag">🇰🇷</div>
-        <h3 data-i18n="guide-kr-h">韩国认证</h3>
-        <p data-i18n="guide-kr-p">EMC / RF / Safety / 能效认证</p>
+    <div class="guide-wrap">
 
-      </a>
-      <div class="guide-card guide-coming">
-        <div class="guide-flag">🇮🇳</div>
-        <h3 data-i18n="guide-in-h">印度认证</h3>
-        <p data-i18n="guide-coming">即将上线</p>
+      <!-- 亚洲 -->
+      <div class="guide-category">
+        <div class="guide-cat-title"><span class="icon">🌏</span> <span data-i18n="guide-cat-asia">亚洲</span></div>
+        <div class="guide-grid">
+          <a href="korea.html" class="guide-card">
+            <div class="guide-flag">🇰🇷</div>
+            <h3 data-i18n="guide-kr-h">韩国认证</h3>
+            <p data-i18n="guide-kr-p">KC / EMC / RF / 能效</p>
+            <span class="tag">已上线</span>
+          </a>
+          <a href="guide-china-ccc.html" class="guide-card">
+            <div class="guide-flag">🇨🇳</div>
+            <h3 data-i18n="guide-cn-h">中国CCC认证</h3>
+            <p data-i18n="guide-cn-p">强制性产品认证</p>
+            <span class="tag">已上线</span>
+          </a>
+          <a href="guide-japan.html" class="guide-card">
+            <div class="guide-flag">🇯🇵</div>
+            <h3 data-i18n="guide-jp-h">日本认证</h3>
+            <p data-i18n="guide-jp-p">PSE / VCCI / MIC</p>
+            <span class="tag">已上线</span>
+          </a>
+          <a href="guide-india.html" class="guide-card">
+            <div class="guide-flag">🇮🇳</div>
+            <h3 data-i18n="guide-in-h">印度认证</h3>
+            <p data-i18n="guide-in-p">BIS / WPC / TEC</p>
+            <span class="tag">已上线</span>
+          </a>
+          <a href="guide-indonesia.html" class="guide-card">
+            <div class="guide-flag">🇮🇩</div>
+            <h3 data-i18n="guide-id-h">印度尼西亚认证</h3>
+            <p data-i18n="guide-id-p">SNI / SDPPI / K3L</p>
+            <span class="tag">已上线</span>
+          </a>
+          <a href="guide-taiwan.html" class="guide-card">
+            <div class="guide-flag">🇹🇼</div>
+            <h3 data-i18n="guide-tw-h">台湾认证</h3>
+            <p data-i18n="guide-tw-p">BSMI / NCC</p>
+            <span class="tag">已上线</span>
+          </a>
+          <a href="guide-vietnam.html" class="guide-card">
+            <div class="guide-flag">🇻🇳</div>
+            <h3 data-i18n="guide-vn-h">越南认证</h3>
+            <p data-i18n="guide-vn-p">CR / MIC Vietnam</p>
+            <span class="tag">已上线</span>
+          </a>
+        </div>
       </div>
-      <div class="guide-card guide-coming">
-        <div class="guide-flag">🇮🇩</div>
-        <h3 data-i18n="guide-id-h">印度尼西亚认证</h3>
-        <p data-i18n="guide-coming">即将上线</p>
+
+      <!-- 欧洲 -->
+      <div class="guide-category">
+        <div class="guide-cat-title"><span class="icon">🌍</span> <span data-i18n="guide-cat-europe">欧洲</span></div>
+        <div class="guide-grid">
+          <a href="guide-ce.html" class="guide-card">
+            <div class="guide-flag">🇪🇺</div>
+            <h3 data-i18n="guide-ce-h">CE 认证</h3>
+            <p data-i18n="guide-ce-p">欧盟市场准入</p>
+            <span class="tag">已上线</span>
+          </a>
+          <a href="guide-rohs.html" class="guide-card">
+            <div class="guide-flag">🇪🇺</div>
+            <h3 data-i18n="guide-rohs-h">RoHS / REACH</h3>
+            <p data-i18n="guide-rohs-p">化学环保法规</p>
+            <span class="tag">已上线</span>
+          </a>
+          <a href="guide-ukca.html" class="guide-card">
+            <div class="guide-flag">🇬🇧</div>
+            <h3 data-i18n="guide-uk-h">UKCA 认证</h3>
+            <p data-i18n="guide-uk-p">英国市场准入</p>
+            <span class="tag">已上线</span>
+          </a>
+          <a href="guide-eac.html" class="guide-card">
+            <div class="guide-flag">🇷🇺</div>
+            <h3 data-i18n="guide-eac-h">EAC 认证</h3>
+            <p data-i18n="guide-eac-p">欧亚经济联盟</p>
+            <span class="tag">已上线</span>
+          </a>
+        </div>
       </div>
+
+      <!-- 美洲 -->
+      <div class="guide-category">
+        <div class="guide-cat-title"><span class="icon">🌎</span> <span data-i18n="guide-cat-americas">美洲</span></div>
+        <div class="guide-grid">
+          <a href="guide-fcc.html" class="guide-card">
+            <div class="guide-flag">🇺🇸</div>
+            <h3 data-i18n="guide-fcc-h">FCC 认证</h3>
+            <p data-i18n="guide-fcc-p">美国无线/EMC</p>
+            <span class="tag">已上线</span>
+          </a>
+          <a href="guide-ul.html" class="guide-card">
+            <div class="guide-flag">🇺🇸</div>
+            <h3 data-i18n="guide-ul-h">UL 认证</h3>
+            <p data-i18n="guide-ul-p">美国安全认证</p>
+            <span class="tag">已上线</span>
+          </a>
+          <a href="guide-ised.html" class="guide-card">
+            <div class="guide-flag">🇨🇦</div>
+            <h3 data-i18n="guide-ca-h">ISED 认证</h3>
+            <p data-i18n="guide-ca-p">加拿大无线认证</p>
+            <span class="tag">已上线</span>
+          </a>
+          <a href="guide-nom.html" class="guide-card">
+            <div class="guide-flag">🇲🇽</div>
+            <h3 data-i18n="guide-mx-h">NOM 认证</h3>
+            <p data-i18n="guide-mx-p">墨西哥安规</p>
+            <span class="tag">已上线</span>
+          </a>
+          <a href="guide-anatel.html" class="guide-card">
+            <div class="guide-flag">🇧🇷</div>
+            <h3 data-i18n="guide-br-h">ANATEL 认证</h3>
+            <p data-i18n="guide-br-p">巴西无线认证</p>
+            <span class="tag">已上线</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 专题 -->
+      <div class="guide-category">
+        <div class="guide-cat-title"><span class="icon">📋</span> <span data-i18n="guide-cat-special">专题</span></div>
+        <div class="guide-grid">
+          <a href="guide-energy.html" class="guide-card">
+            <div class="guide-flag">⚡</div>
+            <h3 data-i18n="guide-energy-h">能效认证专题</h3>
+            <p data-i18n="guide-energy-p">各國能效要求汇总</p>
+            <span class="tag">已上线</span>
+          </a>
+          <a href="guide-wireless.html" class="guide-card">
+            <div class="guide-flag">📡</div>
+            <h3 data-i18n="guide-rf-h">无线射频专题</h3>
+            <p data-i18n="guide-rf-p">RF/Wireless 认证</p>
+            <span class="tag">已上线</span>
+          </a>
+          <a href="guide-chemical.html" class="guide-card">
+            <div class="guide-flag">🧪</div>
+            <h3 data-i18n="guide-chem-h">化学法规专题</h3>
+            <p data-i18n="guide-chem-p">RoHS/REACH/POPs</p>
+            <span class="tag">已上线</span>
+          </a>
+          <a href="guide-safety.html" class="guide-card">
+            <div class="guide-flag">🛡️</div>
+            <h3 data-i18n="guide-safety-h">安规认证专题</h3>
+            <p data-i18n="guide-safety-p">各国安全标准概览</p>
+            <span class="tag">已上线</span>
+          </a>
+          <a href="guide-un38.3.html" class="guide-card">
+            <div class="guide-flag">🔋</div>
+            <h3 data-i18n="guide-un38-h">UN38.3 认证</h3>
+            <p data-i18n="guide-un38-p">锂电池运输安全检测</p>
+            <span class="tag">已上线</span>
+          </a>
+        </div>
+      </div>
+
     </div>
   </section>
 
@@ -474,19 +633,15 @@
           <div class="text">宁波市通跃检测技术有限公司<br>Ningbo Tongyue Testing Technology Co., Ltd.</div>
         </div>
         <div class="contact-row">
-          <span class="icon">📧</span>
-          <div class="text"><a href="mailto:fhpsyz@163.com">fhpsyz@163.com</a></div>
-        </div>
-        <div class="contact-row">
           <span class="icon">👤</span>
           <div class="text" data-i18n="contact-person">
-            Mindy：13586872849（微信同号）
+            Mindy：mindy.liu@nbth-ha.com
           </div>
         </div>
         <div class="contact-row">
           <span class="icon">👤</span>
           <div class="text" data-i18n="contact-person2">
-            陆先生：13732168164（微信同号）
+            陆先生：yueping@nbty-ha.com
           </div>
         </div>
         <div class="contact-row">
@@ -495,7 +650,7 @@
         </div>
       </div>
       <div class="contact-note">
-        <p data-i18n="contact-note">如您有认证或检测需求，欢迎发送邮件至<br><strong>fhpsyz@163.com</strong><br><br>请说明产品类型、目标市场及认证要求，我们的顾问将在 1 个工作日内与您联系。</p>
+        <p data-i18n="contact-note">如您有认证或检测需求，欢迎联系 Mindy 或陆先生，请说明产品类型、目标市场及认证要求，我们的顾问将在 1 个工作日内与您联系。</p>
       </div>
     </div>
   </section>
@@ -561,18 +716,60 @@
         'adv4-p':          '与多国权威机构及实验室建立长期合作关系。',
         'guide-title':     '技术指南',
         'guide-sub':       '各国认证法规解读，助您快速了解合规要求',
+        'guide-cat-asia':  '亚洲',
+        'guide-cat-europe':'欧洲',
+        'guide-cat-americas':'美洲',
+        'guide-cat-special':'专题',
         'guide-kr-h':      '韩国认证',
-        'guide-kr-p':      'EMC / RF / Safety / 能效认证',
+        'guide-kr-p':      'KC / EMC / RF / 能效',
+        'guide-cn-h':      '中国CCC认证',
+        'guide-cn-p':      '强制性产品认证',
+        'guide-jp-h':      '日本认证',
+        'guide-jp-p':      'PSE / VCCI / MIC',
         'guide-in-h':      '印度认证',
+        'guide-in-p':      'BIS / WPC / TEC',
         'guide-id-h':      '印度尼西亚认证',
+        'guide-id-p':      'SNI / SDPPI / K3L',
+        'guide-tw-h':      '台湾认证',
+        'guide-tw-p':      'BSMI / NCC',
+        'guide-vn-h':      '越南认证',
+        'guide-vn-p':      'CR / MIC Vietnam',
+        'guide-ce-h':      'CE 认证',
+        'guide-ce-p':      '欧盟市场准入',
+        'guide-rohs-h':    'RoHS / REACH',
+        'guide-rohs-p':    '化学环保法规',
+        'guide-uk-h':      'UKCA 认证',
+        'guide-uk-p':      '英国市场准入',
+        'guide-eac-h':     'EAC 认证',
+        'guide-eac-p':     '欧亚经济联盟',
+        'guide-fcc-h':     'FCC 认证',
+        'guide-fcc-p':     '美国无线/EMC',
+        'guide-ul-h':      'UL 认证',
+        'guide-ul-p':      '美国安全认证',
+        'guide-ca-h':      'ISED 认证',
+        'guide-ca-p':      '加拿大无线认证',
+        'guide-mx-h':      'NOM 认证',
+        'guide-mx-p':      '墨西哥安规',
+        'guide-br-h':      'ANATEL 认证',
+        'guide-br-p':      '巴西无线认证',
+        'guide-energy-h':  '能效认证专题',
+        'guide-energy-p':  '各國能效要求汇总',
+        'guide-rf-h':      '无线射频专题',
+        'guide-rf-p':      'RF/Wireless 认证',
+        'guide-chem-h':    '化学法规专题',
+        'guide-chem-p':    'RoHS/REACH/POPs',
+        'guide-safety-h':  '安规认证专题',
+        'guide-safety-p':  '各国安全标准概览',
+        'guide-un38-h':   'UN38.3 认证',
+        'guide-un38-p':   '锂电池运输安全检测',
         'guide-coming':    '即将上线',
         'contact-title':   '联系我们',
         'contact-sub':     '欢迎随时来询，我们将尽快回复',
         'contact-info-h':  '联系方式',
         'contact-city':    '宁波市',
-        'contact-person':  'Mindy：13586872849（微信同号）',
-        'contact-person2': '陆先生：13732168164（微信同号）',
-        'contact-note':    '如您有认证或检测需求，欢迎发送邮件至<br><strong>fhpsyz@163.com</strong><br><br>请说明产品类型、目标市场及认证要求，我们的顾问将在 1 个工作日内与您联系。',
+        'contact-person':  'Mindy：mindy.liu@nbth-ha.com',
+        'contact-person2': '陆先生：yueping@nbty-ha.com',
+        'contact-note':    '如您有认证或检测需求，欢迎联系 Mindy 或陆先生，请说明产品类型、目标市场及认证要求，我们的顾问将在 1 个工作日内与您联系。',
         'footer-rights':   '&copy; 2026 通跃检测. 保留所有权利.',
       },
       en: {
@@ -612,18 +809,60 @@
         'adv4-p':          'Long-standing partnerships with accredited bodies and testing laboratories worldwide.',
         'guide-title':     'Tech Guide',
         'guide-sub':       'Country-by-country certification guides to help you navigate compliance requirements',
-        'guide-kr-h':      'Korea Certification',
-        'guide-kr-p':      'EMC / RF / Safety / Energy Efficiency',
-        'guide-in-h':      'India Certification',
-        'guide-id-h':      'Indonesia Certification',
+        'guide-cat-asia':  'Asia',
+        'guide-cat-europe':'Europe',
+        'guide-cat-americas':'Americas',
+        'guide-cat-special':'Special Topics',
+        'guide-kr-h':      'Korea KC',
+        'guide-kr-p':      'KC / EMC / RF / Energy',
+        'guide-cn-h':      'China CCC',
+        'guide-cn-p':      'Compulsory Certification',
+        'guide-jp-h':      'Japan',
+        'guide-jp-p':      'PSE / VCCI / MIC',
+        'guide-in-h':      'India',
+        'guide-in-p':      'BIS / WPC / TEC',
+        'guide-id-h':      'Indonesia',
+        'guide-id-p':      'SNI / SDPPI / K3L',
+        'guide-tw-h':      'Taiwan',
+        'guide-tw-p':      'BSMI / NCC',
+        'guide-vn-h':      'Vietnam',
+        'guide-vn-p':      'CR / MIC Vietnam',
+        'guide-ce-h':      'CE Marking',
+        'guide-ce-p':      'EU Market Access',
+        'guide-rohs-h':    'RoHS / REACH',
+        'guide-rohs-p':    'Chemical Compliance',
+        'guide-uk-h':      'UKCA',
+        'guide-uk-p':      'UK Market Access',
+        'guide-eac-h':     'EAC',
+        'guide-eac-p':     'Eurasian Union',
+        'guide-fcc-h':     'FCC',
+        'guide-fcc-p':     'US Wireless/EMC',
+        'guide-ul-h':      'UL',
+        'guide-ul-p':      'US Safety',
+        'guide-ca-h':      'ISED',
+        'guide-ca-p':      'Canada Wireless',
+        'guide-mx-h':      'NOM',
+        'guide-mx-p':      'Mexico Safety',
+        'guide-br-h':      'ANATEL',
+        'guide-br-p':      'Brazil Wireless',
+        'guide-energy-h':  'Energy Efficiency',
+        'guide-energy-p':  'Global EE Requirements',
+        'guide-rf-h':      'Wireless RF',
+        'guide-rf-p':      'RF/Wireless Cert.',
+        'guide-chem-h':    'Chemical Regs',
+        'guide-chem-p':    'RoHS/REACH/POPs',
+        'guide-safety-h':  'Safety Standards',
+        'guide-safety-p':  'Global Safety Overview',
+        'guide-un38-h':   'UN38.3',
+        'guide-un38-p':   'Lithium Battery Transport',
         'guide-coming':    'Coming Soon',
         'contact-title':   'Contact Us',
         'contact-sub':     "We\'d love to hear from you — we\'ll respond as soon as possible",
         'contact-info-h':  'Contact Information',
         'contact-city':    'Ningbo, China',
-        'contact-person':  'Mindy: +86 135-8687-2849 (WeChat)',
-        'contact-person2': 'Mr. Lu: +86 137-3216-8164 (WeChat)',
-        'contact-note':    'For certification or testing inquiries, please email<br><strong>fhpsyz@163.com</strong><br><br>Please specify your product type, target market, and certification requirements. Our consultants will respond within 1 business day.',
+        'contact-person':  'Mindy: mindy.liu@nbth-ha.com',
+        'contact-person2': 'Mr. Lu: yueping@nbty-ha.com',
+        'contact-note':    'For certification or testing inquiries, please contact Mindy or Mr. Lu. Please specify your product type, target market, and certification requirements. Our consultants will respond within 1 business day.',
         'footer-rights':   '&copy; 2026 Tongyue Testing. All Rights Reserved.',
       }
     };
