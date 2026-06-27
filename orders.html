@@ -2046,9 +2046,10 @@ async function loadLedger() {
 
     LEDGER_DATA = all.map(function(item) {
       var f = item.fields || {};
+      var rawDate = f['日期'] || '';
       return {
         id: item.record_id || item.id || '',
-        date: f['日期'] || '',
+        date: fd(rawDate),
         type: f['进出'] || f['类型'] || '',
         category: f['类目'] || '',
         amount: parseFloat(f['合同额'] || f['金额'] || 0) || 0,
