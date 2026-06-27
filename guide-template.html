@@ -101,6 +101,32 @@
       .page-hero h1 { font-size: 1.5rem; }
       .content { margin: 1.5rem auto 2.5rem; padding: 0 1rem; }
     }
+
+    /* 水印防伪 */
+    body::after {
+      content: "";
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 9999;
+      pointer-events: none;
+      background: url("logo.png") repeat;
+      background-size: 300px auto;
+      opacity: 0.04;
+    }
+
+    /* 水印防伪 */
+    body::after {
+      content: "";
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 9999;
+      pointer-events: none;
+      background: url("logo.png") repeat;
+      background-size: 300px auto;
+      opacity: 0.04;
+    }
   </style>
 </head>
 <body>

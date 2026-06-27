@@ -348,6 +348,19 @@
       .guide-card { width: 100%; }
       .adv-grid { grid-template-columns: 1fr; }
     }
+
+    /* 水印防伪 */
+    body::after {
+      content: "";
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 9999;
+      pointer-events: none;
+      background: url("logo.png") repeat;
+      background-size: 300px auto;
+      opacity: 0.04;
+    }
   </style>
 </head>
 <body>
