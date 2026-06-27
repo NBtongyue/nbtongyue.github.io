@@ -2046,10 +2046,22 @@ async function loadLedger() {
 
     LEDGER_DATA = all.map(function(item) {
       var f = item.fields || {};
-      var rawDate = f['日期'] || '';
+      var rawDate = f['日期'];
+      var dateStr = '';
+      if (rawDate) {
+        // 飞书返回毫秒时间戳（数字）或字符串
+        var ts = typeof rawDate === 'number' ? rawDate : parseInt(rawDate, 10);
+        if (!isNaN(ts) && ts > 0) {
+          var d = new Date(ts);
+          if (!isNaN(d.getTime())) {
+            dateStr = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+          }
+        }
+        if (!dateStr && typeof rawDate === 'string') dateStr = rawDate;
+      }
       return {
         id: item.record_id || item.id || '',
-        date: fd(rawDate),
+        date: dateStr,
         type: f['进出'] || f['类型'] || '',
         category: f['类目'] || '',
         amount: parseFloat(f['合同额'] || f['金额'] || 0) || 0,
