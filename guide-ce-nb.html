@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>欧盟NB公告机构CE认证申请全流程 — 宁波市通跃检测技术有限公司</title>
+  <meta name="description" content="欧盟NB公告机构CE认证详细指南：出口欧盟企业如何判断、准备和避坑？涵盖NB机构选择、申请全流程、常见误区与FAQ。">
+  <meta property="og:title" content="欧盟NB公告机构CE认证申请全流程 — 通跃检测">
+  <meta property="og:description" content="全面解读欧盟NB公告机构CE认证：公告机构选择、10步申请流程、常见误区与合规建议。">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="通跃检测技术指南">
+  <meta property="og:image" content="https://nbtongyue.github.io/share-image.png">
+  <meta property="og:image:width" content="600">
+  <meta property="og:image:height" content="315">
+  <meta property="og:url" content="https://nbtongyue.github.io/guide-ce-nb.html">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: "微软雅黑", "Helvetica Neue", Arial, sans-serif; color: #333; font-size: 16px; background: #f4f7fc; }
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: #fff; border-bottom: 1px solid #e0e0e0;
+      padding: 0 4rem; display: flex;
+      justify-content: space-between; align-items: center;
+      height: 68px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .nav-logo { display: flex; flex-direction: row; align-items: center; gap: 0.7rem; text-decoration: none; }
+    .nav-logo img { height: 46px; width: auto; display: block; }
+    .nav-logo-text { display: flex; flex-direction: column; line-height: 1.3; }
+    .nav-logo-text .cn { font-size: 1rem; font-weight: 700; color: #1b3a6b; }
+    .nav-logo-text .en { font-size: 0.62rem; color: #888; letter-spacing: 0.03em; }
+    .nav-right { display: flex; align-items: center; gap: 1.5rem; }
+    .nav-back { text-decoration: none; color: #1b3a6b; font-size: 0.9rem; font-weight: 600; }
+    .nav-back:hover { color: #2563a8; }
+    .lang-switcher { display: flex; align-items: center; gap: 0.35rem; }
+    .lang-btn { background: none; border: 1px solid #ccc; border-radius: 4px; padding: 0.2rem 0.65rem; font-size: 0.82rem; cursor: pointer; color: #666; font-family: inherit; transition: all 0.2s; }
+    .lang-btn.active { border-color: #1b3a6b; color: #1b3a6b; font-weight: 700; background: #f0f5ff; }
+    .lang-btn:hover { border-color: #1b3a6b; color: #1b3a6b; }
+    .lang-sep { color: #ddd; }
+
+    .page-hero {
+      background: linear-gradient(135deg, #1b3a6b 0%, #2563a8 100%);
+      color: #fff; text-align: center; padding: 4rem 2rem 3rem;
+    }
+    .page-hero .flag { font-size: 2.5rem; margin-bottom: 0.8rem; }
+    .page-hero h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .page-hero p { font-size: 1rem; color: rgba(255,255,255,0.75); }
+
+    .content { max-width: 860px; margin: 2.5rem auto 4rem; padding: 0 1.5rem; }
+
+    .intro-card {
+      background: #fff; border: 1px solid #dde4ef; border-radius: 10px;
+      padding: 1.5rem 1.8rem; margin-bottom: 2rem;
+    }
+    .intro-card h2 { font-size: 1.2rem; color: #1b3a6b; margin-bottom: 0.8rem; }
+    .intro-card p { font-size: 0.9rem; color: #555; line-height: 1.8; }
+
+    .accordion { border: 1px solid #dde4ef; border-radius: 8px; margin-bottom: 0.8rem; background: #fff; overflow: hidden; }
+    .accordion-header {
+      width: 100%; background: none; border: none; text-align: left;
+      padding: 1rem 1.2rem; font-size: 1rem; font-weight: 700; color: #1b3a6b;
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      font-family: inherit;
+    }
+    .accordion-header:hover { background: #f0f5ff; }
+    .accordion-arrow { transition: transform 0.25s; font-style: normal; }
+    .accordion.open .accordion-arrow { transform: rotate(180deg); }
+    .accordion-body { display: none; padding: 0 1.2rem 1.2rem; }
+    .accordion.open .accordion-body { display: block; }
+    .accordion-body p { font-size: 0.9rem; color: #444; line-height: 1.8; margin-bottom: 0.6rem; }
+    .accordion-body ul { padding-left: 1.2rem; margin-bottom: 0.6rem; }
+    .accordion-body ul li { font-size: 0.9rem; color: #444; line-height: 1.8; }
+    .accordion-body ol { padding-left: 1.2rem; margin-bottom: 0.6rem; }
+    .accordion-body ol li { font-size: 0.9rem; color: #444; line-height: 1.8; margin-bottom: 0.5rem; }
+    .accordion-body .note {
+      background: #fff8e1; border-left: 3px solid #f0c040;
+      padding: 0.7rem 1rem; border-radius: 0 6px 6px 0; margin: 0.8rem 0;
+      font-size: 0.88rem; color: #6b5a00;
+    }
+    .accordion-body .danger {
+      background: #fff0f0; border-left: 3px solid #e04040;
+      padding: 0.7rem 1rem; border-radius: 0 6px 6px 0; margin: 0.8rem 0;
+      font-size: 0.88rem; color: #8b0000;
+    }
+    .accordion-body h4 { font-size: 0.95rem; color: #1b3a6b; margin: 1rem 0 0.5rem; }
+    .accordion-body table {
+      width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-bottom: 1rem;
+    }
+    .accordion-body table th {
+      padding: 0.6rem; border: 1px solid #dde4ef; text-align: left;
+      background: #f0f5ff;
+    }
+    .accordion-body table td {
+      padding: 0.5rem; border: 1px solid #dde4ef;
+    }
+
+    .step-block {
+      border-left: 3px solid #1b3a6b;
+      padding: 0.6rem 1rem; margin: 0.8rem 0;
+      background: #f8faff;
+    }
+    .step-block strong { color: #1b3a6b; }
+
+    .cta-card {
+      background: #fff; border: 1px solid #dde4ef; border-radius: 10px;
+      padding: 1.5rem 1.8rem; margin-top: 2rem; text-align: center;
+    }
+    .cta-card h3 { font-size: 1.1rem; color: #1b3a6b; margin-bottom: 0.5rem; }
+    .cta-card p { font-size: 0.9rem; color: #555; line-height: 1.8; }
+    .cta-card .email { color: #2563a8; font-weight: 600; }
+
+    footer { background: #1b3a6b; color: rgba(255,255,255,0.65); text-align: center; padding: 2rem 1rem; font-size: 0.85rem; line-height: 1.8; }
+    footer strong { color: #fff; }
+
+    @media (max-width: 768px) {
+      nav { padding: 0 1.2rem; }
+      .page-hero { padding: 2.5rem 1.2rem 2rem; }
+      .page-hero h1 { font-size: 1.5rem; }
+      .content { margin: 1.5rem auto 2.5rem; padding: 0 1rem; }
+    }
+
+    /* 水印防伪 */
+    body::after {
+      content: "";
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 9999;
+      pointer-events: none;
+      background-image: url("logo.png");
+      background-repeat: repeat;
+      background-size: 180px auto;
+      opacity: 0.10;
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">
+      <img src="logo.png" alt="通跃检测" style="height:46px;width:auto;">
+      <div class="nav-logo-text">
+        <span class="cn">通跃检测</span>
+        <span class="en">TONGYUE TESTING</span>
+      </div>
+    </a>
+    <div class="nav-right">
+      <div class="lang-switcher">
+        <button class="lang-btn active" data-lang="zh" onclick="setLang('zh')">中</button>
+        <span class="lang-sep">|</span>
+        <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+      </div>
+      <a href="index.html" class="nav-back" data-i18n="back">← 返回首页</a>
+    </div>
+  </nav>
+
+  <div class="page-hero">
+    <div class="flag">🇪🇺</div>
+    <h1 data-i18n="hero-h1">欧盟NB公告机构CE认证申请全流程</h1>
+    <p data-i18n="hero-p">出口欧盟企业如何判断、准备和避坑？— 公告机构（Notified Body）CE合格评定指南</p>
+  </div>
+
+  <div class="content">
+
+    <!-- 简介 -->
+    <div class="intro-card">
+      <h2 data-i18n="intro-title">认证简介</h2>
+      <p data-i18n="intro-text">很多出口欧盟的企业在做CE认证时，都会遇到一个问题：我的产品到底是普通CE自我声明，还是必须找NB公告机构介入？CE标志本身不是"证书"，而是制造商声明产品符合欧盟相关法规要求后，允许产品进入欧盟市场的一种合规标志。对于部分低风险产品，企业可以通过自我评估、测试验证、编制技术文件并签署《欧盟符合性声明》（DoC）后加贴CE标志；但对于部分法规明确要求第三方介入的产品，则必须由欧盟认可的公告机构，也就是Notified Body，参与合格评定。因此，所谓"NB公告号CE证书"，更准确地说，是指由具备对应法规和产品范围授权的欧盟公告机构参与评估后，签发的合格评定文件或证书。</p>
+    </div>
+
+    <!-- 一、什么是NB公告机构 -->
+    <div class="accordion open">
+      <button class="accordion-header" onclick="this.closest('.accordion').classList.toggle('open')">
+        <span data-i18n="sec1-title">一、什么是NB公告机构？</span> <i class="accordion-arrow">▾</i>
+      </button>
+      <div class="accordion-body">
+        <p data-i18n="sec1-p1">NB是Notified Body的缩写，中文通常称为"公告机构"或"欧盟公告号机构"。</p>
+        <p data-i18n="sec1-p2">公告机构是由欧盟成员国指定，并通知欧盟委员会后，具备特定法规和产品范围合格评定资格的第三方机构。欧盟委员会会在官方NANDO数据库中公布这些公告机构的信息，包括机构名称、NB编号、授权法规范围和可评定的产品类别。</p>
+        <div class="danger" data-i18n="sec1-warn">⚠️ 需要特别注意：不是有NB编号的机构，就可以评估所有产品。企业在选择公告机构时，不仅要确认该机构是否真实存在，还要确认它是否被授权评估你所对应的法规、产品类别和合格评定模块。</div>
+      </div>
+    </div>
+
+    <!-- 二、哪些产品需要NB介入 -->
+    <div class="accordion">
+      <button class="accordion-header" onclick="this.closest('.accordion').classList.toggle('open')">
+        <span data-i18n="sec2-title">二、哪些产品可能需要NB公告机构介入？</span> <i class="accordion-arrow">▾</i>
+      </button>
+      <div class="accordion-body">
+        <p data-i18n="sec2-p1">并不是所有出口欧盟的产品都需要NB介入。是否需要公告机构参与，主要取决于以下三个因素：</p>
+        <ul>
+          <li data-i18n="sec2-factor1">产品适用的欧盟法规或指令；</li>
+          <li data-i18n="sec2-factor2">产品的风险等级或分类；</li>
+          <li data-i18n="sec2-factor3">所选合格评定模块是否要求第三方机构参与。</li>
+        </ul>
+        <p data-i18n="sec2-p2">常见可能需要NB介入的产品包括：</p>
+        <ul>
+          <li data-i18n="sec2-item1">医疗器械</li>
+          <li data-i18n="sec2-item2">压力设备</li>
+          <li data-i18n="sec2-item3">防爆产品</li>
+          <li data-i18n="sec2-item4">电梯及安全部件</li>
+          <li data-i18n="sec2-item5">燃气器具</li>
+          <li data-i18n="sec2-item6">部分机械设备</li>
+          <li data-i18n="sec2-item7">部分无线电设备</li>
+          <li data-i18n="sec2-item8">建筑产品</li>
+          <li data-i18n="sec2-item9">PPE个人防护用品</li>
+          <li data-i18n="sec2-item10">计量器具等</li>
+        </ul>
+        <div class="note" data-i18n="sec2-note">💡 以无线电设备RED指令为例：并不是所有无线产品都必须找NB。如果产品完整适用了欧盟协调标准，通常可以按制造商内部生产控制路径进行评估；但如果相关协调标准未完全适用、未覆盖或不存在，则可能需要公告机构参与特定项目的合格评定。企业在开始认证前，第一步不是问"能不能做NB证书"，而是要先判断：这个产品适用哪些法规？这些法规下是否必须NB介入？适用哪个合格评定模块？</div>
+      </div>
+    </div>
+
+    <!-- 三、普通CE vs NB参与的CE -->
+    <div class="accordion">
+      <button class="accordion-header" onclick="this.closest('.accordion').classList.toggle('open')">
+        <span data-i18n="sec3-title">三、普通CE自我声明与NB参与的CE有什么区别？</span> <i class="accordion-arrow">▾</i>
+      </button>
+      <div class="accordion-body">
+        <h4 data-i18n="sec3-sub1">1. 普通CE自我声明</h4>
+        <p data-i18n="sec3-p1">普通CE自我声明适用于法规允许制造商自行评估的产品。制造商需要完成以下工作：</p>
+        <ul>
+          <li data-i18n="sec3-self1">确认适用的欧盟法规和协调标准；</li>
+          <li data-i18n="sec3-self2">完成必要的测试或评估；</li>
+          <li data-i18n="sec3-self3">编制技术文件；</li>
+          <li data-i18n="sec3-self4">签署欧盟符合性声明DoC；</li>
+          <li data-i18n="sec3-self5">加贴CE标志；</li>
+          <li data-i18n="sec3-self6">承担产品投放欧盟市场后的合规责任。</li>
+        </ul>
+        <p data-i18n="sec3-self-summary">自我声明并不等于"什么都不用做"，而是制造商自己对产品合规性承担完整责任。</p>
+
+        <h4 data-i18n="sec3-sub2">2. NB公告机构参与的CE合格评定</h4>
+        <p data-i18n="sec3-p2">当法规要求第三方介入时，企业需要选择具备对应授权范围的公告机构，由公告机构参与产品设计、测试资料、技术文件、质量体系或生产控制等环节的评定。NB参与后，可能会签发相应证书或评定文件。具体文件名称取决于法规和合格评定模块，并不一定都叫"CE证书"。</p>
+
+        <h4 data-i18n="sec3-sub3">3. 两者的核心区别</h4>
+        <p data-i18n="sec3-diff1"><strong>普通CE自我声明的核心：</strong>制造商自行评估、自行声明、自行承担责任。</p>
+        <p data-i18n="sec3-diff2"><strong>NB参与的CE合格评定的核心：</strong>法规要求第三方机构参与，公告机构按照授权范围进行独立评估，制造商仍需签署DoC并承担最终合规责任。</p>
+      </div>
+    </div>
+
+    <!-- 四、NB公告机构CE申请全流程（10步） -->
+    <div class="accordion">
+      <button class="accordion-header" onclick="this.closest('.accordion').classList.toggle('open')">
+        <span data-i18n="sec4-title">四、NB公告机构CE申请全流程（10步）</span> <i class="accordion-arrow">▾</i>
+      </button>
+      <div class="accordion-body">
+
+        <div class="step-block">
+          <strong data-i18n="sec4-step1-title">第一步：产品分类，确认适用欧盟法规</strong>
+          <p data-i18n="sec4-step1-text">这是整个认证工作的基础。企业需要根据产品功能、用途、供电方式、无线功能、机械结构、使用场景等信息，判断产品适用哪些欧盟法规。常见法规包括：LVD低电压指令、EMC电磁兼容指令、RED无线电设备指令、Machinery机械法规、Medical Device Regulation医疗器械法规、Pressure Equipment Directive压力设备指令、ATEX防爆指令、Gas Appliances Regulation燃气器具法规、RoHS指令、GPSR通用产品安全法规等。如果一个产品同时具备多个功能，往往需要同时满足多项法规要求。</p>
+        </div>
+
+        <div class="step-block">
+          <strong data-i18n="sec4-step2-title">第二步：判断是否必须NB介入</strong>
+          <p data-i18n="sec4-step2-text">确认适用法规后，需要进一步判断该法规下是否必须由公告机构参与。判断逻辑：法规是否允许制造商自我评估 → 产品是否属于高风险或特殊类别 → 是否完整适用了欧盟协调标准 → 是否存在标准未覆盖、不适用或偏离 → 合格评定模块是否要求公告机构参与。如果法规并不要求NB介入，企业强行办理所谓"NB证书"，可能并不能增加合规性；如果法规明确要求NB介入，而企业只做了普通测试报告和自我声明，则可能存在清关、市场监管或平台审核风险。</p>
+        </div>
+
+        <div class="step-block">
+          <strong data-i18n="sec4-step3-title">第三步：筛选合适的欧盟公告机构</strong>
+          <p data-i18n="sec4-step3-text">选择NB机构时，不能只看报价和周期，更要核验资质。建议重点核查：该机构是否能在欧盟NANDO官方数据库中查询到、NB编号是否真实有效、授权范围是否覆盖对应法规和产品类别、是否覆盖所需合格评定模块、证书签发主体是否与NANDO数据库中的机构信息一致。</p>
+          <div class="note" data-i18n="sec4-step3-note">📌 特别提醒：NANDO数据库主要用于查询公告机构资质，不是所有证书都能在NANDO上直接查询。不要把"机构可查"和"证书可查"混为一谈。企业重点应核验公告机构本身的合法性、授权范围和证书签发路径。</div>
+        </div>
+
+        <div class="step-block">
+          <strong data-i18n="sec4-step4-title">第四步：准备技术文件和申请资料</strong>
+          <p data-i18n="sec4-step4-text">NB评审不是只看一份测试报告，而是要看完整的产品合规证据链。常见资料包括：企业营业执照或注册信息、申请表、产品名称/型号/系列差异说明、产品规格书、使用说明书、铭牌和警示标签、产品照片、爆炸图/结构图、电路原理图/PCB Layout、关键元器件清单、BOM表、关键元器件证书、风险评估报告、适用标准清单、测试报告、软件或固件版本说明、生产工艺流程、质量控制计划、包装资料、欧盟授权代表信息（如适用）、欧盟符合性声明DoC草稿。</p>
+        </div>
+
+        <div class="step-block">
+          <strong data-i18n="sec4-step5-title">第五步：立项评估，确定认证方案</strong>
+          <p data-i18n="sec4-step5-text">资料初步确认后，公告机构或认证服务方会根据产品情况制定认证方案，包括：适用法规、适用标准、合格评定模块、是否需要送样测试、是否需要工厂审核或质量体系审核、技术文件评审范围、预计周期和费用、证书类型和签发条件。企业在这个阶段要重点确认：最终签发的是什么文件？依据哪项法规？适用哪些型号？是否覆盖目标销售场景？不要只看"能出证"，更要看证书是否真正匹配产品和法规要求。</p>
+        </div>
+
+        <div class="step-block">
+          <strong data-i18n="sec4-step6-title">第六步：产品测试与技术文件审核</strong>
+          <p data-i18n="sec4-step6-text">根据认证方案，产品可能需要进行实验室测试，也可能需要进行设计评审、技术文件审核、质量体系审核或现场评估。常见测试和评估内容包括：安全测试、EMC电磁兼容测试、RF射频测试、机械安全评估、材料和环保符合性评估、风险分析、标签和说明书审核、软件功能或网络安全要求评估、生产一致性或质量体系审核。公告机构的职责是按照法规要求进行合格评定，不同法规和模块下NB参与深度会不同。</p>
+        </div>
+
+        <div class="step-block">
+          <strong data-i18n="sec4-step7-title">第七步：问题整改与复核</strong>
+          <p data-i18n="sec4-step7-text">如果测试或文件审核过程中发现不符合项，机构通常会提出问题清单，企业需要进行整改。常见整改内容包括：产品结构调整、电路设计优化、增加安全保护措施、修改铭牌和警示语、补充说明书安全信息、补充关键元器件证书、更新风险评估、重新测试部分项目、完善技术文件。整改完成后，机构会进行复核。只有测试结果、技术文件和合格评定要求全部满足后，才会进入最终审核阶段。</p>
+        </div>
+
+        <div class="step-block">
+          <strong data-i18n="sec4-step8-title">第八步：公告机构终审并签发相关证书或评定文件</strong>
+          <p data-i18n="sec4-step8-text">当产品测试、技术文件和必要的审核均满足要求后，公告机构会进行最终审核，并根据适用法规和模块签发对应文件。常见文件可能包括：EU-Type Examination Certificate、Quality Assurance Certificate、Design Examination Certificate、Conformity Assessment Certificate等。企业应重点确认文件中的以下信息：制造商名称和地址、产品名称和型号、适用法规、适用标准、NB机构名称和编号、证书编号、签发日期、有效期或维持条件、附件和限制条件、型号覆盖范围。如果证书只覆盖某个型号或某个配置，企业不能擅自扩展到其他型号使用。</p>
+        </div>
+
+        <div class="step-block">
+          <strong data-i18n="sec4-step9-title">第九步：签署欧盟符合性声明DoC并加贴CE标志</strong>
+          <p data-i18n="sec4-step9-text">即使公告机构已经参与评定，制造商仍然需要签署欧盟符合性声明DoC。DoC是制造商声明产品符合欧盟法规要求的法律文件，也是CE合规体系中的核心文件之一。DoC通常应包括：制造商名称和地址、产品名称/型号/批次或序列号、声明内容、适用法规和标准、公告机构信息（如适用）、签署人姓名/职务/签字和日期。随后，企业才能按法规要求在产品、铭牌、包装或说明书上加贴CE标志。如果公告机构参与了生产控制阶段，部分法规和模块可能要求在CE标志旁标注NB编号；但并不是所有NB参与的情况都需要在产品CE标志旁加NB编号，具体要看适用法规和合格评定模块。</p>
+        </div>
+
+        <div class="step-block">
+          <strong data-i18n="sec4-step10-title">第十步：技术文件归档和上市后维护</strong>
+          <p data-i18n="sec4-step10-text">产品取得相关证书或完成CE合规后，企业仍需要持续维护合规状态。技术文件和DoC通常需要在产品投放市场后按法规要求保存，以便应对欧盟海关、市场监管机构、客户或平台抽查。企业应重点关注：技术文件归档、DoC归档、证书有效期管理、标准更新跟踪、产品设计变更评估、关键元器件变更评估、供应商变更评估、客诉和市场不良反馈跟踪、必要时通知公告机构重新评估。如果产品结构、关键元器件、软件、无线模块、适用标准或生产工艺发生重大变化，原有测试报告或证书可能不再适用，需要重新评估甚至重新认证。</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 五、企业常见误区 -->
+    <div class="accordion">
+      <button class="accordion-header" onclick="this.closest('.accordion').classList.toggle('open')">
+        <span data-i18n="sec5-title">五、企业常见误区</span> <i class="accordion-arrow">▾</i>
+      </button>
+      <div class="accordion-body">
+        <h4 data-i18n="sec5-m1-title">误区一：认为所有CE都需要证书</h4>
+        <p data-i18n="sec5-m1-text">CE的核心不是"证书"，而是产品符合欧盟法规要求。很多低风险产品并不需要第三方机构发证，制造商完成合规评估后签署DoC即可。</p>
+
+        <h4 data-i18n="sec5-m2-title">误区二：认为有测试报告就等于CE合规</h4>
+        <p data-i18n="sec5-m2-text">测试报告只是合规证据的一部分。完整CE合规还需要适用法规判断、标准选择、风险评估、技术文件、DoC、标签说明书、生产一致性控制等。</p>
+
+        <h4 data-i18n="sec5-m3-title">误区三：认为NB编号越大越权威</h4>
+        <p data-i18n="sec5-m3-text">NB编号只是公告机构的识别编号，不代表机构等级高低。真正要看的是该机构是否具备对应法规、产品类别和模块的授权范围。</p>
+
+        <h4 data-i18n="sec5-m4-title">误区四：认为NB证书可以替代DoC</h4>
+        <p data-i18n="sec5-m4-text">不能替代。NB证书或评定文件是合格评定证据，DoC是制造商的法律声明。即使NB已经参与，制造商或其授权代表仍需签署DoC。</p>
+
+        <h4 data-i18n="sec5-m5-title">误区五：认为证书长期有效，产品可以随便改</h4>
+        <p data-i18n="sec5-m5-text">如果产品设计、关键元器件、软件版本、材料、结构、生产场地或适用标准发生变化，企业需要评估是否影响原有合规结论。必要时应通知实验室或公告机构重新评估。</p>
+      </div>
+    </div>
+
+    <!-- 六、常见问题解答 -->
+    <div class="accordion">
+      <button class="accordion-header" onclick="this.closest('.accordion').classList.toggle('open')">
+        <span data-i18n="sec6-title">六、常见问题解答</span> <i class="accordion-arrow">▾</i>
+      </button>
+      <div class="accordion-body">
+        <h4 data-i18n="sec6-q1">Q1：普通CE和NB参与的CE有什么区别？</h4>
+        <p data-i18n="sec6-a1">普通CE通常是制造商基于测试和技术文件进行自我声明，适用于法规允许自评的产品。NB参与的CE合格评定则适用于法规要求第三方介入的产品或场景，由具备授权范围的公告机构参与审核或评估。</p>
+
+        <h4 data-i18n="sec6-q2">Q2：NB证书是不是一定比普通CE更权威？</h4>
+        <p data-i18n="sec6-a2">不能这样简单理解。如果法规不要求NB介入，企业完成自我声明路径就是合法合规的；如果法规要求NB介入，则必须按要求选择公告机构。关键不是"哪个更高级"，而是"是否符合法规规定的合格评定路径"。</p>
+
+        <h4 data-i18n="sec6-q3">Q3：NB机构如何查询？</h4>
+        <p data-i18n="sec6-a3">可以通过欧盟官方NANDO数据库查询公告机构信息，重点核对机构名称、NB编号、授权法规、产品类别和合格评定模块。欧盟官方NANDO系统用于公布公告机构信息。</p>
+
+        <h4 data-i18n="sec6-q4">Q4：认证周期一般多久？</h4>
+        <p data-i18n="sec6-a4">周期取决于产品复杂程度、适用法规、测试项目、资料完整性以及是否需要工厂审核或质量体系审核。普通电子产品可能几周内完成，复杂机械、医疗器械、防爆产品、压力设备等可能需要数月甚至更长时间。</p>
+
+        <h4 data-i18n="sec6-q5">Q5：证书是否长期有效？</h4>
+        <p data-i18n="sec6-a5">要看具体法规、证书类型和公告机构要求。有些证书有明确有效期，有些则与法规、标准、产品设计和生产一致性状态相关。只要法规标准更新、产品设计变更或关键物料变更影响合规性，就需要重新评估。</p>
+      </div>
+    </div>
+
+    <!-- 七、给出口企业的实用建议 -->
+    <div class="accordion">
+      <button class="accordion-header" onclick="this.closest('.accordion').classList.toggle('open')">
+        <span data-i18n="sec7-title">七、给出口企业的实用建议</span> <i class="accordion-arrow">▾</i>
+      </button>
+      <div class="accordion-body">
+        <p data-i18n="sec7-p1">企业在申请欧盟CE或NB公告机构认证前，建议先做一次完整的合规路径评估：</p>
+        <ol>
+          <li data-i18n="sec7-tip1">明确产品功能和目标市场；</li>
+          <li data-i18n="sec7-tip2">判断适用欧盟法规；</li>
+          <li data-i18n="sec7-tip3">确认是否必须NB介入；</li>
+          <li data-i18n="sec7-tip4">选择正确的协调标准；</li>
+          <li data-i18n="sec7-tip5">准备完整技术文件；</li>
+          <li data-i18n="sec7-tip6">核验公告机构授权范围；</li>
+          <li data-i18n="sec7-tip7">确认证书类型和覆盖型号；</li>
+          <li data-i18n="sec7-tip8">签署DoC并正确加贴CE标志；</li>
+          <li data-i18n="sec7-tip9">建立产品变更和证书维护机制。</li>
+        </ol>
+        <div class="note" data-i18n="sec7-summary">💡 CE合规不是简单"买一张证书"，而是一套从产品设计、测试验证、文件管理到上市后维护的完整合规体系。企业越早在项目开发阶段导入CE法规要求，后期整改成本越低，出口欧盟、平台审核和客户准入也会更加顺利。</div>
+      </div>
+    </div>
+
+    <!-- 朋友圈分享图 -->
+    <div class="cta-card" style="background:#f0f5ff; border-color:#1b3a6b;">
+      <h3 data-i18n="share-title">📱 微信朋友圈分享</h3>
+      <p data-i18n="share-text">下载下方长图，可直接在微信朋友圈发布完整内容，无需点击链接：</p>
+      <a href="ce-nb-long-image.png" download style="display:inline-block; margin-top:0.8rem; background:#1b3a6b; color:#fff; padding:0.6rem 1.5rem; border-radius:6px; text-decoration:none; font-weight:600; font-size:0.9rem;" data-i18n="share-btn">📥 下载朋友圈分享长图</a>
+    </div>
+
+    <!-- 咨询卡片 -->
+    <div class="cta-card">
+      <h3 data-i18n="cta-title">需要办理欧盟NB机构CE认证？</h3>
+      <p data-i18n="cta-text">通跃检测为您提供一站式NB机构CE认证服务：<br>👤 Mindy：mindy.liu@nbth-ha.com<br>👤 陆先生：yueping@nbty-ha.com</p>
+    </div>
+
+  </div>
+
+  <footer>
+    <p><strong>宁波市通跃检测技术有限公司</strong></p>
+    <p>Ningbo Tongyue Testing Technology Co., Ltd.</p>
+    <p style="margin-top:0.5rem" data-i18n="footer-rights">&copy; 2026 通跃检测. 保留所有权利.</p>
+  </footer>
+
+  <script>
+    const I18N = {
+      zh: {
+        'back':       '← 返回首页',
+        'hero-h1':    '欧盟NB公告机构CE认证申请全流程',
+        'hero-p':     '出口欧盟企业如何判断、准备和避坑？— 公告机构（Notified Body）CE合格评定指南',
+        'intro-title':'认证简介',
+        'intro-text': '很多出口欧盟的企业在做CE认证时，都会遇到一个问题：我的产品到底是普通CE自我声明，还是必须找NB公告机构介入？CE标志本身不是"证书"，而是制造商声明产品符合欧盟相关法规要求后，允许产品进入欧盟市场的一种合规标志。对于部分低风险产品，企业可以通过自我评估、测试验证、编制技术文件并签署《欧盟符合性声明》（DoC）后加贴CE标志；但对于部分法规明确要求第三方介入的产品，则必须由欧盟认可的公告机构，也就是Notified Body，参与合格评定。因此，所谓"NB公告号CE证书"，更准确地说，是指由具备对应法规和产品范围授权的欧盟公告机构参与评估后，签发的合格评定文件或证书。',
+
+        'sec1-title': '一、什么是NB公告机构？',
+        'sec1-p1':   'NB是Notified Body的缩写，中文通常称为"公告机构"或"欧盟公告号机构"。',
+        'sec1-p2':   '公告机构是由欧盟成员国指定，并通知欧盟委员会后，具备特定法规和产品范围合格评定资格的第三方机构。欧盟委员会会在官方NANDO数据库中公布这些公告机构的信息，包括机构名称、NB编号、授权法规范围和可评定的产品类别。',
+        'sec1-warn': '⚠️ 需要特别注意：不是有NB编号的机构，就可以评估所有产品。企业在选择公告机构时，不仅要确认该机构是否真实存在，还要确认它是否被授权评估你所对应的法规、产品类别和合格评定模块。',
+
+        'sec2-title': '二、哪些产品可能需要NB公告机构介入？',
+        'sec2-p1':   '并不是所有出口欧盟的产品都需要NB介入。是否需要公告机构参与，主要取决于以下三个因素：',
+        'sec2-factor1': '产品适用的欧盟法规或指令；',
+        'sec2-factor2': '产品的风险等级或分类；',
+        'sec2-factor3': '所选合格评定模块是否要求第三方机构参与。',
+        'sec2-p2':   '常见可能需要NB介入的产品包括：',
+        'sec2-item1': '医疗器械',
+        'sec2-item2': '压力设备',
+        'sec2-item3': '防爆产品',
+        'sec2-item4': '电梯及安全部件',
+        'sec2-item5': '燃气器具',
+        'sec2-item6': '部分机械设备',
+        'sec2-item7': '部分无线电设备',
+        'sec2-item8': '建筑产品',
+        'sec2-item9': 'PPE个人防护用品',
+        'sec2-item10': '计量器具等',
+        'sec2-note': '💡 以无线电设备RED指令为例：并不是所有无线产品都必须找NB。如果产品完整适用了欧盟协调标准，通常可以按制造商内部生产控制路径进行评估；但如果相关协调标准未完全适用、未覆盖或不存在，则可能需要公告机构参与特定项目的合格评定。企业在开始认证前，第一步不是问"能不能做NB证书"，而是要先判断：这个产品适用哪些法规？这些法规下是否必须NB介入？适用哪个合格评定模块？',
+
+        'sec3-title': '三、普通CE自我声明与NB参与的CE有什么区别？',
+        'sec3-sub1': '1. 普通CE自我声明',
+        'sec3-p1':   '普通CE自我声明适用于法规允许制造商自行评估的产品。制造商需要完成以下工作：',
+        'sec3-self1': '确认适用的欧盟法规和协调标准；',
+        'sec3-self2': '完成必要的测试或评估；',
+        'sec3-self3': '编制技术文件；',
+        'sec3-self4': '签署欧盟符合性声明DoC；',
+        'sec3-self5': '加贴CE标志；',
+        'sec3-self6': '承担产品投放欧盟市场后的合规责任。',
+        'sec3-self-summary': '自我声明并不等于"什么都不用做"，而是制造商自己对产品合规性承担完整责任。',
+        'sec3-sub2': '2. NB公告机构参与的CE合格评定',
+        'sec3-p2':   '当法规要求第三方介入时，企业需要选择具备对应授权范围的公告机构，由公告机构参与产品设计、测试资料、技术文件、质量体系或生产控制等环节的评定。NB参与后，可能会签发相应证书或评定文件。具体文件名称取决于法规和合格评定模块，并不一定都叫"CE证书"。',
+        'sec3-sub3': '3. 两者的核心区别',
+        'sec3-diff1': '<strong>普通CE自我声明的核心：</strong>制造商自行评估、自行声明、自行承担责任。',
+        'sec3-diff2': '<strong>NB参与的CE合格评定的核心：</strong>法规要求第三方机构参与，公告机构按照授权范围进行独立评估，制造商仍需签署DoC并承担最终合规责任。',
+
+        'sec4-title': '四、NB公告机构CE申请全流程（10步）',
+        'sec4-step1-title': '第一步：产品分类，确认适用欧盟法规',
+        'sec4-step1-text': '这是整个认证工作的基础。企业需要根据产品功能、用途、供电方式、无线功能、机械结构、使用场景等信息，判断产品适用哪些欧盟法规。常见法规包括：LVD低电压指令、EMC电磁兼容指令、RED无线电设备指令、Machinery机械法规、Medical Device Regulation医疗器械法规、Pressure Equipment Directive压力设备指令、ATEX防爆指令、Gas Appliances Regulation燃气器具法规、RoHS指令、GPSR通用产品安全法规等。如果一个产品同时具备多个功能，往往需要同时满足多项法规要求。',
+        'sec4-step2-title': '第二步：判断是否必须NB介入',
+        'sec4-step2-text': '确认适用法规后，需要进一步判断该法规下是否必须由公告机构参与。判断逻辑：法规是否允许制造商自我评估 → 产品是否属于高风险或特殊类别 → 是否完整适用了欧盟协调标准 → 是否存在标准未覆盖、不适用或偏离 → 合格评定模块是否要求公告机构参与。如果法规并不要求NB介入，企业强行办理所谓"NB证书"，可能并不能增加合规性；如果法规明确要求NB介入，而企业只做了普通测试报告和自我声明，则可能存在清关、市场监管或平台审核风险。',
+        'sec4-step3-title': '第三步：筛选合适的欧盟公告机构',
+        'sec4-step3-text': '选择NB机构时，不能只看报价和周期，更要核验资质。建议重点核查：该机构是否能在欧盟NANDO官方数据库中查询到、NB编号是否真实有效、授权范围是否覆盖对应法规和产品类别、是否覆盖所需合格评定模块、证书签发主体是否与NANDO数据库中的机构信息一致。',
+        'sec4-step3-note': '📌 特别提醒：NANDO数据库主要用于查询公告机构资质，不是所有证书都能在NANDO上直接查询。不要把"机构可查"和"证书可查"混为一谈。企业重点应核验公告机构本身的合法性、授权范围和证书签发路径。',
+        'sec4-step4-title': '第四步：准备技术文件和申请资料',
+        'sec4-step4-text': 'NB评审不是只看一份测试报告，而是要看完整的产品合规证据链。常见资料包括：企业营业执照或注册信息、申请表、产品名称/型号/系列差异说明、产品规格书、使用说明书、铭牌和警示标签、产品照片、爆炸图/结构图、电路原理图/PCB Layout、关键元器件清单、BOM表、关键元器件证书、风险评估报告、适用标准清单、测试报告、软件或固件版本说明、生产工艺流程、质量控制计划、包装资料、欧盟授权代表信息（如适用）、欧盟符合性声明DoC草稿。',
+        'sec4-step5-title': '第五步：立项评估，确定认证方案',
+        'sec4-step5-text': '资料初步确认后，公告机构或认证服务方会根据产品情况制定认证方案，包括：适用法规、适用标准、合格评定模块、是否需要送样测试、是否需要工厂审核或质量体系审核、技术文件评审范围、预计周期和费用、证书类型和签发条件。企业在这个阶段要重点确认：最终签发的是什么文件？依据哪项法规？适用哪些型号？是否覆盖目标销售场景？不要只看"能出证"，更要看证书是否真正匹配产品和法规要求。',
+        'sec4-step6-title': '第六步：产品测试与技术文件审核',
+        'sec4-step6-text': '根据认证方案，产品可能需要进行实验室测试，也可能需要进行设计评审、技术文件审核、质量体系审核或现场评估。常见测试和评估内容包括：安全测试、EMC电磁兼容测试、RF射频测试、机械安全评估、材料和环保符合性评估、风险分析、标签和说明书审核、软件功能或网络安全要求评估、生产一致性或质量体系审核。公告机构的职责是按照法规要求进行合格评定，不同法规和模块下NB参与深度会不同。',
+        'sec4-step7-title': '第七步：问题整改与复核',
+        'sec4-step7-text': '如果测试或文件审核过程中发现不符合项，机构通常会提出问题清单，企业需要进行整改。常见整改内容包括：产品结构调整、电路设计优化、增加安全保护措施、修改铭牌和警示语、补充说明书安全信息、补充关键元器件证书、更新风险评估、重新测试部分项目、完善技术文件。整改完成后，机构会进行复核。只有测试结果、技术文件和合格评定要求全部满足后，才会进入最终审核阶段。',
+        'sec4-step8-title': '第八步：公告机构终审并签发相关证书或评定文件',
+        'sec4-step8-text': '当产品测试、技术文件和必要的审核均满足要求后，公告机构会进行最终审核，并根据适用法规和模块签发对应文件。常见文件可能包括：EU-Type Examination Certificate、Quality Assurance Certificate、Design Examination Certificate、Conformity Assessment Certificate等。企业应重点确认文件中的以下信息：制造商名称和地址、产品名称和型号、适用法规、适用标准、NB机构名称和编号、证书编号、签发日期、有效期或维持条件、附件和限制条件、型号覆盖范围。如果证书只覆盖某个型号或某个配置，企业不能擅自扩展到其他型号使用。',
+        'sec4-step9-title': '第九步：签署欧盟符合性声明DoC并加贴CE标志',
+        'sec4-step9-text': '即使公告机构已经参与评定，制造商仍然需要签署欧盟符合性声明DoC。DoC是制造商声明产品符合欧盟法规要求的法律文件，也是CE合规体系中的核心文件之一。DoC通常应包括：制造商名称和地址、产品名称/型号/批次或序列号、声明内容、适用法规和标准、公告机构信息（如适用）、签署人姓名/职务/签字和日期。随后，企业才能按法规要求在产品、铭牌、包装或说明书上加贴CE标志。如果公告机构参与了生产控制阶段，部分法规和模块可能要求在CE标志旁标注NB编号；但并不是所有NB参与的情况都需要在产品CE标志旁加NB编号，具体要看适用法规和合格评定模块。',
+        'sec4-step10-title': '第十步：技术文件归档和上市后维护',
+        'sec4-step10-text': '产品取得相关证书或完成CE合规后，企业仍需要持续维护合规状态。技术文件和DoC通常需要在产品投放市场后按法规要求保存，以便应对欧盟海关、市场监管机构、客户或平台抽查。企业应重点关注：技术文件归档、DoC归档、证书有效期管理、标准更新跟踪、产品设计变更评估、关键元器件变更评估、供应商变更评估、客诉和市场不良反馈跟踪、必要时通知公告机构重新评估。如果产品结构、关键元器件、软件、无线模块、适用标准或生产工艺发生重大变化，原有测试报告或证书可能不再适用，需要重新评估甚至重新认证。',
+
+        'sec5-title': '五、企业常见误区',
+        'sec5-m1-title': '误区一：认为所有CE都需要证书',
+        'sec5-m1-text': 'CE的核心不是"证书"，而是产品符合欧盟法规要求。很多低风险产品并不需要第三方机构发证，制造商完成合规评估后签署DoC即可。',
+        'sec5-m2-title': '误区二：认为有测试报告就等于CE合规',
+        'sec5-m2-text': '测试报告只是合规证据的一部分。完整CE合规还需要适用法规判断、标准选择、风险评估、技术文件、DoC、标签说明书、生产一致性控制等。',
+        'sec5-m3-title': '误区三：认为NB编号越大越权威',
+        'sec5-m3-text': 'NB编号只是公告机构的识别编号，不代表机构等级高低。真正要看的是该机构是否具备对应法规、产品类别和模块的授权范围。',
+        'sec5-m4-title': '误区四：认为NB证书可以替代DoC',
+        'sec5-m4-text': '不能替代。NB证书或评定文件是合格评定证据，DoC是制造商的法律声明。即使NB已经参与，制造商或其授权代表仍需签署DoC。',
+        'sec5-m5-title': '误区五：认为证书长期有效，产品可以随便改',
+        'sec5-m5-text': '如果产品设计、关键元器件、软件版本、材料、结构、生产场地或适用标准发生变化，企业需要评估是否影响原有合规结论。必要时应通知实验室或公告机构重新评估。',
+
+        'sec6-title': '六、常见问题解答',
+        'sec6-q1': 'Q1：普通CE和NB参与的CE有什么区别？',
+        'sec6-a1': '普通CE通常是制造商基于测试和技术文件进行自我声明，适用于法规允许自评的产品。NB参与的CE合格评定则适用于法规要求第三方介入的产品或场景，由具备授权范围的公告机构参与审核或评估。',
+        'sec6-q2': 'Q2：NB证书是不是一定比普通CE更权威？',
+        'sec6-a2': '不能这样简单理解。如果法规不要求NB介入，企业完成自我声明路径就是合法合规的；如果法规要求NB介入，则必须按要求选择公告机构。关键不是"哪个更高级"，而是"是否符合法规规定的合格评定路径"。',
+        'sec6-q3': 'Q3：NB机构如何查询？',
+        'sec6-a3': '可以通过欧盟官方NANDO数据库查询公告机构信息，重点核对机构名称、NB编号、授权法规、产品类别和合格评定模块。欧盟官方NANDO系统用于公布公告机构信息。',
+        'sec6-q4': 'Q4：认证周期一般多久？',
+        'sec6-a4': '周期取决于产品复杂程度、适用法规、测试项目、资料完整性以及是否需要工厂审核或质量体系审核。普通电子产品可能几周内完成，复杂机械、医疗器械、防爆产品、压力设备等可能需要数月甚至更长时间。',
+        'sec6-q5': 'Q5：证书是否长期有效？',
+        'sec6-a5': '要看具体法规、证书类型和公告机构要求。有些证书有明确有效期，有些则与法规、标准、产品设计和生产一致性状态相关。只要法规标准更新、产品设计变更或关键物料变更影响合规性，就需要重新评估。',
+
+        'sec7-title': '七、给出口企业的实用建议',
+        'sec7-p1': '企业在申请欧盟CE或NB公告机构认证前，建议先做一次完整的合规路径评估：',
+        'sec7-tip1': '明确产品功能和目标市场；',
+        'sec7-tip2': '判断适用欧盟法规；',
+        'sec7-tip3': '确认是否必须NB介入；',
+        'sec7-tip4': '选择正确的协调标准；',
+        'sec7-tip5': '准备完整技术文件；',
+        'sec7-tip6': '核验公告机构授权范围；',
+        'sec7-tip7': '确认证书类型和覆盖型号；',
+        'sec7-tip8': '签署DoC并正确加贴CE标志；',
+        'sec7-tip9': '建立产品变更和证书维护机制。',
+        'sec7-summary': '💡 CE合规不是简单"买一张证书"，而是一套从产品设计、测试验证、文件管理到上市后维护的完整合规体系。企业越早在项目开发阶段导入CE法规要求，后期整改成本越低，出口欧盟、平台审核和客户准入也会更加顺利。',
+
+        'share-title': '📱 微信朋友圈分享',
+        'share-text':  '下载下方长图，可直接在微信朋友圈发布完整内容，无需点击链接：',
+        'share-btn':   '📥 下载朋友圈分享长图',
+        'cta-title':  '需要办理欧盟NB机构CE认证？',
+        'cta-text':   '通跃检测为您提供一站式NB机构CE认证服务：<br>👤 Mindy：mindy.liu@nbth-ha.com<br>👤 陆先生：yueping@nbty-ha.com',
+        'footer-rights': '&copy; 2026 通跃检测. 保留所有权利.',
+      },
+      en: {
+        'back':       '← Back to Home',
+        'hero-h1':    'EU Notified Body CE Certification — Full Process Guide',
+        'hero-p':     'How to assess, prepare, and avoid pitfalls when exporting to the EU — Notified Body CE Conformity Assessment Guide',
+        'intro-title':'Overview',
+        'intro-text': 'Many companies exporting to the EU face a common question: does my product require a simple CE self-declaration, or must a Notified Body (NB) be involved? The CE mark itself is not a "certificate" — it is a conformity mark indicating that the manufacturer declares the product complies with applicable EU regulations. For lower-risk products, manufacturers can self-assess, test, compile technical documentation, and sign the EU Declaration of Conformity (DoC) before affixing the CE mark. However, for products where regulations explicitly require third-party involvement, an EU-recognized Notified Body must participate in the conformity assessment. Therefore, the so-called "NB CE certificate" more accurately refers to conformity assessment documents or certificates issued by an EU Notified Body authorized for the relevant regulations and product scope.',
+
+        'sec1-title': '1. What is a Notified Body (NB)?',
+        'sec1-p1':   'NB stands for Notified Body. It is a third-party conformity assessment organization designated by an EU Member State and notified to the European Commission.',
+        'sec1-p2':   'Notified Bodies are designated by EU Member States and notified to the European Commission. They possess conformity assessment qualifications for specific regulations and product scopes. The European Commission publishes NB information — including institution name, NB number, authorized regulations, and assessable product categories — in the official NANDO database.',
+        'sec1-warn': '⚠️ Important: An NB number does not mean the body can assess all products. When selecting a Notified Body, verify not only that it genuinely exists but also that it is authorized to assess your specific regulation, product category, and conformity assessment module.',
+
+        'sec2-title': '2. Which Products May Require NB Involvement?',
+        'sec2-p1':   'Not all products exported to the EU require NB involvement. Whether a Notified Body is needed depends on three factors:',
+        'sec2-factor1': 'Which EU regulations or directives apply to the product;',
+        'sec2-factor2': 'The product\'s risk level or classification;',
+        'sec2-factor3': 'Whether the chosen conformity assessment module requires third-party involvement.',
+        'sec2-p2':   'Common products that may require NB involvement include:',
+        'sec2-item1': 'Medical devices',
+        'sec2-item2': 'Pressure equipment',
+        'sec2-item3': 'ATEX / explosion-proof products',
+        'sec2-item4': 'Lifts and safety components',
+        'sec2-item5': 'Gas appliances',
+        'sec2-item6': 'Certain machinery',
+        'sec2-item7': 'Certain radio equipment',
+        'sec2-item8': 'Construction products',
+        'sec2-item9': 'PPE (Personal Protective Equipment)',
+        'sec2-item10': 'Measuring instruments, etc.',
+        'sec2-note': '💡 Example with RED (Radio Equipment Directive): Not all wireless products require NB involvement. If the product fully applies EU harmonized standards, manufacturers can typically follow the internal production control path. However, if relevant harmonized standards are not fully applied, not covered, or do not exist, NB involvement may be required for specific conformity assessment items. Before starting certification, the first question is not "can I get an NB certificate?" but rather: which regulations apply? Does the regulation mandate NB involvement? Which conformity assessment module applies?',
+
+        'sec3-title': '3. Differences Between CE Self-Declaration and NB-Involved CE',
+        'sec3-sub1': '1. CE Self-Declaration',
+        'sec3-p1':   'CE self-declaration applies to products where regulations permit manufacturer self-assessment. The manufacturer must complete the following:',
+        'sec3-self1': 'Identify applicable EU regulations and harmonized standards;',
+        'sec3-self2': 'Complete necessary testing or assessment;',
+        'sec3-self3': 'Compile technical documentation;',
+        'sec3-self4': 'Sign the EU Declaration of Conformity (DoC);',
+        'sec3-self5': 'Affix the CE mark;',
+        'sec3-self6': 'Assume full compliance responsibility after placing the product on the EU market.',
+        'sec3-self-summary': 'Self-declaration does not mean "doing nothing" — the manufacturer bears full responsibility for product compliance.',
+        'sec3-sub2': '2. NB-Involved CE Conformity Assessment',
+        'sec3-p2':   'When regulations require third-party involvement, companies must select a Notified Body with the appropriate authorization scope. The NB will participate in assessing product design, test data, technical documentation, quality systems, or production control. After NB involvement, corresponding certificates or assessment documents may be issued. The specific document name depends on the regulation and conformity assessment module — not all are called "CE certificates".',
+        'sec3-sub3': '3. Core Differences',
+        'sec3-diff1': '<strong>CE Self-Declaration core:</strong> Manufacturer self-assesses, self-declares, and self-assumes responsibility.',
+        'sec3-diff2': '<strong>NB-Involved CE core:</strong> Regulations require third-party involvement; the NB conducts independent assessment per its authorized scope; the manufacturer must still sign the DoC and assume ultimate compliance responsibility.',
+
+        'sec4-title': '4. NB CE Certification — Full 10-Step Process',
+        'sec4-step1-title': 'Step 1: Classify Product & Identify Applicable EU Regulations',
+        'sec4-step1-text': 'This is the foundation of the entire certification process. Based on product function, usage, power supply, wireless features, mechanical structure, and usage scenarios, determine which EU regulations apply. Common regulations include: LVD, EMC Directive, RED, Machinery Regulation, MDR, PED, ATEX, GAR, RoHS, GPSR, etc. Products with multiple functions often need to comply with multiple regulations simultaneously.',
+        'sec4-step2-title': 'Step 2: Determine Whether NB Involvement Is Mandatory',
+        'sec4-step2-text': 'After identifying applicable regulations, determine whether NB involvement is mandatory. Decision logic: Does the regulation permit self-assessment? → Is the product high-risk or a special category? → Are EU harmonized standards fully applied? → Are there gaps in standard coverage? → Does the conformity module require NB participation? If the regulation does not require NB involvement, forcing an "NB certificate" adds no compliance value; if the regulation mandates NB involvement and you only have basic test reports and self-declaration, you risk customs, market surveillance, and platform audit issues.',
+        'sec4-step3-title': 'Step 3: Select the Appropriate EU Notified Body',
+        'sec4-step3-text': 'When selecting an NB, verify qualifications beyond price and timeline. Key checks: Is the body listed in the EU NANDO database? Is the NB number valid? Does the authorization scope cover the applicable regulations and product categories? Does it cover the required conformity modules? Is the certificate issuer consistent with NANDO database information?',
+        'sec4-step3-note': '📌 Note: The NANDO database is primarily for verifying NB qualifications — not all certificates can be directly queried in NANDO. Do not confuse "body verifiability" with "certificate verifiability." Focus on verifying the NB\'s legitimacy, authorization scope, and certificate issuance pathway.',
+        'sec4-step4-title': 'Step 4: Prepare Technical Documentation & Application Materials',
+        'sec4-step4-text': 'NB review is not just about a test report — it requires a complete product compliance evidence chain. Common materials include: business license/registration, application form, product name/model/series differences, product specifications, user manual, nameplate and warning labels, product photos, exploded/structural diagrams, circuit schematics/PCB layout, critical component list, BOM, critical component certificates, risk assessment report, applicable standards list, test reports, software/firmware version description, production process flow, quality control plan, packaging information, EU Authorized Representative info (if applicable), and draft DoC.',
+        'sec4-step5-title': 'Step 5: Project Assessment & Certification Plan',
+        'sec4-step5-text': 'After preliminary document review, the NB or certification service provider will develop a certification plan covering: applicable regulations, applicable standards, conformity assessment module, whether sample testing is needed, whether factory or quality system audit is needed, technical documentation review scope, estimated timeline and cost, certificate type and issuance conditions. At this stage, confirm: What document will be issued? Under which regulation? Which models are covered? Does it cover the target sales scenario?',
+        'sec4-step6-title': 'Step 6: Product Testing & Technical Documentation Review',
+        'sec4-step6-text': 'Depending on the certification plan, the product may require laboratory testing, design review, technical documentation audit, quality system audit, or on-site assessment. Common testing and assessment areas: safety testing, EMC testing, RF testing, mechanical safety assessment, material and environmental compliance, risk analysis, label and manual review, software/cybersecurity assessment, production conformity/quality system audit. NB involvement depth varies by regulation and module.',
+        'sec4-step7-title': 'Step 7: Non-Conformance Correction & Re-Review',
+        'sec4-step7-text': 'If non-conformances are found during testing or document review, the body will issue a findings list requiring correction. Common corrections: product structure adjustment, circuit design optimization, adding safety protections, revising nameplate and warnings, supplementing manual safety info, providing missing component certificates, updating risk assessment, re-testing certain items, improving technical documentation. After corrections, the body conducts re-review. Only when all test results, documentation, and conformity requirements are satisfied does the process advance to final review.',
+        'sec4-step8-title': 'Step 8: NB Final Review & Certificate Issuance',
+        'sec4-step8-text': 'Once product testing, technical documentation, and required audits are all satisfactory, the NB conducts final review and issues corresponding documents per applicable regulations and modules. Common documents include: EU-Type Examination Certificate, Quality Assurance Certificate, Design Examination Certificate, Conformity Assessment Certificate, etc. Verify the following on the document: manufacturer name/address, product name/model, applicable regulations, applicable standards, NB name and number, certificate number, issue date, validity or maintenance conditions, annexes and restrictions, model coverage scope. If the certificate covers only a specific model or configuration, do not extend it to other models.',
+        'sec4-step9-title': 'Step 9: Sign DoC & Affix CE Mark',
+        'sec4-step9-text': 'Even with NB involvement, the manufacturer must still sign the EU Declaration of Conformity (DoC). The DoC is the manufacturer\'s legal declaration of compliance and a core document in the CE system. A DoC typically includes: manufacturer name/address, product name/model/batch or serial number, declaration content, applicable regulations and standards, NB information (if applicable), signatory name/title/signature/date. The CE mark may then be affixed per regulations. If the NB was involved in production control stages, some regulations/modules may require the NB number alongside the CE mark — but this is not required for all NB-involved cases; check the specific regulation and module.',
+        'sec4-step10-title': 'Step 10: Document Archiving & Post-Market Maintenance',
+        'sec4-step10-text': 'After obtaining certification or completing CE compliance, ongoing compliance maintenance is required. Technical documentation and DoC must be retained per regulatory requirements after market placement to address EU customs, market surveillance, customer, or platform audits. Key focus areas: document archiving, DoC archiving, certificate validity management, standards update tracking, product design change assessment, critical component change assessment, supplier change assessment, complaint and market feedback tracking, and notifying the NB for re-assessment when necessary. If product structure, critical components, software, wireless modules, applicable standards, or production processes undergo significant changes, existing test reports or certificates may no longer apply, requiring re-assessment or even re-certification.',
+
+        'sec5-title': '5. Common Misconceptions',
+        'sec5-m1-title': 'Misconception 1: All CE requires a certificate',
+        'sec5-m1-text': 'The core of CE is not a "certificate" but product compliance with EU regulations. Many low-risk products do not require third-party certification — manufacturers can sign the DoC after completing compliance assessment.',
+        'sec5-m2-title': 'Misconception 2: A test report equals CE compliance',
+        'sec5-m2-text': 'Test reports are only one part of compliance evidence. Complete CE compliance also requires applicable regulation identification, standard selection, risk assessment, technical documentation, DoC, labeling and manuals, and production conformity control.',
+        'sec5-m3-title': 'Misconception 3: Higher NB numbers mean more authority',
+        'sec5-m3-text': 'NB numbers are merely identification codes, not rankings. What matters is whether the body holds authorization for the relevant regulations, product categories, and modules.',
+        'sec5-m4-title': 'Misconception 4: NB certificates can replace the DoC',
+        'sec5-m4-text': 'They cannot. NB certificates or assessment documents are conformity assessment evidence; the DoC is the manufacturer\'s legal declaration. Even with NB involvement, the manufacturer or authorized representative must still sign the DoC.',
+        'sec5-m5-title': 'Misconception 5: Certificates are permanently valid and products can be freely modified',
+        'sec5-m5-text': 'If product design, critical components, software versions, materials, structure, production site, or applicable standards change, the company must assess whether existing compliance conclusions are affected. Notify the lab or NB for re-assessment when necessary.',
+
+        'sec6-title': '6. Frequently Asked Questions',
+        'sec6-q1': 'Q1: What\'s the difference between regular CE and NB-involved CE?',
+        'sec6-a1': 'Regular CE typically involves manufacturer self-declaration based on testing and technical documentation, applicable to products where regulations permit self-assessment. NB-involved CE conformity assessment applies to products or scenarios where regulations require third-party involvement, with an authorized NB participating in review or assessment.',
+        'sec6-q2': 'Q2: Is an NB certificate always more authoritative than regular CE?',
+        'sec6-a2': 'Not necessarily. If regulations do not require NB involvement, the self-declaration path is fully legal and compliant. If regulations require NB involvement, you must engage a Notified Body per requirements. The key is not "which is higher-level" but "which conformity assessment path meets the regulatory requirements."',
+        'sec6-q3': 'Q3: How do I verify a Notified Body?',
+        'sec6-a3': 'Query the EU\'s official NANDO database for NB information, verifying the institution name, NB number, authorized regulations, product categories, and conformity assessment modules.',
+        'sec6-q4': 'Q4: How long does certification typically take?',
+        'sec6-a4': 'Timeline depends on product complexity, applicable regulations, testing scope, documentation completeness, and whether factory or quality system audits are required. Standard electronics may complete in weeks; complex machinery, medical devices, ATEX products, or pressure equipment may take months or longer.',
+        'sec6-q5': 'Q5: Are certificates permanently valid?',
+        'sec6-a5': 'It depends on the specific regulation, certificate type, and NB requirements. Some certificates have explicit validity periods; others are tied to the status of regulations, standards, product design, and production conformity. Whenever regulatory standards update, product design changes, or critical material changes affect compliance, re-assessment is required.',
+
+        'sec7-title': '7. Practical Recommendations for Exporters',
+        'sec7-p1': 'Before applying for EU CE or NB certification, conduct a complete compliance pathway assessment:',
+        'sec7-tip1': 'Clarify product functions and target markets;',
+        'sec7-tip2': 'Identify applicable EU regulations;',
+        'sec7-tip3': 'Confirm whether NB involvement is mandatory;',
+        'sec7-tip4': 'Select the correct harmonized standards;',
+        'sec7-tip5': 'Prepare complete technical documentation;',
+        'sec7-tip6': 'Verify the NB\'s authorization scope;',
+        'sec7-tip7': 'Confirm certificate type and model coverage;',
+        'sec7-tip8': 'Sign the DoC and correctly affix the CE mark;',
+        'sec7-tip9': 'Establish a product change and certificate maintenance mechanism.',
+        'sec7-summary': '💡 CE compliance is not simply "buying a certificate" — it is a complete compliance system spanning product design, testing and verification, document management, and post-market maintenance. The earlier CE regulatory requirements are integrated during product development, the lower the later correction costs, and the smoother the path to EU market entry, platform audits, and customer acceptance.',
+
+        'share-title': '📱 Share on WeChat Moments',
+        'share-text':  'Download the long image below to share the full content directly on WeChat Moments:',
+        'share-btn':   '📥 Download Share Image',
+        'cta-title':  'Need NB CE Certification?',
+        'cta-text':   'Tongyue Testing provides one-stop NB CE certification services:<br>👤 Mindy: mindy.liu@nbth-ha.com<br>👤 Mr. Lu: yueping@nbty-ha.com',
+        'footer-rights': '&copy; 2026 Tongyue Testing. All Rights Reserved.',
+      }
+    };
+
+    function setLang(lang) {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (I18N[lang] && I18N[lang][key] !== undefined) el.innerHTML = I18N[lang][key];
+      });
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+      });
+      localStorage.setItem('lang', lang);
+    }
+
+    (function() {
+      const saved = localStorage.getItem('lang') || 'zh';
+      if (saved === 'en') setLang('en');
+    })();
+  </script>
+
+</body>
+</html>
