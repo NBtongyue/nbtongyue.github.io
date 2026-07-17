@@ -715,6 +715,7 @@ function applyFilters(sysKey) {
 
   sys.filtered = sys.records.filter(r => {
     if (r.status === '已作废') return false;
+    if (r.status === '已交付') return false;
 
     if (qLower && ![r.no, r.client, r.proj].some(v => v.toLowerCase().includes(qLower)))
       return false;
@@ -906,7 +907,7 @@ function refreshFilterDropdowns(sysKey) {
   if (!el) return;
   const cur = el.value;
   const names = [...new Set(sys.records
-    .filter(r => r.status !== '已作废' && r.client)
+    .filter(r => r.status !== '已作废' && r.status !== '已交付' && r.client)
     .map(r => r.client))]
     .sort();
   el.innerHTML = `<option value="">全部${sys.clientLabel}</option>` +
