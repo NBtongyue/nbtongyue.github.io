@@ -335,6 +335,7 @@
   <button class="tab-btn"        id="tab-btn-lab"  onclick="switchTab('lab')">实验室分包订单</button>
   <button class="tab-btn"        id="tab-btn-finance" onclick="switchTab('finance')">财务统计</button>
   <button class="tab-btn"        id="tab-btn-ledger" onclick="switchTab('ledger')">账本统计</button>
+  <button class="tab-btn"        id="tab-btn-done" onclick="switchTab('done')">已交付</button>
   <button class="tab-btn"        id="tab-btn-void" onclick="switchTab('void')">已作废</button>
 </nav>
 
@@ -342,6 +343,7 @@
 <div id="panel-lab"  class="tab-panel"></div>
 <div id="panel-finance" class="tab-panel"></div>
 <div id="panel-ledger" class="tab-panel"></div>
+<div id="panel-done" class="tab-panel"></div>
 <div id="panel-void" class="tab-panel"></div>
 <div id="debug-info" style="display:none;position:fixed;bottom:0;right:0;background:#ffeb3b;color:#333;padding:4px 8px;font-size:11px;z-index:9999;font-family:monospace;max-width:400px;word-break:break-all;"></div>
 
@@ -954,6 +956,13 @@ function resetFilters(sysKey) {
     });
     var s = document.getElementById('fin-search'); if (s) s.value = '';
     renderFinance();
+  } else if (sysKey === 'done') {
+    ['done-f-date-from','done-f-date-to','done-f-amount-min','done-f-amount-max'].forEach(function(id) {
+      var el = document.getElementById(id); if (el) el.value = '';
+    });
+    var n = document.getElementById('done-f-name'); if (n) n.selectedIndex = 0;
+    var s = document.getElementById('done-search'); if (s) s.value = '';
+    renderDoneFiltered();
   } else if (sysKey === 'void') {
     ['void-f-date-from','void-f-date-to','void-f-amount-min','void-f-amount-max'].forEach(function(id) {
       var el = document.getElementById(id); if (el) el.value = '';
@@ -1411,7 +1420,7 @@ function today() { return new Date().toISOString().slice(0, 10); }
 // ════════════════════════════════════════════════════════════
 function switchTab(sysKey) {
   if (sysKey === 'finance') {
-    ['cert','lab','ledger','void'].forEach(k => {
+    ['cert','lab','ledger','done','void'].forEach(k => {
       document.getElementById('panel-' + k).classList.remove('active');
       document.getElementById('tab-btn-' + k).classList.remove('active');
     });
@@ -1423,7 +1432,7 @@ function switchTab(sysKey) {
     return;
   }
   if (sysKey === 'ledger') {
-    ['cert','lab','finance','void'].forEach(k => {
+    ['cert','lab','finance','done','void'].forEach(k => {
       document.getElementById('panel-' + k).classList.remove('active');
       document.getElementById('tab-btn-' + k).classList.remove('active');
     });
@@ -1437,6 +1446,18 @@ function switchTab(sysKey) {
       debug('ledger switch error: ' + e.message);
       document.getElementById('panel-ledger').innerHTML = '<main><div class="state-msg" style="color:#dc2626;">初始化失败：' + e.message + '</div></main>';
     }
+    return;
+  }
+  if (sysKey === 'done') {
+    ['cert','lab','finance','ledger','void'].forEach(k => {
+      document.getElementById('panel-' + k).classList.remove('active');
+      document.getElementById('tab-btn-' + k).classList.remove('active');
+    });
+    document.getElementById('panel-done').classList.add('active');
+    document.getElementById('tab-btn-done').classList.add('active');
+    document.getElementById('h-tab-title').textContent = '已交付订单';
+    if (!window._doneBuilt) { buildDonePanel(); window._doneBuilt = true; }
+    loadDone();
     return;
   }
   if (sysKey === 'void') {
@@ -1459,6 +1480,8 @@ function switchTab(sysKey) {
   document.getElementById('tab-btn-finance').classList.remove('active');
   document.getElementById('panel-ledger').classList.remove('active');
   document.getElementById('tab-btn-ledger').classList.remove('active');
+  document.getElementById('panel-done').classList.remove('active');
+  document.getElementById('tab-btn-done').classList.remove('active');
   document.getElementById('panel-void').classList.remove('active');
   document.getElementById('tab-btn-void').classList.remove('active');
   document.getElementById('h-tab-title').textContent = SYSTEMS[sysKey].name;
@@ -1814,6 +1837,203 @@ async function saveFinanceEdit(recordId) {
   }
 }
 
+
+// ════════════════════════════════════════════════════════════
+//  已交付订单
+// ════════════════════════════════════════════════════════════
+function buildDoneFilterBarHTML() {
+  return `<div class="filter-bar" id="done-filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">提交日期</span>
+      <div class="filter-range">
+        <input type="date" class="filter-input" id="done-f-date-from" onchange="renderDoneFiltered()">
+        <span>~</span>
+        <input type="date" class="filter-input" id="done-f-date-to" onchange="renderDoneFiltered()">
+      </div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">合同额</span>
+      <div class="filter-range">
+        <input type="number" class="filter-input" id="done-f-amount-min" placeholder="最低" onchange="renderDoneFiltered()">
+        <span>~</span>
+        <input type="number" class="filter-input" id="done-f-amount-max" placeholder="最高" onchange="renderDoneFiltered()">
+      </div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">客户/实验室</span>
+      <select class="filter-select" id="done-f-name" onchange="renderDoneFiltered()">
+        <option value="">全部</option>
+      </select>
+    </div>
+    <div class="filter-group filter-search">
+      <span class="filter-label">搜索</span>
+      <input class="filter-input" id="done-search" type="text"
+        placeholder="搜索订单编号、客户名称…" oninput="renderDoneFiltered()">
+    </div>
+    <button class="filter-reset" onclick="resetFilters('done')" title="清空所有筛选条件">✕ 重置</button>
+  </div>`;
+}
+
+function buildDonePanel() {
+  document.getElementById('panel-done').innerHTML = ''
+    + '<main>'
+    + '<div class="stats" id="done-stats"></div>'
+    + buildDoneFilterBarHTML()
+    + '<div class="controls">'
+    + '<button class="btn-refresh" onclick="loadDone()">↻ 刷新</button>'
+    + '</div>'
+    + '<div style="margin-bottom:1.2rem;">'
+    + '<h3 style="font-size:0.9rem;color:#1b3a6b;margin-bottom:0.5rem;padding-left:0.2rem;">认证订单 - 已交付</h3>'
+    + '<div class="table-wrap"><table>'
+    + '<thead><tr>'
+    + '<th>订单编号</th><th>客户名称</th><th>项目名称</th><th>认证类型</th>'
+    + '<th>合同额</th><th>信息费</th><th>实验室额</th><th>利润</th>'
+    + '<th>提交日期</th><th>预计完成日期</th><th>备注</th>'
+    + '</tr></thead>'
+    + '<tbody id="done-cert-tbody">'
+    + '<tr><td colspan="11" class="state-msg"><span class="spinner"></span>加载中…</td></tr>'
+    + '</tbody>'
+    + '</table></div>'
+    + '</div>'
+    + '<div>'
+    + '<h3 style="font-size:0.9rem;color:#1b3a6b;margin-bottom:0.5rem;padding-left:0.2rem;">实验室订单 - 已交付</h3>'
+    + '<div class="table-wrap"><table>'
+    + '<thead><tr>'
+    + '<th>订单编号</th><th>实验室名称</th><th>项目名称</th>'
+    + '<th>合同额</th><th>提交日期</th><th>预计完成日期</th><th>备注</th>'
+    + '</tr></thead>'
+    + '<tbody id="done-lab-tbody">'
+    + '<tr><td colspan="7" class="state-msg"><span class="spinner"></span>加载中…</td></tr>'
+    + '</tbody>'
+    + '</table></div>'
+    + '</div>'
+    + '</main>';
+}
+
+function refreshDoneFilterDropdowns() {
+  var el = document.getElementById('done-f-name');
+  if (!el) return;
+  var cur = el.value;
+  var certNames = (SYSTEMS.cert.records || [])
+    .filter(function(r) { return r.status === '已交付' && r.client; }).map(function(r) { return r.client; });
+  var labNames  = (SYSTEMS.lab.records || [])
+    .filter(function(r) { return r.status === '已交付' && r.client; }).map(function(r) { return r.client; });
+  var names = [].concat(certNames, labNames).filter(function(v, i, a) { return a.indexOf(v) === i; }).sort();
+  el.innerHTML = '<option value="">全部</option>' +
+    names.map(function(n) { return '<option value="' + escHtml(n) + '"' + (n === cur ? ' selected' : '') + '>' + escHtml(n) + '</option>'; }).join('');
+}
+
+function loadDone() {
+  var certSys = SYSTEMS.cert;
+  var labSys  = SYSTEMS.lab;
+  var needCert = !certSys.records || certSys.records.length === 0;
+  var needLab  = !labSys.records || labSys.records.length === 0;
+
+  function proceed() {
+    refreshDoneFilterDropdowns();
+    renderDoneFiltered();
+  }
+
+  var promises = [];
+  if (needCert) promises.push(loadData('cert'));
+  if (needLab)  promises.push(loadData('lab'));
+
+  if (promises.length > 0) {
+    Promise.all(promises).then(proceed).catch(function(err) {
+      debug('loadDone ERROR: ' + err.message);
+    });
+  } else {
+    proceed();
+  }
+}
+
+function renderDoneFiltered() {
+  var certSys = SYSTEMS.cert;
+  var labSys  = SYSTEMS.lab;
+
+  var q = (document.getElementById('done-search') || {}).value || '';
+  var qLower = q.trim().toLowerCase();
+  var dateFrom = (document.getElementById('done-f-date-from') || {}).value || '';
+  var dateTo   = (document.getElementById('done-f-date-to') || {}).value || '';
+  var amtMinEl = document.getElementById('done-f-amount-min');
+  var amtMaxEl = document.getElementById('done-f-amount-max');
+  var amtMin = amtMinEl && amtMinEl.value !== '' ? parseFloat(amtMinEl.value) : null;
+  var amtMax = amtMaxEl && amtMaxEl.value !== '' ? parseFloat(amtMaxEl.value) : null;
+  var nameVal = (document.getElementById('done-f-name') || {}).value || '';
+
+  function filterDone(list) {
+    return list.filter(function(r) {
+      if (r.status !== '已交付') return false;
+      if (qLower && ![r.no, r.client, r.proj].some(function(v) { return v.toLowerCase().indexOf(qLower) !== -1; })) return false;
+      if (dateFrom && r.start < dateFrom) return false;
+      if (dateTo   && r.start > dateTo)   return false;
+      if (amtMin !== null && !isNaN(amtMin) && (r.contract || 0) < amtMin) return false;
+      if (amtMax !== null && !isNaN(amtMax) && (r.contract || 0) > amtMax) return false;
+      if (nameVal && r.client !== nameVal) return false;
+      return true;
+    });
+  }
+
+  var certDone = filterDone(certSys.records);
+  var labDone  = filterDone(labSys.records);
+
+  var statsEl = document.getElementById('done-stats');
+  if (statsEl) {
+    var totalContract = certDone.reduce(function(s, r) { return s + (r.contract || 0); }, 0)
+      + labDone.reduce(function(s, r) { return s + (r.contract || 0); }, 0);
+    var totalInfoFee = certDone.reduce(function(s, r) { return s + (r.infoFee || 0); }, 0);
+    var totalLabFee = certDone.reduce(function(s, r) { return s + (r.labFee || 0); }, 0);
+    var totalProfit = totalContract - totalInfoFee - totalLabFee;
+    statsEl.innerHTML =
+      '<div class="stat-card"><div class="num">' + (certDone.length + labDone.length) + '</div><div class="lbl">已交付订单合计</div></div>' +
+      '<div class="stat-card"><div class="num">' + certDone.length + '</div><div class="lbl">认证已交付</div></div>' +
+      '<div class="stat-card"><div class="num">' + labDone.length + '</div><div class="lbl">实验室已交付</div></div>' +
+      '<div class="stat-card"><div class="num" style="color:#065f46;">¥' + totalProfit.toLocaleString('zh-CN', { minimumFractionDigits: 0 }) + '</div><div class="lbl">已交付利润合计</div></div>';
+  }
+
+  var certTbody = document.getElementById('done-cert-tbody');
+  if (certTbody) {
+    if (certDone.length === 0) {
+      certTbody.innerHTML = '<tr><td colspan="11" class="state-msg">暂无已交付的认证订单</td></tr>';
+    } else {
+      certTbody.innerHTML = certDone.map(function(r) {
+        var profit = (r.contract || 0) - (r.infoFee || 0) - (r.labFee || 0);
+        return '<tr>'
+          + '<td><strong>' + (r.no || '—') + '</strong></td>'
+          + '<td>' + (r.client || '—') + '</td>'
+          + '<td>' + (r.proj || '—') + '</td>'
+          + '<td>' + (r.tag ? '<span class="cert-tag">' + r.tag + '</span>' : '—') + '</td>'
+          + '<td class="amount-cell">' + fmtAmount(r.contract) + '</td>'
+          + '<td class="amount-cell">' + fmtAmount(r.infoFee) + '</td>'
+          + '<td class="amount-cell">' + fmtAmount(r.labFee) + '</td>'
+          + '<td>' + fmtProfit(r.contract, r.infoFee, r.labFee) + '</td>'
+          + '<td>' + (r.start || '—') + '</td>'
+          + '<td>' + (r.endFmt || '—') + '</td>'
+          + '<td style="color:#888;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escHtml(r.note || '') + '">' + (r.note || '—') + '</td>'
+          + '</tr>';
+      }).join('');
+    }
+  }
+
+  var labTbody = document.getElementById('done-lab-tbody');
+  if (labTbody) {
+    if (labDone.length === 0) {
+      labTbody.innerHTML = '<tr><td colspan="7" class="state-msg">暂无已交付的实验室订单</td></tr>';
+    } else {
+      labTbody.innerHTML = labDone.map(function(r) {
+        return '<tr>'
+          + '<td><strong>' + (r.no || '—') + '</strong></td>'
+          + '<td>' + (r.client || '—') + '</td>'
+          + '<td>' + (r.proj || '—') + '</td>'
+          + '<td class="amount-cell">' + fmtAmount(r.contract) + '</td>'
+          + '<td>' + (r.start || '—') + '</td>'
+          + '<td>' + (r.endFmt || '—') + '</td>'
+          + '<td style="color:#888;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escHtml(r.note || '') + '">' + (r.note || '—') + '</td>'
+          + '</tr>';
+      }).join('');
+    }
+  }
+}
 
 // ════════════════════════════════════════════════════════════
 //  已作废订单
