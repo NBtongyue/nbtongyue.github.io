@@ -2039,7 +2039,10 @@ function renderDoneFiltered() {
           + '<td>' + (r.start || '—') + '</td>'
           + '<td>' + (r.endFmt || '—') + '</td>'
           + '<td style="color:#888;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escHtml(r.note || '') + '">' + (r.note || '—') + '</td>'
-          + '<td><button class="btn-act btn-act-next" onclick="editDoneRow(\'cert\',\'' + r.id + '\')">编辑</button></td>'
+          + '<td><div style="display:flex;gap:4px;flex-wrap:wrap;">'
+          + '<button class="btn-act btn-act-next" onclick="editDoneRow(\'cert\',\'' + r.id + '\')">编辑</button>'
+          + '<button class="btn-act btn-act-del" onclick="voidDoneOrder(\'cert\',\'' + r.id + '\',\'' + (r.no || '') + '\')">作废</button>'
+          + '</div></td>'
           + '</tr>';
       }).join('');
     }
@@ -2074,7 +2077,10 @@ function renderDoneFiltered() {
           + '<td>' + (r.start || '—') + '</td>'
           + '<td>' + (r.endFmt || '—') + '</td>'
           + '<td style="color:#888;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escHtml(r.note || '') + '">' + (r.note || '—') + '</td>'
-          + '<td><button class="btn-act btn-act-next" onclick="editDoneRow(\'lab\',\'' + r.id + '\')">编辑</button></td>'
+          + '<td><div style="display:flex;gap:4px;flex-wrap:wrap;">'
+          + '<button class="btn-act btn-act-next" onclick="editDoneRow(\'lab\',\'' + r.id + '\')">编辑</button>'
+          + '<button class="btn-act btn-act-del" onclick="voidDoneOrder(\'lab\',\'' + r.id + '\',\'' + (r.no || '') + '\')">作废</button>'
+          + '</div></td>'
           + '</tr>';
       }).join('');
     }
@@ -2140,6 +2146,18 @@ async function saveDoneEdit(sysKey, recordId) {
     await loadData(sysKey);
     renderDoneFiltered();
   } catch (err) { alert(err.message); }
+}
+
+async function voidDoneOrder(sysKey, recordId, orderNo) {
+  if (!confirm('确认将订单 ' + orderNo + ' 标记为"已作废"？')) return;
+  var sys = SYSTEMS[sysKey];
+  try {
+    await updateRecord(sys.apiUrl, recordId, { [sys.F.status]: '已作废' });
+    await loadData(sysKey);
+    renderDoneFiltered();
+    renderStats(sysKey);
+    applyFilters(sysKey);
+  } catch (err) { alert('操作失败：' + err.message); }
 }
 
 // ════════════════════════════════════════════════════════════
