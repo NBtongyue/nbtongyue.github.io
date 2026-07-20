@@ -62,6 +62,31 @@
     .stat-card .lbl { font-size:0.76rem; color:#888; margin-top:0.2rem; }
     .stat-card.warn .num { color:#f59e0b; }
 
+    /* ── 财务分区标题 ── */
+    .finance-section {
+      margin: 1.2rem 0 0.6rem 0;
+      padding: 0.5rem 0.8rem;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .finance-section .section-icon { font-size: 1.1rem; }
+    .finance-section .section-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #1b3a6b;
+    }
+    .finance-section .section-count {
+      font-size: 0.76rem;
+      color: #888;
+      margin-left: 0.3rem;
+    }
+    .finance-section.paid .section-title { color: #16a34a; }
+    .finance-section.unpaid .section-title { color: #d97706; }
+
     /* ── 操作栏 ── */
     .controls {
       background:#fff; border-radius:8px; padding:0.5rem 0.8rem;
@@ -1578,6 +1603,13 @@ function buildFinancePanel() {
       <div class="controls">
         <button class="btn-refresh" onclick="loadFinance()">↻ 刷新</button>
       </div>
+      <!-- 未付清订单 -->
+      <div class="finance-section unpaid" id="fin-unpaid-header" style="display:none;">
+        <span class="section-icon">📋</span>
+        <span class="section-title">未付清订单</span>
+        <span class="section-count" id="fin-unpaid-count"></span>
+      </div>
+      <div class="stats stats-finance" id="fin-unpaid-stats"></div>
       <div class="table-wrap">
         <table>
           <thead><tr>
@@ -1590,6 +1622,28 @@ function buildFinancePanel() {
           </tr></thead>
           <tbody id="fin-tbody">
             <tr><td colspan="22" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- 已付清订单 -->
+      <div class="finance-section paid" id="fin-paid-header" style="display:none;">
+        <span class="section-icon">✅</span>
+        <span class="section-title">已付清订单</span>
+        <span class="section-count" id="fin-paid-count"></span>
+      </div>
+      <div class="stats stats-finance" id="fin-paid-stats"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>订单编号</th><th>客户名称</th>
+            <th>合同额</th><th>信息费</th><th>利润</th><th>首付款</th><th>二次付款</th><th>尾款</th>
+            <th>已付合计</th><th>待付金额</th><th>付款状态</th>
+            <th>实验室额</th><th>实验室首付</th><th>实验室二付</th><th>实验室尾款</th>
+            <th>实验室已付</th><th>实验室待付</th><th>实验室状态</th>
+            <th>客户发票额</th><th>实验室发票</th><th>信息费发票</th><th>操作</th>
+          </tr></thead>
+          <tbody id="fin-paid-tbody">
+            <tr><td colspan="22" class="state-msg">—</td></tr>
           </tbody>
         </table>
       </div>
@@ -1692,7 +1746,18 @@ function renderFinance() {
     return { r: r, client: client, lab: lab, infoFee: infoFee, profit: profit };
   });
 
-  // stats
+  // 拆分为已付清和未付清两组（客户已付清 = 已付清）
+  var unpaidRows = [];
+  var paidRows = [];
+  rows.forEach(function(row) {
+    if (row.client.remaining <= 0 && (row.r.contract || 0) > 0) {
+      paidRows.push(row);
+    } else {
+      unpaidRows.push(row);
+    }
+  });
+
+  // ── 顶部汇总统计（全部） ──
   var statsEl = document.getElementById('fin-stats');
   if (statsEl) {
     statsEl.innerHTML =
@@ -1709,14 +1774,19 @@ function renderFinance() {
       '<div class="stat-card"><div class="num">' + fmtAmount(totalInfoFeeInvoice) + '</div><div class="lbl">信息费发票</div></div>';
   }
 
-  // table
+  // ── 空数据 ──
   if (filtered.length === 0) {
-    document.getElementById('fin-tbody').innerHTML =
-      '<tr><td colspan="22" class="state-msg">暂无数据</td></tr>';
+    document.getElementById('fin-tbody').innerHTML = '<tr><td colspan="22" class="state-msg">暂无数据</td></tr>';
+    document.getElementById('fin-unpaid-stats').innerHTML = '';
+    document.getElementById('fin-unpaid-header').style.display = 'none';
+    document.getElementById('fin-paid-tbody').innerHTML = '<tr><td colspan="22" class="state-msg">—</td></tr>';
+    document.getElementById('fin-paid-stats').innerHTML = '';
+    document.getElementById('fin-paid-header').style.display = 'none';
     return;
   }
 
-  document.getElementById('fin-tbody').innerHTML = rows.map(function(row) {
+  // ── 辅助函数：渲染单行 ──
+  function renderRow(row) {
     var r = row.r, c = row.client, l = row.lab;
     var crColor = c.remaining > 0 ? 'color:#dc2626;font-weight:600;' : 'color:#16a34a;font-weight:600;';
     var lrColor = l.remaining > 0 ? 'color:#dc2626;font-weight:600;' : 'color:#16a34a;font-weight:600;';
@@ -1775,9 +1845,76 @@ function renderFinance() {
       '<td class="amount-cell">' + fmtAmount(r.infoFeeInvoice) + '</td>' +
       '<td><button class="btn-act btn-act-next" onclick="editFinanceRow(\'' + r.id + '\')">编辑</button></td>' +
       '</tr>';
-  }).join('');
-  var ft = document.querySelector('#panel-finance table');
-  if (ft) initResizableColumns(ft, { colWidths: FIN_COL_WIDTHS });
+  }
+
+  // ── 辅助函数：计算分组统计 ──
+  function calcGroupStats(groupRows) {
+    var s = { contract:0, infoFee:0, profit:0, clientPaid:0, clientRemain:0, lab:0, labPaid:0, labRemain:0, clientInvoice:0, labInvoice:0, infoFeeInvoice:0 };
+    groupRows.forEach(function(row) {
+      s.contract    += (row.r.contract || 0);
+      s.infoFee     += (row.infoFee || 0);
+      s.profit      += (row.profit || 0);
+      s.clientPaid  += (row.client.paid || 0);
+      s.clientRemain += (row.client.remaining || 0);
+      s.lab         += (row.r.labFee || 0);
+      s.labPaid     += (row.lab.paid || 0);
+      s.labRemain   += (row.lab.remaining || 0);
+      s.clientInvoice  += (row.r.clientInvoice || 0);
+      s.labInvoice     += (row.r.labInvoice || 0);
+      s.infoFeeInvoice += (row.r.infoFeeInvoice || 0);
+    });
+    return s;
+  }
+
+  function renderGroupStats(elId, s) {
+    var el = document.getElementById(elId);
+    if (!el) return;
+    el.innerHTML =
+      '<div class="stat-card"><div class="num">' + fmtAmount(s.contract) + '</div><div class="lbl">合同额</div></div>' +
+      '<div class="stat-card"><div class="num" style="color:#16a34a;">' + fmtAmount(s.clientPaid) + '</div><div class="lbl">客户已付</div></div>' +
+      '<div class="stat-card warn"><div class="num">' + fmtAmount(s.clientRemain) + '</div><div class="lbl">客户待付</div></div>' +
+      '<div class="stat-card"><div class="num">' + fmtAmount(s.lab) + '</div><div class="lbl">实验室额</div></div>' +
+      '<div class="stat-card"><div class="num" style="color:#16a34a;">' + fmtAmount(s.labPaid) + '</div><div class="lbl">实验室已付</div></div>' +
+      '<div class="stat-card warn"><div class="num">' + fmtAmount(s.labRemain) + '</div><div class="lbl">实验室待付</div></div>' +
+      '<div class="stat-card"><div class="num">' + fmtAmount(s.infoFee) + '</div><div class="lbl">信息费</div></div>' +
+      '<div class="stat-card"><div class="num" style="color:' + (s.profit >= 0 ? '#065f46' : '#dc2626') + ';">' + fmtAmount(s.profit) + '</div><div class="lbl">利润</div></div>';
+  }
+
+  // ── 渲染未付清订单 ──
+  var unpaidStats = calcGroupStats(unpaidRows);
+  var unpaidHeader = document.getElementById('fin-unpaid-header');
+  var unpaidCount = document.getElementById('fin-unpaid-count');
+  if (unpaidRows.length > 0) {
+    unpaidHeader.style.display = 'flex';
+    unpaidCount.textContent = '(' + unpaidRows.length + ' 条)';
+    renderGroupStats('fin-unpaid-stats', unpaidStats);
+    document.getElementById('fin-tbody').innerHTML = unpaidRows.map(renderRow).join('');
+  } else {
+    unpaidHeader.style.display = 'none';
+    document.getElementById('fin-unpaid-stats').innerHTML = '';
+    document.getElementById('fin-tbody').innerHTML = '<tr><td colspan="22" class="state-msg">全部已付清 ✅</td></tr>';
+  }
+
+  // ── 渲染已付清订单 ──
+  var paidStats = calcGroupStats(paidRows);
+  var paidHeader = document.getElementById('fin-paid-header');
+  var paidCount = document.getElementById('fin-paid-count');
+  if (paidRows.length > 0) {
+    paidHeader.style.display = 'flex';
+    paidCount.textContent = '(' + paidRows.length + ' 条)';
+    renderGroupStats('fin-paid-stats', paidStats);
+    document.getElementById('fin-paid-tbody').innerHTML = paidRows.map(renderRow).join('');
+  } else {
+    paidHeader.style.display = 'none';
+    document.getElementById('fin-paid-stats').innerHTML = '';
+    document.getElementById('fin-paid-tbody').innerHTML = '<tr><td colspan="22" class="state-msg">暂无已付清订单</td></tr>';
+  }
+
+  // 初始化所有表格的列宽
+  var tables = document.querySelectorAll('#panel-finance table');
+  tables.forEach(function(ft) {
+    initResizableColumns(ft, { colWidths: FIN_COL_WIDTHS });
+  });
 }
 
 function editFinanceRow(id) {
