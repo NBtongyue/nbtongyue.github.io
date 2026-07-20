@@ -716,6 +716,7 @@ function applyFilters(sysKey) {
   sys.filtered = sys.records.filter(r => {
     if (r.status === '已作废') return false;
     if (r.status === '已交付') return false;
+    if (r.status === '已完成') return false;
 
     if (qLower && ![r.no, r.client, r.proj].some(v => v.toLowerCase().includes(qLower)))
       return false;
@@ -907,7 +908,7 @@ function refreshFilterDropdowns(sysKey) {
   if (!el) return;
   const cur = el.value;
   const names = [...new Set(sys.records
-    .filter(r => r.status !== '已作废' && r.status !== '已交付' && r.client)
+    .filter(r => r.status !== '已作废' && r.status !== '已交付' && r.status !== '已完成' && r.client)
     .map(r => r.client))]
     .sort();
   el.innerHTML = `<option value="">全部${sys.clientLabel}</option>` +
@@ -1140,7 +1141,7 @@ function renderStats(sysKey) {
   const now  = Date.now();
   const week = 7 * 24 * 3600 * 1000;
   const ongoingSet = new Set(['待提交','资料审核','检测中','证书申请中']);
-  document.getElementById(sysKey + '-s-total').textContent   = sys.records.filter(r => r.status !== '已作废').length;
+  document.getElementById(sysKey + '-s-total').textContent   = sys.records.filter(r => r.status !== '已作废' && r.status !== '已完成').length;
   document.getElementById(sysKey + '-s-ongoing').textContent = sys.records.filter(r => ongoingSet.has(r.status)).length;
   document.getElementById(sysKey + '-s-done').textContent    = sys.records.filter(r => ['已交付'].includes(r.status)).length;
   document.getElementById(sysKey + '-s-due').textContent     = sys.records.filter(r =>
@@ -1842,6 +1843,9 @@ async function saveFinanceEdit(recordId) {
 // ════════════════════════════════════════════════════════════
 //  已交付订单
 // ════════════════════════════════════════════════════════════
+var doneEditingSysKey = null;  // 'cert' or 'lab'
+var doneEditingId = null;
+
 function buildDoneFilterBarHTML() {
   return `<div class="filter-bar" id="done-filter-bar">
     <div class="filter-group">
@@ -1889,10 +1893,10 @@ function buildDonePanel() {
     + '<thead><tr>'
     + '<th>订单编号</th><th>客户名称</th><th>项目名称</th><th>认证类型</th>'
     + '<th>合同额</th><th>信息费</th><th>实验室额</th><th>利润</th>'
-    + '<th>提交日期</th><th>预计完成日期</th><th>备注</th>'
+    + '<th>提交日期</th><th>预计完成日期</th><th>备注</th><th>操作</th>'
     + '</tr></thead>'
     + '<tbody id="done-cert-tbody">'
-    + '<tr><td colspan="11" class="state-msg"><span class="spinner"></span>加载中…</td></tr>'
+    + '<tr><td colspan="12" class="state-msg"><span class="spinner"></span>加载中…</td></tr>'
     + '</tbody>'
     + '</table></div>'
     + '</div>'
@@ -1901,10 +1905,10 @@ function buildDonePanel() {
     + '<div class="table-wrap"><table>'
     + '<thead><tr>'
     + '<th>订单编号</th><th>实验室名称</th><th>项目名称</th>'
-    + '<th>合同额</th><th>提交日期</th><th>预计完成日期</th><th>备注</th>'
+    + '<th>合同额</th><th>提交日期</th><th>预计完成日期</th><th>备注</th><th>操作</th>'
     + '</tr></thead>'
     + '<tbody id="done-lab-tbody">'
-    + '<tr><td colspan="7" class="state-msg"><span class="spinner"></span>加载中…</td></tr>'
+    + '<tr><td colspan="8" class="state-msg"><span class="spinner"></span>加载中…</td></tr>'
     + '</tbody>'
     + '</table></div>'
     + '</div>'
@@ -1916,9 +1920,9 @@ function refreshDoneFilterDropdowns() {
   if (!el) return;
   var cur = el.value;
   var certNames = (SYSTEMS.cert.records || [])
-    .filter(function(r) { return r.status === '已交付' && r.client; }).map(function(r) { return r.client; });
+    .filter(function(r) { return (r.status === '已交付' || r.status === '已完成') && r.client; }).map(function(r) { return r.client; });
   var labNames  = (SYSTEMS.lab.records || [])
-    .filter(function(r) { return r.status === '已交付' && r.client; }).map(function(r) { return r.client; });
+    .filter(function(r) { return (r.status === '已交付' || r.status === '已完成') && r.client; }).map(function(r) { return r.client; });
   var names = [].concat(certNames, labNames).filter(function(v, i, a) { return a.indexOf(v) === i; }).sort();
   el.innerHTML = '<option value="">全部</option>' +
     names.map(function(n) { return '<option value="' + escHtml(n) + '"' + (n === cur ? ' selected' : '') + '>' + escHtml(n) + '</option>'; }).join('');
@@ -1964,7 +1968,7 @@ function renderDoneFiltered() {
 
   function filterDone(list) {
     return list.filter(function(r) {
-      if (r.status !== '已交付') return false;
+      if (r.status !== '已交付' && r.status !== '已完成') return false;
       if (qLower && ![r.no, r.client, r.proj].some(function(v) { return v.toLowerCase().indexOf(qLower) !== -1; })) return false;
       if (dateFrom && r.start < dateFrom) return false;
       if (dateTo   && r.start > dateTo)   return false;
@@ -1995,10 +1999,34 @@ function renderDoneFiltered() {
   var certTbody = document.getElementById('done-cert-tbody');
   if (certTbody) {
     if (certDone.length === 0) {
-      certTbody.innerHTML = '<tr><td colspan="11" class="state-msg">暂无已交付的认证订单</td></tr>';
+      certTbody.innerHTML = '<tr><td colspan="12" class="state-msg">暂无已交付的认证订单</td></tr>';
     } else {
       certTbody.innerHTML = certDone.map(function(r) {
         var profit = (r.contract || 0) - (r.infoFee || 0) - (r.labFee || 0);
+
+        if (doneEditingSysKey === 'cert' && doneEditingId === r.id) {
+          var tagOpts = getAllTags(SYSTEMS.cert).map(function(c) {
+            return '<option value="' + escHtml(c) + '"' + (c === r.tag ? ' selected' : '') + '>' + (c || '请选择') + '</option>';
+          }).join('');
+          return '<tr class="editing-row">'
+            + '<td><strong>' + (r.no || '—') + '</strong></td>'
+            + '<td><input class="cell-input" id="done-ei-client" type="text" value="' + escHtml(r.client) + '"></td>'
+            + '<td><input class="cell-input" id="done-ei-proj" type="text" value="' + escHtml(r.proj) + '"></td>'
+            + '<td><select class="cell-input" id="done-ei-tag"><option value="">请选择</option>' + tagOpts + '</select></td>'
+            + '<td><input class="cell-input" id="done-ei-contract" type="number" min="0" step="0.01" value="' + (r.contract ?? '') + '"></td>'
+            + '<td><input class="cell-input" id="done-ei-info-fee" type="number" min="0" step="0.01" value="' + (r.infoFee ?? '') + '"></td>'
+            + '<td><input class="cell-input" id="done-ei-lab-fee" type="number" min="0" step="0.01" value="' + (r.labFee ?? '') + '"></td>'
+            + '<td>' + fmtProfit(r.contract, r.infoFee, r.labFee) + '</td>'
+            + '<td><input class="cell-input" id="done-ei-start" type="date" value="' + r.start + '"></td>'
+            + '<td><input class="cell-input" id="done-ei-end" type="date" value="' + r.endFmt + '"></td>'
+            + '<td><input class="cell-input" id="done-ei-note" type="text" value="' + escHtml(r.note) + '"></td>'
+            + '<td><div style="display:flex;gap:4px;flex-wrap:wrap;">'
+            + '<button class="btn-act btn-act-next" onclick="saveDoneEdit(\'cert\',\'' + r.id + '\')">保存</button>'
+            + '<button class="btn-act" style="background:#f0f4fa;border-color:#e0e7f0;color:#555;" onclick="cancelDoneEdit()">取消</button>'
+            + '</div></td>'
+            + '</tr>';
+        }
+
         return '<tr>'
           + '<td><strong>' + (r.no || '—') + '</strong></td>'
           + '<td>' + (r.client || '—') + '</td>'
@@ -2011,6 +2039,7 @@ function renderDoneFiltered() {
           + '<td>' + (r.start || '—') + '</td>'
           + '<td>' + (r.endFmt || '—') + '</td>'
           + '<td style="color:#888;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escHtml(r.note || '') + '">' + (r.note || '—') + '</td>'
+          + '<td><button class="btn-act btn-act-next" onclick="editDoneRow(\'cert\',\'' + r.id + '\')">编辑</button></td>'
           + '</tr>';
       }).join('');
     }
@@ -2019,9 +2048,24 @@ function renderDoneFiltered() {
   var labTbody = document.getElementById('done-lab-tbody');
   if (labTbody) {
     if (labDone.length === 0) {
-      labTbody.innerHTML = '<tr><td colspan="7" class="state-msg">暂无已交付的实验室订单</td></tr>';
+      labTbody.innerHTML = '<tr><td colspan="8" class="state-msg">暂无已交付的实验室订单</td></tr>';
     } else {
       labTbody.innerHTML = labDone.map(function(r) {
+        if (doneEditingSysKey === 'lab' && doneEditingId === r.id) {
+          return '<tr class="editing-row">'
+            + '<td><strong>' + (r.no || '—') + '</strong></td>'
+            + '<td><input class="cell-input" id="done-ei-client" type="text" value="' + escHtml(r.client) + '"></td>'
+            + '<td><input class="cell-input" id="done-ei-proj" type="text" value="' + escHtml(r.proj) + '"></td>'
+            + '<td><input class="cell-input" id="done-ei-contract" type="number" min="0" step="0.01" value="' + (r.contract ?? '') + '"></td>'
+            + '<td><input class="cell-input" id="done-ei-start" type="date" value="' + r.start + '"></td>'
+            + '<td><input class="cell-input" id="done-ei-end" type="date" value="' + r.endFmt + '"></td>'
+            + '<td><input class="cell-input" id="done-ei-note" type="text" value="' + escHtml(r.note) + '"></td>'
+            + '<td><div style="display:flex;gap:4px;flex-wrap:wrap;">'
+            + '<button class="btn-act btn-act-next" onclick="saveDoneEdit(\'lab\',\'' + r.id + '\')">保存</button>'
+            + '<button class="btn-act" style="background:#f0f4fa;border-color:#e0e7f0;color:#555;" onclick="cancelDoneEdit()">取消</button>'
+            + '</div></td>'
+            + '</tr>';
+        }
         return '<tr>'
           + '<td><strong>' + (r.no || '—') + '</strong></td>'
           + '<td>' + (r.client || '—') + '</td>'
@@ -2030,15 +2074,80 @@ function renderDoneFiltered() {
           + '<td>' + (r.start || '—') + '</td>'
           + '<td>' + (r.endFmt || '—') + '</td>'
           + '<td style="color:#888;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escHtml(r.note || '') + '">' + (r.note || '—') + '</td>'
+          + '<td><button class="btn-act btn-act-next" onclick="editDoneRow(\'lab\',\'' + r.id + '\')">编辑</button></td>'
           + '</tr>';
       }).join('');
     }
   }
 }
 
+// ── 已交付编辑功能 ──
+function editDoneRow(sysKey, recordId) {
+  doneEditingSysKey = sysKey;
+  doneEditingId = recordId;
+  renderDoneFiltered();
+}
+
+function cancelDoneEdit() {
+  doneEditingSysKey = null;
+  doneEditingId = null;
+  renderDoneFiltered();
+}
+
+async function saveDoneEdit(sysKey, recordId) {
+  var sys = SYSTEMS[sysKey];
+  var client = document.getElementById('done-ei-client').value.trim();
+  var proj   = document.getElementById('done-ei-proj').value.trim();
+  if (!client) { alert((sysKey === 'cert' ? '客户名称' : '实验室名称') + '不能为空'); return; }
+  if (!proj)   { alert('项目名称不能为空'); return; }
+  try {
+    var fields = {};
+    fields[sys.F.client] = client;
+    fields[sys.F.proj]   = proj;
+
+    if (!sys.noTag) {
+      var tagEl = document.getElementById('done-ei-tag');
+      if (tagEl) {
+        var tag = tagEl.value;
+        if (tag) { fields[sys.F.tag] = tag; saveCustomTag(sys, tag); }
+      }
+    }
+
+    var contract = parseFloat(document.getElementById('done-ei-contract').value);
+    if (!isNaN(contract)) fields[sys.F.contract] = contract;
+
+    var infoFeeEl = document.getElementById('done-ei-info-fee');
+    if (infoFeeEl) {
+      var infoFee = parseFloat(infoFeeEl.value);
+      if (!isNaN(infoFee)) fields[sys.F.infoFee] = infoFee;
+    }
+
+    var labFeeEl = document.getElementById('done-ei-lab-fee');
+    if (labFeeEl) {
+      var labFee = parseFloat(labFeeEl.value);
+      if (!isNaN(labFee)) fields[sys.F.labFee] = labFee;
+    }
+
+    var start = document.getElementById('done-ei-start').value;
+    if (start) fields[sys.F.start] = new Date(start + 'T00:00:00').getTime();
+    var end = document.getElementById('done-ei-end').value;
+    if (end) fields[sys.F.end] = new Date(end + 'T00:00:00').getTime();
+    fields[sys.F.note] = document.getElementById('done-ei-note').value.trim();
+
+    await updateRecord(sys.apiUrl, recordId, fields);
+    doneEditingSysKey = null;
+    doneEditingId = null;
+    await loadData(sysKey);
+    renderDoneFiltered();
+  } catch (err) { alert(err.message); }
+}
+
 // ════════════════════════════════════════════════════════════
 //  已作废订单
 // ════════════════════════════════════════════════════════════
+var voidEditingSysKey = null;  // 'cert' or 'lab'
+var voidEditingId = null;
+
 function buildVoidPanel() {
   document.getElementById('panel-void').innerHTML = ''
     + '<main>'
@@ -2146,6 +2255,25 @@ function renderVoidFiltered() {
       certTbody.innerHTML = '<tr><td colspan="9" class="state-msg">暂无已作废的认证订单</td></tr>';
     } else {
       certTbody.innerHTML = certVoid.map(function(r) {
+        if (voidEditingSysKey === 'cert' && voidEditingId === r.id) {
+          var tagOpts = getAllTags(SYSTEMS.cert).map(function(c) {
+            return '<option value="' + escHtml(c) + '"' + (c === r.tag ? ' selected' : '') + '>' + (c || '请选择') + '</option>';
+          }).join('');
+          return '<tr class="editing-row">'
+            + '<td><strong>' + (r.no || '—') + '</strong></td>'
+            + '<td><input class="cell-input" id="void-ei-client" type="text" value="' + escHtml(r.client) + '"></td>'
+            + '<td><input class="cell-input" id="void-ei-proj" type="text" value="' + escHtml(r.proj) + '"></td>'
+            + '<td><select class="cell-input" id="void-ei-tag"><option value="">请选择</option>' + tagOpts + '</select></td>'
+            + '<td><input class="cell-input" id="void-ei-contract" type="number" min="0" step="0.01" value="' + (r.contract ?? '') + '"></td>'
+            + '<td><input class="cell-input" id="void-ei-start" type="date" value="' + r.start + '"></td>'
+            + '<td><input class="cell-input" id="void-ei-end" type="date" value="' + r.endFmt + '"></td>'
+            + '<td><input class="cell-input" id="void-ei-note" type="text" value="' + escHtml(r.note) + '"></td>'
+            + '<td><div style="display:flex;gap:4px;flex-wrap:wrap;">'
+            + '<button class="btn-act btn-act-next" onclick="saveVoidEdit(\'cert\',\'' + r.id + '\')">保存</button>'
+            + '<button class="btn-act" style="background:#f0f4fa;border-color:#e0e7f0;color:#555;" onclick="cancelVoidEdit()">取消</button>'
+            + '</div></td>'
+            + '</tr>';
+        }
         return '<tr>'
           + '<td><strong>' + (r.no || '—') + '</strong></td>'
           + '<td>' + (r.client || '—') + '</td>'
@@ -2155,7 +2283,10 @@ function renderVoidFiltered() {
           + '<td>' + (r.start || '—') + '</td>'
           + '<td>' + (r.endFmt || '—') + '</td>'
           + '<td style="color:#888;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escHtml(r.note || '') + '">' + (r.note || '—') + '</td>'
-          + '<td><button class="btn-act btn-act-next" onclick="restoreOrder(\'cert\',\'' + r.id + '\',\'' + (r.no || '') + '\')">恢复</button></td>'
+          + '<td><div style="display:flex;gap:4px;flex-wrap:wrap;">'
+          + '<button class="btn-act btn-act-next" onclick="editVoidRow(\'cert\',\'' + r.id + '\')">编辑</button>'
+          + '<button class="btn-act btn-act-next" onclick="restoreOrder(\'cert\',\'' + r.id + '\',\'' + (r.no || '') + '\')">恢复</button>'
+          + '</div></td>'
           + '</tr>';
       }).join('');
     }
@@ -2167,6 +2298,21 @@ function renderVoidFiltered() {
       labTbody.innerHTML = '<tr><td colspan="8" class="state-msg">暂无已作废的实验室订单</td></tr>';
     } else {
       labTbody.innerHTML = labVoid.map(function(r) {
+        if (voidEditingSysKey === 'lab' && voidEditingId === r.id) {
+          return '<tr class="editing-row">'
+            + '<td><strong>' + (r.no || '—') + '</strong></td>'
+            + '<td><input class="cell-input" id="void-ei-client" type="text" value="' + escHtml(r.client) + '"></td>'
+            + '<td><input class="cell-input" id="void-ei-proj" type="text" value="' + escHtml(r.proj) + '"></td>'
+            + '<td><input class="cell-input" id="void-ei-contract" type="number" min="0" step="0.01" value="' + (r.contract ?? '') + '"></td>'
+            + '<td><input class="cell-input" id="void-ei-start" type="date" value="' + r.start + '"></td>'
+            + '<td><input class="cell-input" id="void-ei-end" type="date" value="' + r.endFmt + '"></td>'
+            + '<td><input class="cell-input" id="void-ei-note" type="text" value="' + escHtml(r.note) + '"></td>'
+            + '<td><div style="display:flex;gap:4px;flex-wrap:wrap;">'
+            + '<button class="btn-act btn-act-next" onclick="saveVoidEdit(\'lab\',\'' + r.id + '\')">保存</button>'
+            + '<button class="btn-act" style="background:#f0f4fa;border-color:#e0e7f0;color:#555;" onclick="cancelVoidEdit()">取消</button>'
+            + '</div></td>'
+            + '</tr>';
+        }
         return '<tr>'
           + '<td><strong>' + (r.no || '—') + '</strong></td>'
           + '<td>' + (r.client || '—') + '</td>'
@@ -2175,7 +2321,10 @@ function renderVoidFiltered() {
           + '<td>' + (r.start || '—') + '</td>'
           + '<td>' + (r.endFmt || '—') + '</td>'
           + '<td style="color:#888;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escHtml(r.note || '') + '">' + (r.note || '—') + '</td>'
-          + '<td><button class="btn-act btn-act-next" onclick="restoreOrder(\'lab\',\'' + r.id + '\',\'' + (r.no || '') + '\')">恢复</button></td>'
+          + '<td><div style="display:flex;gap:4px;flex-wrap:wrap;">'
+          + '<button class="btn-act btn-act-next" onclick="editVoidRow(\'lab\',\'' + r.id + '\')">编辑</button>'
+          + '<button class="btn-act btn-act-next" onclick="restoreOrder(\'lab\',\'' + r.id + '\',\'' + (r.no || '') + '\')">恢复</button>'
+          + '</div></td>'
           + '</tr>';
       }).join('');
     }
@@ -2192,6 +2341,55 @@ async function restoreOrder(sysKey, recordId, orderNo) {
     renderStats(sysKey);
     applyFilters(sysKey);
   } catch (err) { alert('恢复失败：' + err.message); }
+}
+
+// ── 已作废编辑功能 ──
+function editVoidRow(sysKey, recordId) {
+  voidEditingSysKey = sysKey;
+  voidEditingId = recordId;
+  renderVoidFiltered();
+}
+
+function cancelVoidEdit() {
+  voidEditingSysKey = null;
+  voidEditingId = null;
+  renderVoidFiltered();
+}
+
+async function saveVoidEdit(sysKey, recordId) {
+  var sys = SYSTEMS[sysKey];
+  var client = document.getElementById('void-ei-client').value.trim();
+  var proj   = document.getElementById('void-ei-proj').value.trim();
+  if (!client) { alert((sysKey === 'cert' ? '客户名称' : '实验室名称') + '不能为空'); return; }
+  if (!proj)   { alert('项目名称不能为空'); return; }
+  try {
+    var fields = {};
+    fields[sys.F.client] = client;
+    fields[sys.F.proj]   = proj;
+
+    if (!sys.noTag) {
+      var tagEl = document.getElementById('void-ei-tag');
+      if (tagEl) {
+        var tag = tagEl.value;
+        if (tag) { fields[sys.F.tag] = tag; saveCustomTag(sys, tag); }
+      }
+    }
+
+    var contract = parseFloat(document.getElementById('void-ei-contract').value);
+    if (!isNaN(contract)) fields[sys.F.contract] = contract;
+
+    var start = document.getElementById('void-ei-start').value;
+    if (start) fields[sys.F.start] = new Date(start + 'T00:00:00').getTime();
+    var end = document.getElementById('void-ei-end').value;
+    if (end) fields[sys.F.end] = new Date(end + 'T00:00:00').getTime();
+    fields[sys.F.note] = document.getElementById('void-ei-note').value.trim();
+
+    await updateRecord(sys.apiUrl, recordId, fields);
+    voidEditingSysKey = null;
+    voidEditingId = null;
+    await loadData(sysKey);
+    renderVoidFiltered();
+  } catch (err) { alert(err.message); }
 }
 
 // ════════════════════════════════════════════════════════════
