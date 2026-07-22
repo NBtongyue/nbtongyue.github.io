@@ -335,6 +335,107 @@
     @media(max-width:600px) {
       .form-row-3 { grid-template-columns:1fr; }
     }
+
+    /* ── 财务统计卡片布局 ── */
+    .fin-card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.7rem;
+      margin-bottom: 0.8rem;
+    }
+    .fin-card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      overflow: hidden;
+      transition: box-shadow .2s;
+    }
+    .fin-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .fin-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.45rem 0.7rem;
+      background: #f8faff;
+      border-bottom: 1px solid #e8eef8;
+    }
+    .fin-card-no {
+      font-weight: 700;
+      font-size: 0.8rem;
+      color: #1b3a6b;
+      font-family: monospace;
+    }
+    .fin-card-body { padding: 0.4rem 0.7rem; }
+    .fin-card-client {
+      font-size: 0.78rem;
+      color: #555;
+      padding-bottom: 0.35rem;
+      border-bottom: 1px solid #f0f4f8;
+    }
+    .fin-card-client .fin-client-name { font-weight: 600; color: #333; }
+    .fin-card-client .fin-sep { color: #ccc; margin: 0 0.3rem; }
+    .fin-card-client .fin-proj-name { color: #888; }
+    .fin-card-amounts {
+      display: flex;
+      gap: 1rem;
+      padding: 0.35rem 0;
+      font-size: 0.78rem;
+      border-bottom: 1px solid #f0f4f8;
+    }
+    .fin-card-amounts .fin-amt-item { display: flex; flex-direction: column; }
+    .fin-card-amounts .fin-amt-val { font-weight: 700; color: #1b3a6b; font-size: 0.84rem; }
+    .fin-card-amounts .fin-amt-lbl { font-size: 0.7rem; color: #999; }
+    .fin-pay-section {
+      padding: 0.35rem 0;
+      border-bottom: 1px solid #f0f4f8;
+    }
+    .fin-pay-label {
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: #555;
+      margin-bottom: 0.2rem;
+    }
+    .fin-pay-bar {
+      height: 6px;
+      background: #e8eef8;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 0.2rem;
+    }
+    .fin-pay-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width .3s;
+    }
+    .fin-pay-bar-fill.cleared { background: #16a34a; }
+    .fin-pay-bar-fill.partial { background: #f59e0b; }
+    .fin-pay-bar-fill.none { background: #dc2626; }
+    .fin-pay-detail {
+      font-size: 0.74rem;
+      color: #666;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .fin-pay-detail .fin-pay-amount { font-weight: 600; color: #333; }
+    .fin-pay-detail .fin-pay-remain { font-weight: 600; color: #dc2626; }
+    .fin-pay-detail .fin-pay-done { font-weight: 600; color: #16a34a; }
+    .fin-card-invoice {
+      padding: 0.3rem 0;
+      font-size: 0.72rem;
+      color: #888;
+      border-bottom: 1px solid #f0f4f8;
+    }
+    .fin-card-invoice strong { color: #555; }
+    .fin-card-actions {
+      padding: 0.35rem 0.7rem;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    @media (max-width: 900px) {
+      .fin-card-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -387,7 +488,6 @@ const WORKER = '';
 const STATUS_FLOW = ['暂时合同','正式合同','检测中','证书申请中','已交付'];
 const TERMINAL    = new Set(['已作废']);
 const PAGE_SIZE   = 20;
-var FIN_COL_WIDTHS = [];
 
 const SYSTEMS = {
   cert: {
@@ -885,7 +985,7 @@ function buildFinanceFilterBarHTML() {
     <div class="filter-group filter-search">
       <span class="filter-label">搜索</span>
       <input class="filter-input" id="fin-search" type="text"
-        placeholder="搜索订单编号、客户名称…" oninput="renderFinance()">
+        placeholder="搜索订单编号、客户名称、项目名称…" oninput="renderFinance()">
     </div>
     <button class="filter-reset" onclick="resetFilters('finance')" title="清空所有筛选条件">✕ 重置</button>
   </div>`;
@@ -1610,20 +1710,8 @@ function buildFinancePanel() {
         <span class="section-count" id="fin-unpaid-count"></span>
       </div>
       <div class="stats stats-finance" id="fin-unpaid-stats"></div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr>
-            <th>订单编号</th><th>客户名称</th>
-            <th>合同额</th><th>信息费</th><th>利润</th><th>首付款</th><th>二次付款</th><th>尾款</th>
-            <th>已付合计</th><th>待付金额</th><th>付款状态</th>
-            <th>实验室额</th><th>实验室首付</th><th>实验室二付</th><th>实验室尾款</th>
-            <th>实验室已付</th><th>实验室待付</th><th>实验室状态</th>
-            <th>客户发票额</th><th>实验室发票</th><th>信息费发票</th><th>操作</th>
-          </tr></thead>
-          <tbody id="fin-tbody">
-            <tr><td colspan="22" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
-          </tbody>
-        </table>
+      <div class="fin-card-grid" id="fin-unpaid-grid">
+        <div class="state-msg" style="grid-column:1/-1;"><span class="spinner"></span>加载中…</div>
       </div>
       <!-- 已付清订单 -->
       <div class="finance-section paid" id="fin-paid-header" style="display:none;">
@@ -1632,22 +1720,43 @@ function buildFinancePanel() {
         <span class="section-count" id="fin-paid-count"></span>
       </div>
       <div class="stats stats-finance" id="fin-paid-stats"></div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr>
-            <th>订单编号</th><th>客户名称</th>
-            <th>合同额</th><th>信息费</th><th>利润</th><th>首付款</th><th>二次付款</th><th>尾款</th>
-            <th>已付合计</th><th>待付金额</th><th>付款状态</th>
-            <th>实验室额</th><th>实验室首付</th><th>实验室二付</th><th>实验室尾款</th>
-            <th>实验室已付</th><th>实验室待付</th><th>实验室状态</th>
-            <th>客户发票额</th><th>实验室发票</th><th>信息费发票</th><th>操作</th>
-          </tr></thead>
-          <tbody id="fin-paid-tbody">
-            <tr><td colspan="22" class="state-msg">—</td></tr>
-          </tbody>
-        </table>
+      <div class="fin-card-grid" id="fin-paid-grid">
+        <div class="state-msg" style="grid-column:1/-1;">—</div>
       </div>
-    </main>`;
+    </main>
+    <!-- 财务编辑弹窗 -->
+    <div class="modal-bg" id="fin-edit-modal" onclick="if(event.target===this)closeFinanceEditModal()">
+      <div class="modal" style="max-width:640px;">
+        <h2>编辑财务数据</h2>
+        <div class="form-row-3">
+          <div class="mfg"><label>合同额（元）</label><input id="fin-em-contract" type="number" min="0" step="0.01"></div>
+          <div class="mfg"><label>信息费（元）</label><input id="fin-em-info-fee" type="number" min="0" step="0.01"></div>
+          <div class="mfg"><label>实验室额（元）</label><input id="fin-em-lab-fee" type="number" min="0" step="0.01"></div>
+        </div>
+        <div class="mfg" style="margin-top:0.8rem;"><label style="font-weight:700;color:#1b3a6b;">👤 客户付款</label></div>
+        <div class="form-row-3">
+          <div class="mfg"><label>首付款</label><input id="fin-em-cp1" type="number" min="0" step="0.01"></div>
+          <div class="mfg"><label>二次付款</label><input id="fin-em-cp2" type="number" min="0" step="0.01"></div>
+          <div class="mfg"><label>尾款</label><input id="fin-em-cp3" type="number" min="0" step="0.01"></div>
+        </div>
+        <div class="mfg" style="margin-top:0.8rem;"><label style="font-weight:700;color:#1b3a6b;">🔬 实验室付款</label></div>
+        <div class="form-row-3">
+          <div class="mfg"><label>首付款</label><input id="fin-em-lp1" type="number" min="0" step="0.01"></div>
+          <div class="mfg"><label>二次付款</label><input id="fin-em-lp2" type="number" min="0" step="0.01"></div>
+          <div class="mfg"><label>尾款</label><input id="fin-em-lp3" type="number" min="0" step="0.01"></div>
+        </div>
+        <div class="mfg" style="margin-top:0.8rem;"><label style="font-weight:700;color:#1b3a6b;">🧾 发票</label></div>
+        <div class="form-row-3">
+          <div class="mfg"><label>客户发票额</label><input id="fin-em-cli-inv" type="number" min="0" step="0.01"></div>
+          <div class="mfg"><label>实验室发票</label><input id="fin-em-lab-inv" type="number" min="0" step="0.01"></div>
+          <div class="mfg"><label>信息费发票</label><input id="fin-em-info-inv" type="number" min="0" step="0.01"></div>
+        </div>
+        <div class="modal-btns">
+          <button class="btn-cancel" onclick="closeFinanceEditModal()">取消</button>
+          <button class="btn-save" id="fin-em-save" onclick="saveFinanceEditModal()">保存</button>
+        </div>
+      </div>
+    </div>`;
 }
 
 function loadFinance() {
@@ -1681,7 +1790,7 @@ function calcPayStatus(total, payments) {
   return { paid: 0, remaining: 0, status: '—', cls: '' };
 }
 
-var editingFinanceId = null;
+var _financeEditId = null;
 
 function renderFinance() {
   var records = SYSTEMS.cert.records;
@@ -1703,7 +1812,7 @@ function renderFinance() {
   var VALID_FINANCE_STATUS = ['正式合同','检测中','证书申请中','已交付'];
   var filtered = records.filter(function(r) {
     if (VALID_FINANCE_STATUS.indexOf(r.status) === -1) return false;
-    if (q && ![r.no, r.client].some(function(v) { return v.toLowerCase().indexOf(q) !== -1; })) return false;
+    if (q && ![r.no, r.client, r.proj].some(function(v) { return (v||'').toLowerCase().indexOf(q) !== -1; })) return false;
     if (dateFrom && r.start < dateFrom) return false;
     if (dateTo   && r.start > dateTo)   return false;
     if (amtMin !== null && !isNaN(amtMin) && (r.contract || 0) < amtMin) return false;
@@ -1723,7 +1832,6 @@ function renderFinance() {
   var totalContract = 0, totalInfoFee = 0, totalProfit = 0;
   var totalClientPaid = 0, totalClientRemain = 0;
   var totalLab = 0, totalLabPaid = 0, totalLabRemain = 0;
-  var totalClientInvoice = 0, totalLabInvoice = 0, totalInfoFeeInvoice = 0;
 
   var rows = filtered.map(function(r) {
     var client = calcPayStatus(r.contract, [r.clientPay1, r.clientPay2, r.clientPay3]);
@@ -1739,9 +1847,6 @@ function renderFinance() {
     totalLab         += (r.labFee || 0);
     totalLabPaid     += lab.paid;
     totalLabRemain   += lab.remaining;
-    totalClientInvoice  += (r.clientInvoice || 0);
-    totalLabInvoice     += (r.labInvoice || 0);
-    totalInfoFeeInvoice += (r.infoFeeInvoice || 0);
 
     return { r: r, client: client, lab: lab, infoFee: infoFee, profit: profit };
   });
@@ -1757,7 +1862,7 @@ function renderFinance() {
     }
   });
 
-  // ── 顶部汇总统计（全部） ──
+  // ── 顶部汇总统计（8 个核心指标） ──
   var statsEl = document.getElementById('fin-stats');
   if (statsEl) {
     statsEl.innerHTML =
@@ -1768,88 +1873,84 @@ function renderFinance() {
       '<div class="stat-card"><div class="num" style="color:#16a34a;">' + fmtAmount(totalLabPaid) + '</div><div class="lbl">实验室已付</div></div>' +
       '<div class="stat-card warn"><div class="num">' + fmtAmount(totalLabRemain) + '</div><div class="lbl">实验室待付</div></div>' +
       '<div class="stat-card"><div class="num">' + fmtAmount(totalInfoFee) + '</div><div class="lbl">信息费总额</div></div>' +
-      '<div class="stat-card"><div class="num" style="color:' + (totalProfit >= 0 ? '#065f46' : '#dc2626') + ';">' + fmtAmount(totalProfit) + '</div><div class="lbl">利润总额</div></div>' +
-      '<div class="stat-card"><div class="num">' + fmtAmount(totalClientInvoice) + '</div><div class="lbl">客户发票额</div></div>' +
-      '<div class="stat-card"><div class="num">' + fmtAmount(totalLabInvoice) + '</div><div class="lbl">实验室发票</div></div>' +
-      '<div class="stat-card"><div class="num">' + fmtAmount(totalInfoFeeInvoice) + '</div><div class="lbl">信息费发票</div></div>';
+      '<div class="stat-card"><div class="num" style="color:' + (totalProfit >= 0 ? '#065f46' : '#dc2626') + ';">' + fmtAmount(totalProfit) + '</div><div class="lbl">利润总额</div></div>';
   }
 
   // ── 空数据 ──
   if (filtered.length === 0) {
-    document.getElementById('fin-tbody').innerHTML = '<tr><td colspan="22" class="state-msg">暂无数据</td></tr>';
+    document.getElementById('fin-unpaid-grid').innerHTML = '<div class="state-msg" style="grid-column:1/-1;">暂无数据</div>';
     document.getElementById('fin-unpaid-stats').innerHTML = '';
     document.getElementById('fin-unpaid-header').style.display = 'none';
-    document.getElementById('fin-paid-tbody').innerHTML = '<tr><td colspan="22" class="state-msg">—</td></tr>';
+    document.getElementById('fin-paid-grid').innerHTML = '<div class="state-msg" style="grid-column:1/-1;">—</div>';
     document.getElementById('fin-paid-stats').innerHTML = '';
     document.getElementById('fin-paid-header').style.display = 'none';
     return;
   }
 
-  // ── 辅助函数：渲染单行 ──
-  function renderRow(row) {
+  // ── 辅助函数：渲染卡片 ──
+  function renderCard(row) {
     var r = row.r, c = row.client, l = row.lab;
-    var crColor = c.remaining > 0 ? 'color:#dc2626;font-weight:600;' : 'color:#16a34a;font-weight:600;';
-    var lrColor = l.remaining > 0 ? 'color:#dc2626;font-weight:600;' : 'color:#16a34a;font-weight:600;';
+    // 进度百分比
+    var clientPct = (r.contract && r.contract > 0) ? Math.round((c.paid / r.contract) * 100) : 0;
+    var labPct = (r.labFee && r.labFee > 0) ? Math.round((l.paid / r.labFee) * 100) : 0;
+    var clientBarCls = c.remaining <= 0 ? 'cleared' : (c.paid > 0 ? 'partial' : 'none');
+    var labBarCls = l.remaining <= 0 ? 'cleared' : (l.paid > 0 ? 'partial' : 'none');
+    var crCls = c.remaining > 0 ? 'fin-pay-remain' : 'fin-pay-done';
+    var lrCls = l.remaining > 0 ? 'fin-pay-remain' : 'fin-pay-done';
 
-    if (r.id === editingFinanceId) {
-      return '<tr class="editing-row">' +
-        '<td><strong>' + (r.no || '—') + '</strong></td>' +
-        '<td>' + (r.client || '—') + '</td>' +
-        '<td><input class="cell-input" id="fin-ei-contract" type="number" min="0" step="0.01" value="' + (r.contract ?? '') + '"></td>' +
-        '<td><input class="cell-input" id="fin-ei-info-fee" type="number" min="0" step="0.01" value="' + (r.infoFee ?? '') + '"></td>' +
-        '<td class="amount-cell" style="color:' + (row.profit >= 0 ? '#065f46' : '#dc2626') + ';font-weight:600;">' + fmtAmount(row.profit) + '</td>' +
-        '<td><input class="cell-input" id="fin-ei-cp1" type="number" min="0" step="0.01" value="' + (r.clientPay1 ?? '') + '"></td>' +
-        '<td><input class="cell-input" id="fin-ei-cp2" type="number" min="0" step="0.01" value="' + (r.clientPay2 ?? '') + '"></td>' +
-        '<td><input class="cell-input" id="fin-ei-cp3" type="number" min="0" step="0.01" value="' + (r.clientPay3 ?? '') + '"></td>' +
-        '<td class="amount-cell" style="font-weight:600;">' + fmtAmount(c.paid) + '</td>' +
-        '<td class="amount-cell" style="' + crColor + '">' + (c.remaining > 0 ? fmtAmount(c.remaining) : '—') + '</td>' +
-        '<td><span class="badge ' + c.cls + '">' + c.status + '</span></td>' +
-        '<td><input class="cell-input" id="fin-ei-lab-fee" type="number" min="0" step="0.01" value="' + (r.labFee ?? '') + '"></td>' +
-        '<td><input class="cell-input" id="fin-ei-lp1" type="number" min="0" step="0.01" value="' + (r.labPay1 ?? '') + '"></td>' +
-        '<td><input class="cell-input" id="fin-ei-lp2" type="number" min="0" step="0.01" value="' + (r.labPay2 ?? '') + '"></td>' +
-        '<td><input class="cell-input" id="fin-ei-lp3" type="number" min="0" step="0.01" value="' + (r.labPay3 ?? '') + '"></td>' +
-        '<td class="amount-cell" style="font-weight:600;">' + fmtAmount(l.paid) + '</td>' +
-        '<td class="amount-cell" style="' + lrColor + '">' + (l.remaining > 0 ? fmtAmount(l.remaining) : '—') + '</td>' +
-        '<td><span class="badge ' + l.cls + '">' + l.status + '</span></td>' +
-        '<td><input class="cell-input" id="fin-ei-cli-inv" type="number" min="0" step="0.01" value="' + (r.clientInvoice ?? '') + '"></td>' +
-        '<td><input class="cell-input" id="fin-ei-lab-inv" type="number" min="0" step="0.01" value="' + (r.labInvoice ?? '') + '"></td>' +
-        '<td><input class="cell-input" id="fin-ei-info-inv" type="number" min="0" step="0.01" value="' + (r.infoFeeInvoice ?? '') + '"></td>' +
-        '<td><div style="display:flex;gap:4px;flex-wrap:wrap;">' +
-        '<button class="btn-act btn-act-next" onclick="saveFinanceEdit(\'' + r.id + '\')">保存</button>' +
-        '<button class="btn-act" style="background:#f0f4fa;border-color:#e0e7f0;color:#555;" onclick="cancelFinanceEdit()">取消</button>' +
-        '</div></td>' +
-        '</tr>';
-    }
-
-    return '<tr>' +
-      '<td><strong>' + (r.no || '—') + '</strong></td>' +
-      '<td>' + (r.client || '—') + '</td>' +
-      '<td class="amount-cell">' + fmtAmount(r.contract) + '</td>' +
-      '<td class="amount-cell">' + fmtAmount(row.infoFee) + '</td>' +
-      '<td class="amount-cell" style="color:' + (row.profit >= 0 ? '#065f46' : '#dc2626') + ';font-weight:600;">' + fmtAmount(row.profit) + '</td>' +
-      '<td class="amount-cell">' + fmtAmount(r.clientPay1) + '</td>' +
-      '<td class="amount-cell">' + fmtAmount(r.clientPay2) + '</td>' +
-      '<td class="amount-cell">' + fmtAmount(r.clientPay3) + '</td>' +
-      '<td class="amount-cell" style="font-weight:600;">' + fmtAmount(c.paid) + '</td>' +
-      '<td class="amount-cell" style="' + crColor + '">' + (c.remaining > 0 ? fmtAmount(c.remaining) : '—') + '</td>' +
-      '<td><span class="badge ' + c.cls + '">' + c.status + '</span></td>' +
-      '<td class="amount-cell">' + fmtAmount(r.labFee) + '</td>' +
-      '<td class="amount-cell">' + fmtAmount(r.labPay1) + '</td>' +
-      '<td class="amount-cell">' + fmtAmount(r.labPay2) + '</td>' +
-      '<td class="amount-cell">' + fmtAmount(r.labPay3) + '</td>' +
-      '<td class="amount-cell" style="font-weight:600;">' + fmtAmount(l.paid) + '</td>' +
-      '<td class="amount-cell" style="' + lrColor + '">' + (l.remaining > 0 ? fmtAmount(l.remaining) : '—') + '</td>' +
-      '<td><span class="badge ' + l.cls + '">' + l.status + '</span></td>' +
-      '<td class="amount-cell">' + fmtAmount(r.clientInvoice) + '</td>' +
-      '<td class="amount-cell">' + fmtAmount(r.labInvoice) + '</td>' +
-      '<td class="amount-cell">' + fmtAmount(r.infoFeeInvoice) + '</td>' +
-      '<td><button class="btn-act btn-act-next" onclick="editFinanceRow(\'' + r.id + '\')">编辑</button></td>' +
-      '</tr>';
+    return '<div class="fin-card">' +
+      // Header: 订单编号 + 客户付款状态
+      '<div class="fin-card-header">' +
+        '<span class="fin-card-no">' + (r.no || '—') + '</span>' +
+        '<span class="badge ' + c.cls + '">' + c.status + '</span>' +
+      '</div>' +
+      '<div class="fin-card-body">' +
+        // 客户名称 + 项目名称
+        '<div class="fin-card-client">' +
+          '<span class="fin-client-name">' + escHtml(r.client || '—') + '</span>' +
+          '<span class="fin-sep">·</span>' +
+          '<span class="fin-proj-name">' + escHtml(r.proj || '—') + '</span>' +
+        '</div>' +
+        // 金额摘要
+        '<div class="fin-card-amounts">' +
+          '<span class="fin-amt-item"><span class="fin-amt-val">' + fmtAmount(r.contract) + '</span><span class="fin-amt-lbl">合同额</span></span>' +
+          '<span class="fin-amt-item"><span class="fin-amt-val">' + fmtAmount(row.infoFee) + '</span><span class="fin-amt-lbl">信息费</span></span>' +
+          '<span class="fin-amt-item"><span class="fin-amt-val" style="color:' + (row.profit >= 0 ? '#065f46' : '#dc2626') + ';">' + fmtAmount(row.profit) + '</span><span class="fin-amt-lbl">利润</span></span>' +
+        '</div>' +
+        // 客户付款
+        '<div class="fin-pay-section">' +
+          '<div class="fin-pay-label">👤 客户付款</div>' +
+          '<div class="fin-pay-bar"><div class="fin-pay-bar-fill ' + clientBarCls + '" style="width:' + Math.min(clientPct, 100) + '%"></div></div>' +
+          '<div class="fin-pay-detail">' +
+            '<span class="fin-pay-amount">已付 ' + fmtAmount(c.paid) + '</span>' +
+            '<span class="' + crCls + '">待付 ' + (c.remaining > 0 ? fmtAmount(c.remaining) : '¥0') + '</span>' +
+            '<span class="badge ' + c.cls + '">' + c.status + '</span>' +
+          '</div>' +
+        '</div>' +
+        // 实验室付款
+        '<div class="fin-pay-section">' +
+          '<div class="fin-pay-label">🔬 实验室付款</div>' +
+          '<div class="fin-pay-bar"><div class="fin-pay-bar-fill ' + labBarCls + '" style="width:' + Math.min(labPct, 100) + '%"></div></div>' +
+          '<div class="fin-pay-detail">' +
+            '<span class="fin-pay-amount">已付 ' + fmtAmount(l.paid) + '</span>' +
+            '<span class="' + lrCls + '">待付 ' + (l.remaining > 0 ? fmtAmount(l.remaining) : '¥0') + '</span>' +
+            '<span class="badge ' + l.cls + '">' + l.status + '</span>' +
+          '</div>' +
+        '</div>' +
+        // 发票信息
+        '<div class="fin-card-invoice">' +
+          '🧾 发票: 客户 <strong>' + fmtAmount(r.clientInvoice) + '</strong> | 实验室 <strong>' + fmtAmount(r.labInvoice) + '</strong> | 信息费 <strong>' + fmtAmount(r.infoFeeInvoice) + '</strong>' +
+        '</div>' +
+      '</div>' +
+      '<div class="fin-card-actions">' +
+        '<button class="btn-act btn-act-next" onclick="openFinanceEditModal(\'' + r.id + '\')">编辑</button>' +
+      '</div>' +
+      '</div>';
   }
 
   // ── 辅助函数：计算分组统计 ──
   function calcGroupStats(groupRows) {
-    var s = { contract:0, infoFee:0, profit:0, clientPaid:0, clientRemain:0, lab:0, labPaid:0, labRemain:0, clientInvoice:0, labInvoice:0, infoFeeInvoice:0 };
+    var s = { contract:0, infoFee:0, profit:0, clientPaid:0, clientRemain:0, lab:0, labPaid:0, labRemain:0 };
     groupRows.forEach(function(row) {
       s.contract    += (row.r.contract || 0);
       s.infoFee     += (row.infoFee || 0);
@@ -1859,9 +1960,6 @@ function renderFinance() {
       s.lab         += (row.r.labFee || 0);
       s.labPaid     += (row.lab.paid || 0);
       s.labRemain   += (row.lab.remaining || 0);
-      s.clientInvoice  += (row.r.clientInvoice || 0);
-      s.labInvoice     += (row.r.labInvoice || 0);
-      s.infoFeeInvoice += (row.r.infoFeeInvoice || 0);
     });
     return s;
   }
@@ -1888,11 +1986,11 @@ function renderFinance() {
     unpaidHeader.style.display = 'flex';
     unpaidCount.textContent = '(' + unpaidRows.length + ' 条)';
     renderGroupStats('fin-unpaid-stats', unpaidStats);
-    document.getElementById('fin-tbody').innerHTML = unpaidRows.map(renderRow).join('');
+    document.getElementById('fin-unpaid-grid').innerHTML = unpaidRows.map(renderCard).join('');
   } else {
     unpaidHeader.style.display = 'none';
     document.getElementById('fin-unpaid-stats').innerHTML = '';
-    document.getElementById('fin-tbody').innerHTML = '<tr><td colspan="22" class="state-msg">全部已付清 ✅</td></tr>';
+    document.getElementById('fin-unpaid-grid').innerHTML = '<div class="state-msg" style="grid-column:1/-1;">全部已付清 ✅</div>';
   }
 
   // ── 渲染已付清订单 ──
@@ -1903,76 +2001,89 @@ function renderFinance() {
     paidHeader.style.display = 'flex';
     paidCount.textContent = '(' + paidRows.length + ' 条)';
     renderGroupStats('fin-paid-stats', paidStats);
-    document.getElementById('fin-paid-tbody').innerHTML = paidRows.map(renderRow).join('');
+    document.getElementById('fin-paid-grid').innerHTML = paidRows.map(renderCard).join('');
   } else {
     paidHeader.style.display = 'none';
     document.getElementById('fin-paid-stats').innerHTML = '';
-    document.getElementById('fin-paid-tbody').innerHTML = '<tr><td colspan="22" class="state-msg">暂无已付清订单</td></tr>';
+    document.getElementById('fin-paid-grid').innerHTML = '<div class="state-msg" style="grid-column:1/-1;">暂无已付清订单</div>';
   }
-
-  // 初始化所有表格的列宽
-  var tables = document.querySelectorAll('#panel-finance table');
-  tables.forEach(function(ft) {
-    initResizableColumns(ft, { colWidths: FIN_COL_WIDTHS });
-  });
 }
 
-function editFinanceRow(id) {
-  editingFinanceId = id;
-  renderFinance();
+function openFinanceEditModal(id) {
+  var rec = SYSTEMS.cert.records.find(function(r) { return r.id === id; });
+  if (!rec) return;
+  _financeEditId = id;
+  document.getElementById('fin-em-contract').value = rec.contract ?? '';
+  document.getElementById('fin-em-info-fee').value = rec.infoFee ?? '';
+  document.getElementById('fin-em-lab-fee').value = rec.labFee ?? '';
+  document.getElementById('fin-em-cp1').value = rec.clientPay1 ?? '';
+  document.getElementById('fin-em-cp2').value = rec.clientPay2 ?? '';
+  document.getElementById('fin-em-cp3').value = rec.clientPay3 ?? '';
+  document.getElementById('fin-em-lp1').value = rec.labPay1 ?? '';
+  document.getElementById('fin-em-lp2').value = rec.labPay2 ?? '';
+  document.getElementById('fin-em-lp3').value = rec.labPay3 ?? '';
+  document.getElementById('fin-em-cli-inv').value = rec.clientInvoice ?? '';
+  document.getElementById('fin-em-lab-inv').value = rec.labInvoice ?? '';
+  document.getElementById('fin-em-info-inv').value = rec.infoFeeInvoice ?? '';
+  document.getElementById('fin-edit-modal').classList.add('open');
 }
 
-function cancelFinanceEdit() {
-  editingFinanceId = null;
-  renderFinance();
+function closeFinanceEditModal() {
+  _financeEditId = null;
+  document.getElementById('fin-edit-modal').classList.remove('open');
 }
 
-async function saveFinanceEdit(recordId) {
+async function saveFinanceEditModal() {
+  var recordId = _financeEditId;
+  if (!recordId) return;
   var sys = SYSTEMS.cert;
+  var btn = document.getElementById('fin-em-save');
+  btn.disabled = true;
+  btn.textContent = '保存中…';
   try {
     var fields = {};
+    var localUpdates = {};
     var v;
-    var localUpdates = {};  // 同步更新本地记录
-
-    v = parseFloat(document.getElementById('fin-ei-contract').value);
+    v = parseFloat(document.getElementById('fin-em-contract').value);
     if (!isNaN(v)) { fields[sys.F.contract] = v; localUpdates.contract = v; }
-    v = parseFloat(document.getElementById('fin-ei-info-fee').value);
+    v = parseFloat(document.getElementById('fin-em-info-fee').value);
     if (!isNaN(v)) { fields[sys.F.infoFee] = v; localUpdates.infoFee = v; }
-    v = parseFloat(document.getElementById('fin-ei-cp1').value);
-    if (!isNaN(v)) { fields[sys.F.clientPay1] = v; localUpdates.clientPay1 = v; }
-    v = parseFloat(document.getElementById('fin-ei-cp2').value);
-    if (!isNaN(v)) { fields[sys.F.clientPay2] = v; localUpdates.clientPay2 = v; }
-    v = parseFloat(document.getElementById('fin-ei-cp3').value);
-    if (!isNaN(v)) { fields[sys.F.clientPay3] = v; localUpdates.clientPay3 = v; }
-    v = parseFloat(document.getElementById('fin-ei-lab-fee').value);
+    v = parseFloat(document.getElementById('fin-em-lab-fee').value);
     if (!isNaN(v)) { fields[sys.F.labFee] = v; localUpdates.labFee = v; }
-    v = parseFloat(document.getElementById('fin-ei-lp1').value);
+    v = parseFloat(document.getElementById('fin-em-cp1').value);
+    if (!isNaN(v)) { fields[sys.F.clientPay1] = v; localUpdates.clientPay1 = v; }
+    v = parseFloat(document.getElementById('fin-em-cp2').value);
+    if (!isNaN(v)) { fields[sys.F.clientPay2] = v; localUpdates.clientPay2 = v; }
+    v = parseFloat(document.getElementById('fin-em-cp3').value);
+    if (!isNaN(v)) { fields[sys.F.clientPay3] = v; localUpdates.clientPay3 = v; }
+    v = parseFloat(document.getElementById('fin-em-lp1').value);
     if (!isNaN(v)) { fields[sys.F.labPay1] = v; localUpdates.labPay1 = v; }
-    v = parseFloat(document.getElementById('fin-ei-lp2').value);
+    v = parseFloat(document.getElementById('fin-em-lp2').value);
     if (!isNaN(v)) { fields[sys.F.labPay2] = v; localUpdates.labPay2 = v; }
-    v = parseFloat(document.getElementById('fin-ei-lp3').value);
+    v = parseFloat(document.getElementById('fin-em-lp3').value);
     if (!isNaN(v)) { fields[sys.F.labPay3] = v; localUpdates.labPay3 = v; }
-    v = parseFloat(document.getElementById('fin-ei-cli-inv').value);
+    v = parseFloat(document.getElementById('fin-em-cli-inv').value);
     if (!isNaN(v)) { fields[sys.F.clientInvoice] = v; localUpdates.clientInvoice = v; }
-    v = parseFloat(document.getElementById('fin-ei-lab-inv').value);
+    v = parseFloat(document.getElementById('fin-em-lab-inv').value);
     if (!isNaN(v)) { fields[sys.F.labInvoice] = v; localUpdates.labInvoice = v; }
-    v = parseFloat(document.getElementById('fin-ei-info-inv').value);
+    v = parseFloat(document.getElementById('fin-em-info-inv').value);
     if (!isNaN(v)) { fields[sys.F.infoFeeInvoice] = v; localUpdates.infoFeeInvoice = v; }
 
-    // 先更新飞书
     await updateRecord(sys.apiUrl, recordId, fields);
 
-    // 立即更新本地内存中的记录，绕过飞书读取延迟
     var rec = sys.records.find(function(r) { return r.id === recordId; });
     if (rec) {
       Object.keys(localUpdates).forEach(function(k) { rec[k] = localUpdates[k]; });
     }
 
-    editingFinanceId = null;
+    closeFinanceEditModal();
     renderFinance();
-    debug('save OK: clientInvoice=' + rec.clientInvoice + ' labInvoice=' + rec.labInvoice + ' infoFeeInvoice=' + rec.infoFeeInvoice);
+    debug('save OK');
   } catch (err) {
     alert('保存失败: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '保存';
   }
 }
 
