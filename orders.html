@@ -500,7 +500,8 @@ const SYSTEMS = {
       start:'提交日期', end:'预计完成日期', status:'当前状态', note:'备注',
       clientPay1:'客户首付款', clientPay2:'客户二次付款', clientPay3:'客户尾款',
       labPay1:'实验室首付款', labPay2:'实验室二次付款', labPay3:'实验室尾款',
-      clientInvoice:'客户发票额', labInvoice:'实验室发票', infoFeeInvoice:'信息费发票',
+      clientInvoice:'客户发票额', labInvoice:'实验室发票',
+      infoFeeExpense:'信息费支出',
     },
     clientLabel:  '客户名称',
     tagLabel:     '认证类型',
@@ -785,7 +786,7 @@ async function loadData(sysKey) {
         labPay3: fnv(f[sys.F.labPay3]),
         clientInvoice: fnv(f[sys.F.clientInvoice]),
         labInvoice:    fnv(f[sys.F.labInvoice]),
-        infoFeeInvoice: fnv(f[sys.F.infoFeeInvoice]),
+        infoFeeExpense: fnv(f[sys.F.infoFeeExpense]),
       };
     });
     if (!sys.noTag) sys.records.forEach(r => { if (r.tag) saveCustomTag(sys, r.tag); });
@@ -982,6 +983,15 @@ function buildFinanceFilterBarHTML() {
         <option value="未付款">未付款</option>
       </select>
     </div>
+    <div class="filter-group">
+      <span class="filter-label">信息费支出</span>
+      <select class="filter-select" id="fin-f-info-pay-status" onchange="renderFinance()">
+        <option value="">全部</option>
+        <option value="已结清">已结清</option>
+        <option value="部分付款">部分付款</option>
+        <option value="未付款">未付款</option>
+      </select>
+    </div>
     <div class="filter-group filter-search">
       <span class="filter-label">搜索</span>
       <input class="filter-input" id="fin-search" type="text"
@@ -1078,7 +1088,7 @@ function resetFilters(sysKey) {
     ['fin-f-date-from','fin-f-date-to','fin-f-amount-min','fin-f-amount-max'].forEach(function(id) {
       var el = document.getElementById(id); if (el) el.value = '';
     });
-    ['fin-f-client','fin-f-client-pay-status','fin-f-lab-pay-status'].forEach(function(id) {
+    ['fin-f-client','fin-f-client-pay-status','fin-f-lab-pay-status','fin-f-info-pay-status'].forEach(function(id) {
       var el = document.getElementById(id); if (el) el.selectedIndex = 0;
     });
     var s = document.getElementById('fin-search'); if (s) s.value = '';
@@ -1745,11 +1755,15 @@ function buildFinancePanel() {
           <div class="mfg"><label>二次付款</label><input id="fin-em-lp2" type="number" min="0" step="0.01"></div>
           <div class="mfg"><label>尾款</label><input id="fin-em-lp3" type="number" min="0" step="0.01"></div>
         </div>
+        <div class="mfg" style="margin-top:0.8rem;"><label style="font-weight:700;color:#1b3a6b;">💰 信息费支出</label></div>
+        <div class="form-row">
+          <div class="mfg"><label>信息费总额（元）</label><input id="fin-em-info-fee2" type="number" min="0" step="0.01" readonly style="background:#f8faff;"></div>
+          <div class="mfg"><label>已支出（元）</label><input id="fin-em-info-expense" type="number" min="0" step="0.01"></div>
+        </div>
         <div class="mfg" style="margin-top:0.8rem;"><label style="font-weight:700;color:#1b3a6b;">🧾 发票</label></div>
-        <div class="form-row-3">
+        <div class="form-row">
           <div class="mfg"><label>客户发票额</label><input id="fin-em-cli-inv" type="number" min="0" step="0.01"></div>
           <div class="mfg"><label>实验室发票</label><input id="fin-em-lab-inv" type="number" min="0" step="0.01"></div>
-          <div class="mfg"><label>信息费发票</label><input id="fin-em-info-inv" type="number" min="0" step="0.01"></div>
         </div>
         <div class="modal-btns">
           <button class="btn-cancel" onclick="closeFinanceEditModal()">取消</button>
@@ -1807,6 +1821,7 @@ function renderFinance() {
   var client    = (document.getElementById('fin-f-client') || {}).value || '';
   var clientPay = (document.getElementById('fin-f-client-pay-status') || {}).value || '';
   var labPay    = (document.getElementById('fin-f-lab-pay-status') || {}).value || '';
+  var infoPay   = (document.getElementById('fin-f-info-pay-status') || {}).value || '';
 
   // 只统计正式合同及之后状态（排除暂时合同、已作废）
   var VALID_FINANCE_STATUS = ['正式合同','检测中','证书申请中','已交付'];
@@ -1826,17 +1841,27 @@ function renderFinance() {
       var lp = calcPayStatus(r.labFee, [r.labPay1, r.labPay2, r.labPay3]);
       if (lp.status !== labPay) return false;
     }
+    if (infoPay) {
+      var infoFeePaid = (r.infoFeeExpense || 0);
+      var infoFeeTotal = (r.infoFee || 0);
+      var infoFeeRemain = Math.max(0, infoFeeTotal - infoFeePaid);
+      var infoFeeStatus = infoFeeRemain <= 0 ? '已结清' : (infoFeePaid > 0 ? '部分付款' : '未付款');
+      if (infoFeeStatus !== infoPay) return false;
+    }
     return true;
   });
 
   var totalContract = 0, totalInfoFee = 0, totalProfit = 0;
   var totalClientPaid = 0, totalClientRemain = 0;
   var totalLab = 0, totalLabPaid = 0, totalLabRemain = 0;
+  var totalInfoFeePaid = 0, totalInfoFeeRemain = 0;
 
   var rows = filtered.map(function(r) {
     var client = calcPayStatus(r.contract, [r.clientPay1, r.clientPay2, r.clientPay3]);
     var lab    = calcPayStatus(r.labFee,    [r.labPay1, r.labPay2, r.labPay3]);
     var infoFee = (r.infoFee || 0);
+    var infoFeePaid = (r.infoFeeExpense || 0);
+    var infoFeeRemain = Math.max(0, infoFee - infoFeePaid);
     var profit  = (r.contract || 0) - infoFee - (r.labFee || 0);
 
     totalContract    += (r.contract || 0);
@@ -1847,8 +1872,10 @@ function renderFinance() {
     totalLab         += (r.labFee || 0);
     totalLabPaid     += lab.paid;
     totalLabRemain   += lab.remaining;
+    totalInfoFeePaid += infoFeePaid;
+    totalInfoFeeRemain += infoFeeRemain;
 
-    return { r: r, client: client, lab: lab, infoFee: infoFee, profit: profit };
+    return { r: r, client: client, lab: lab, infoFee: infoFee, profit: profit, infoFeePaid: infoFeePaid, infoFeeRemain: infoFeeRemain };
   });
 
   // 拆分为已付清和未付清两组（客户已付清 = 已付清）
@@ -1873,6 +1900,8 @@ function renderFinance() {
       '<div class="stat-card"><div class="num" style="color:#16a34a;">' + fmtAmount(totalLabPaid) + '</div><div class="lbl">实验室已付</div></div>' +
       '<div class="stat-card warn"><div class="num">' + fmtAmount(totalLabRemain) + '</div><div class="lbl">实验室待付</div></div>' +
       '<div class="stat-card"><div class="num">' + fmtAmount(totalInfoFee) + '</div><div class="lbl">信息费总额</div></div>' +
+      '<div class="stat-card"><div class="num" style="color:#16a34a;">' + fmtAmount(totalInfoFeePaid) + '</div><div class="lbl">信息费已付</div></div>' +
+      '<div class="stat-card warn"><div class="num">' + fmtAmount(totalInfoFeeRemain) + '</div><div class="lbl">信息费待付</div></div>' +
       '<div class="stat-card"><div class="num" style="color:' + (totalProfit >= 0 ? '#065f46' : '#dc2626') + ';">' + fmtAmount(totalProfit) + '</div><div class="lbl">利润总额</div></div>';
   }
 
@@ -1897,6 +1926,12 @@ function renderFinance() {
     var labBarCls = l.remaining <= 0 ? 'cleared' : (l.paid > 0 ? 'partial' : 'none');
     var crCls = c.remaining > 0 ? 'fin-pay-remain' : 'fin-pay-done';
     var lrCls = l.remaining > 0 ? 'fin-pay-remain' : 'fin-pay-done';
+    // 信息费支付进度
+    var infoFeePct = (row.infoFee && row.infoFee > 0) ? Math.round((row.infoFeePaid / row.infoFee) * 100) : 0;
+    var infoFeeBarCls = row.infoFeeRemain <= 0 ? 'cleared' : (row.infoFeePaid > 0 ? 'partial' : 'none');
+    var infoFeeStatus = row.infoFeeRemain <= 0 ? '已结清' : (row.infoFeePaid > 0 ? '部分付款' : '未付款');
+    var infoFeeStatusCls = 's-' + infoFeeStatus;
+    var irCls = row.infoFeeRemain > 0 ? 'fin-pay-remain' : 'fin-pay-done';
 
     return '<div class="fin-card">' +
       // Header: 订单编号 + 客户付款状态
@@ -1937,9 +1972,19 @@ function renderFinance() {
             '<span class="badge ' + l.cls + '">' + l.status + '</span>' +
           '</div>' +
         '</div>' +
+        // 信息费支出
+        '<div class="fin-pay-section">' +
+          '<div class="fin-pay-label">💰 信息费支出</div>' +
+          '<div class="fin-pay-bar"><div class="fin-pay-bar-fill ' + infoFeeBarCls + '" style="width:' + Math.min(infoFeePct, 100) + '%"></div></div>' +
+          '<div class="fin-pay-detail">' +
+            '<span class="fin-pay-amount">已付 ' + fmtAmount(row.infoFeePaid) + '</span>' +
+            '<span class="' + irCls + '">待付 ' + (row.infoFeeRemain > 0 ? fmtAmount(row.infoFeeRemain) : '¥0') + '</span>' +
+            '<span class="badge ' + infoFeeStatusCls + '">' + infoFeeStatus + '</span>' +
+          '</div>' +
+        '</div>' +
         // 发票信息
         '<div class="fin-card-invoice">' +
-          '🧾 发票: 客户 <strong>' + fmtAmount(r.clientInvoice) + '</strong> | 实验室 <strong>' + fmtAmount(r.labInvoice) + '</strong> | 信息费 <strong>' + fmtAmount(r.infoFeeInvoice) + '</strong>' +
+          '🧾 发票: 客户 <strong>' + fmtAmount(r.clientInvoice) + '</strong> | 实验室 <strong>' + fmtAmount(r.labInvoice) + '</strong>' +
         '</div>' +
       '</div>' +
       '<div class="fin-card-actions">' +
@@ -1950,7 +1995,7 @@ function renderFinance() {
 
   // ── 辅助函数：计算分组统计 ──
   function calcGroupStats(groupRows) {
-    var s = { contract:0, infoFee:0, profit:0, clientPaid:0, clientRemain:0, lab:0, labPaid:0, labRemain:0 };
+    var s = { contract:0, infoFee:0, profit:0, clientPaid:0, clientRemain:0, lab:0, labPaid:0, labRemain:0, infoFeePaid:0, infoFeeRemain:0 };
     groupRows.forEach(function(row) {
       s.contract    += (row.r.contract || 0);
       s.infoFee     += (row.infoFee || 0);
@@ -1960,6 +2005,8 @@ function renderFinance() {
       s.lab         += (row.r.labFee || 0);
       s.labPaid     += (row.lab.paid || 0);
       s.labRemain   += (row.lab.remaining || 0);
+      s.infoFeePaid += (row.infoFeePaid || 0);
+      s.infoFeeRemain += (row.infoFeeRemain || 0);
     });
     return s;
   }
@@ -1975,6 +2022,8 @@ function renderFinance() {
       '<div class="stat-card"><div class="num" style="color:#16a34a;">' + fmtAmount(s.labPaid) + '</div><div class="lbl">实验室已付</div></div>' +
       '<div class="stat-card warn"><div class="num">' + fmtAmount(s.labRemain) + '</div><div class="lbl">实验室待付</div></div>' +
       '<div class="stat-card"><div class="num">' + fmtAmount(s.infoFee) + '</div><div class="lbl">信息费</div></div>' +
+      '<div class="stat-card"><div class="num" style="color:#16a34a;">' + fmtAmount(s.infoFeePaid) + '</div><div class="lbl">信息费已付</div></div>' +
+      '<div class="stat-card warn"><div class="num">' + fmtAmount(s.infoFeeRemain) + '</div><div class="lbl">信息费待付</div></div>' +
       '<div class="stat-card"><div class="num" style="color:' + (s.profit >= 0 ? '#065f46' : '#dc2626') + ';">' + fmtAmount(s.profit) + '</div><div class="lbl">利润</div></div>';
   }
 
@@ -2024,7 +2073,8 @@ function openFinanceEditModal(id) {
   document.getElementById('fin-em-lp3').value = rec.labPay3 ?? '';
   document.getElementById('fin-em-cli-inv').value = rec.clientInvoice ?? '';
   document.getElementById('fin-em-lab-inv').value = rec.labInvoice ?? '';
-  document.getElementById('fin-em-info-inv').value = rec.infoFeeInvoice ?? '';
+  document.getElementById('fin-em-info-fee2').value = rec.infoFee ?? '';
+  document.getElementById('fin-em-info-expense').value = rec.infoFeeExpense ?? '';
   document.getElementById('fin-edit-modal').classList.add('open');
 }
 
@@ -2066,8 +2116,8 @@ async function saveFinanceEditModal() {
     if (!isNaN(v)) { fields[sys.F.clientInvoice] = v; localUpdates.clientInvoice = v; }
     v = parseFloat(document.getElementById('fin-em-lab-inv').value);
     if (!isNaN(v)) { fields[sys.F.labInvoice] = v; localUpdates.labInvoice = v; }
-    v = parseFloat(document.getElementById('fin-em-info-inv').value);
-    if (!isNaN(v)) { fields[sys.F.infoFeeInvoice] = v; localUpdates.infoFeeInvoice = v; }
+    v = parseFloat(document.getElementById('fin-em-info-expense').value);
+    if (!isNaN(v)) { fields[sys.F.infoFeeExpense] = v; localUpdates.infoFeeExpense = v; }
 
     await updateRecord(sys.apiUrl, recordId, fields);
 
