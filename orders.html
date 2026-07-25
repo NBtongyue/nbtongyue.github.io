@@ -1844,6 +1844,7 @@ function renderFinance() {
     if (infoPay) {
       var infoFeePaid = (r.infoFeeExpense || 0);
       var infoFeeTotal = (r.infoFee || 0);
+      if (infoFeeTotal <= 0) return false; // 无信息费，不匹配任何筛选
       var infoFeeRemain = Math.max(0, infoFeeTotal - infoFeePaid);
       var infoFeeStatus = infoFeeRemain <= 0 ? '已结清' : (infoFeePaid > 0 ? '部分付款' : '未付款');
       if (infoFeeStatus !== infoPay) return false;
@@ -1919,8 +1920,6 @@ function renderFinance() {
   // ── 辅助函数：渲染卡片 ──
   function renderCard(row) {
     var r = row.r, c = row.client, l = row.lab;
-    // DEBUG: 信息费数据
-    if (typeof row.infoFeePaid === 'undefined') console.warn('renderCard: infoFeePaid undefined for', r.no);
     // 进度百分比
     var clientPct = (r.contract && r.contract > 0) ? Math.round((c.paid / r.contract) * 100) : 0;
     var labPct = (r.labFee && r.labFee > 0) ? Math.round((l.paid / r.labFee) * 100) : 0;
@@ -1928,11 +1927,11 @@ function renderFinance() {
     var labBarCls = l.remaining <= 0 ? 'cleared' : (l.paid > 0 ? 'partial' : 'none');
     var crCls = c.remaining > 0 ? 'fin-pay-remain' : 'fin-pay-done';
     var lrCls = l.remaining > 0 ? 'fin-pay-remain' : 'fin-pay-done';
-    // 信息费支付进度
-    var infoFeePct = (row.infoFee && row.infoFee > 0) ? Math.round((row.infoFeePaid / row.infoFee) * 100) : 0;
+    // 信息费支付进度（信息费为0则无需支付，进度条拉满）
+    var infoFeePct = (row.infoFee && row.infoFee > 0) ? Math.round((row.infoFeePaid / row.infoFee) * 100) : 100;
     var infoFeeBarCls = row.infoFeeRemain <= 0 ? 'cleared' : (row.infoFeePaid > 0 ? 'partial' : 'none');
-    var infoFeeStatus = row.infoFeeRemain <= 0 ? '已结清' : (row.infoFeePaid > 0 ? '部分付款' : '未付款');
-    var infoFeeStatusCls = 's-' + infoFeeStatus;
+    var infoFeeStatus = (row.infoFee && row.infoFee > 0) ? (row.infoFeeRemain <= 0 ? '已结清' : (row.infoFeePaid > 0 ? '部分付款' : '未付款')) : '—';
+    var infoFeeStatusCls = infoFeeStatus === '—' ? '' : 's-' + infoFeeStatus;
     var irCls = row.infoFeeRemain > 0 ? 'fin-pay-remain' : 'fin-pay-done';
 
     return '<div class="fin-card">' +
