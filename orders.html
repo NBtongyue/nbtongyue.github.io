@@ -446,7 +446,7 @@
 
 <header>
   <div class="h-left">
-    <div class="h-logo">通跃检测</div>
+    <div class="h-logo">通跃检测 <span style="font-size:0.6rem;opacity:0.6;">v2.1</span></div>
     <div class="h-title" id="h-tab-title">认证订单追踪系统</div>
   </div>
   <div class="h-right">
@@ -1919,6 +1919,8 @@ function renderFinance() {
   // ── 辅助函数：渲染卡片 ──
   function renderCard(row) {
     var r = row.r, c = row.client, l = row.lab;
+    // DEBUG: 信息费数据
+    if (typeof row.infoFeePaid === 'undefined') console.warn('renderCard: infoFeePaid undefined for', r.no);
     // 进度百分比
     var clientPct = (r.contract && r.contract > 0) ? Math.round((c.paid / r.contract) * 100) : 0;
     var labPct = (r.labFee && r.labFee > 0) ? Math.round((l.paid / r.labFee) * 100) : 0;
