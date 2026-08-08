@@ -1960,10 +1960,10 @@ function renderFinance() {
 
   // ── 客户合同额汇总（按客户分组，降序排列） ──
   var custMap = {};
-  filtered.forEach(function(row) {
-    var c = row.r.client;
+  filtered.forEach(function(r) {
+    var c = r.client;
     if (!custMap[c]) custMap[c] = 0;
-    custMap[c] += (row.r.contract || 0);
+    custMap[c] += (r.contract || 0);
   });
   var custEntries = Object.keys(custMap).map(function(k) { return [k, custMap[k]]; });
   custEntries.sort(function(a, b) { return b[1] - a[1]; });
