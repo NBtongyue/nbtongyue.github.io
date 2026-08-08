@@ -1843,11 +1843,18 @@ function loadFinance() {
     return;
   }
 
-  var promises = [];
-  if (needCert) promises.push(loadData('cert'));
-  if (needLab)  promises.push(loadData('lab'));
-
-  Promise.all(promises).then(proceed).catch(function(err) {
+  // cert 数据是必须的，lab 数据是可选的（仅用于实验室汇总）
+  var certPromise = needCert ? loadData('cert') : Promise.resolve();
+  certPromise.then(function() {
+    if (needLab) {
+      loadData('lab').then(proceed).catch(function(err) {
+        debug('loadFinance: lab load failed, rendering without lab data: ' + err.message);
+        proceed();
+      });
+    } else {
+      proceed();
+    }
+  }).catch(function(err) {
     debug('loadFinance ERROR: ' + err.message);
     console.error('loadFinance error:', err);
   });
