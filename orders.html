@@ -1828,32 +1828,17 @@ function buildFinancePanel() {
 function loadFinance() {
   debug('loadFinance START');
   var certSys = SYSTEMS.cert;
-  var labSys  = SYSTEMS.lab;
-  var needCert = !certSys.records || certSys.records.length === 0;
-  var needLab  = !labSys.records || labSys.records.length === 0;
-
-  function proceed() {
-    debug('loadFinance: data ready, rendering');
+  // 避免重复加载：如果已有数据直接渲染
+  if (certSys.records && certSys.records.length > 0) {
+    debug('loadFinance: using cached cert data, ' + certSys.records.length + ' records');
     refreshFinanceFilterDropdowns();
     renderFinance();
-  }
-
-  if (!needCert && !needLab) {
-    proceed();
     return;
   }
-
-  // cert 数据是必须的，lab 数据是可选的（仅用于实验室汇总）
-  var certPromise = needCert ? loadData('cert') : Promise.resolve();
-  certPromise.then(function() {
-    if (needLab) {
-      loadData('lab').then(proceed).catch(function(err) {
-        debug('loadFinance: lab load failed, rendering without lab data: ' + err.message);
-        proceed();
-      });
-    } else {
-      proceed();
-    }
+  loadData('cert').then(function() {
+    debug('loadFinance: cert data loaded, rendering finance');
+    refreshFinanceFilterDropdowns();
+    renderFinance();
   }).catch(function(err) {
     debug('loadFinance ERROR: ' + err.message);
     console.error('loadFinance error:', err);
