@@ -436,6 +436,44 @@
     @media (max-width: 900px) {
       .fin-card-grid { grid-template-columns: 1fr; }
     }
+
+    /* ── 客户/实验室合同额汇总卡片 ── */
+    .fin-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 0.5rem;
+      margin-bottom: 0.8rem;
+    }
+    .fin-summary-card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 0.45rem 0.7rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      transition: box-shadow .2s;
+    }
+    .fin-summary-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .fin-summary-card .fin-summary-name {
+      font-size: 0.8rem;
+      color: #555;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .fin-summary-card .fin-summary-amount {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #1b3a6b;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    @media (max-width: 900px) {
+      .fin-summary-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    }
   </style>
 </head>
 <body>
@@ -1709,6 +1747,20 @@ function buildFinancePanel() {
   document.getElementById('panel-finance').innerHTML = `
     <main>
       <div class="stats stats-finance" id="fin-stats"></div>
+      <!-- 客户合同额汇总 -->
+      <div class="finance-section" id="fin-cust-header" style="display:none;">
+        <span class="section-icon">👥</span>
+        <span class="section-title">客户合同额汇总</span>
+        <span class="section-count" id="fin-cust-count"></span>
+      </div>
+      <div class="fin-summary-grid" id="fin-cust-grid"></div>
+      <!-- 实验室合同额汇总 -->
+      <div class="finance-section" id="fin-lab-header" style="display:none;">
+        <span class="section-icon">🔬</span>
+        <span class="section-title">实验室合同额汇总</span>
+        <span class="section-count" id="fin-lab-count"></span>
+      </div>
+      <div class="fin-summary-grid" id="fin-lab-grid"></div>
       ${buildFinanceFilterBarHTML()}
       <div class="controls">
         <button class="btn-refresh" onclick="loadFinance()">↻ 刷新</button>
@@ -1776,18 +1828,26 @@ function buildFinancePanel() {
 function loadFinance() {
   debug('loadFinance START');
   var certSys = SYSTEMS.cert;
-  // 避免重复加载：如果已有数据直接渲染
-  if (certSys.records && certSys.records.length > 0) {
-    debug('loadFinance: using cached cert data, ' + certSys.records.length + ' records');
+  var labSys  = SYSTEMS.lab;
+  var needCert = !certSys.records || certSys.records.length === 0;
+  var needLab  = !labSys.records || labSys.records.length === 0;
+
+  function proceed() {
+    debug('loadFinance: data ready, rendering');
     refreshFinanceFilterDropdowns();
     renderFinance();
+  }
+
+  if (!needCert && !needLab) {
+    proceed();
     return;
   }
-  loadData('cert').then(function() {
-    debug('loadFinance: cert data loaded, rendering finance');
-    refreshFinanceFilterDropdowns();
-    renderFinance();
-  }).catch(function(err) {
+
+  var promises = [];
+  if (needCert) promises.push(loadData('cert'));
+  if (needLab)  promises.push(loadData('lab'));
+
+  Promise.all(promises).then(proceed).catch(function(err) {
     debug('loadFinance ERROR: ' + err.message);
     console.error('loadFinance error:', err);
   });
@@ -1904,6 +1964,54 @@ function renderFinance() {
       '<div class="stat-card"><div class="num" style="color:#16a34a;">' + fmtAmount(totalInfoFeePaid) + '</div><div class="lbl">信息费已付</div></div>' +
       '<div class="stat-card warn"><div class="num">' + fmtAmount(totalInfoFeeRemain) + '</div><div class="lbl">信息费待付</div></div>' +
       '<div class="stat-card"><div class="num" style="color:' + (totalProfit >= 0 ? '#065f46' : '#dc2626') + ';">' + fmtAmount(totalProfit) + '</div><div class="lbl">利润总额</div></div>';
+  }
+
+  // ── 客户合同额汇总（按客户分组，降序排列） ──
+  var custMap = {};
+  filtered.forEach(function(row) {
+    var c = row.r.client;
+    if (!custMap[c]) custMap[c] = 0;
+    custMap[c] += (row.r.contract || 0);
+  });
+  var custEntries = Object.keys(custMap).map(function(k) { return [k, custMap[k]]; });
+  custEntries.sort(function(a, b) { return b[1] - a[1]; });
+  var custHeader = document.getElementById('fin-cust-header');
+  var custCount = document.getElementById('fin-cust-count');
+  var custGrid = document.getElementById('fin-cust-grid');
+  if (custEntries.length > 0) {
+    custHeader.style.display = 'flex';
+    custCount.textContent = '(' + custEntries.length + ' 家)';
+    custGrid.innerHTML = custEntries.map(function(e) {
+      return '<div class="fin-summary-card"><span class="fin-summary-name">' + escHtml(e[0]) + '</span><span class="fin-summary-amount">' + fmtAmount(e[1]) + '</span></div>';
+    }).join('');
+  } else {
+    custHeader.style.display = 'none';
+    custGrid.innerHTML = '';
+  }
+
+  // ── 实验室合同额汇总（按实验室名称分组，降序排列） ──
+  var labRecords = SYSTEMS.lab.records || [];
+  var labMap = {};
+  labRecords.forEach(function(r) {
+    if (r.status === '已作废') return;
+    var name = r.client;
+    if (!labMap[name]) labMap[name] = 0;
+    labMap[name] += (r.contract || 0);
+  });
+  var labEntries = Object.keys(labMap).map(function(k) { return [k, labMap[k]]; });
+  labEntries.sort(function(a, b) { return b[1] - a[1]; });
+  var labHeader = document.getElementById('fin-lab-header');
+  var labCount = document.getElementById('fin-lab-count');
+  var labGrid = document.getElementById('fin-lab-grid');
+  if (labEntries.length > 0) {
+    labHeader.style.display = 'flex';
+    labCount.textContent = '(' + labEntries.length + ' 家)';
+    labGrid.innerHTML = labEntries.map(function(e) {
+      return '<div class="fin-summary-card"><span class="fin-summary-name">' + escHtml(e[0]) + '</span><span class="fin-summary-amount">' + fmtAmount(e[1]) + '</span></div>';
+    }).join('');
+  } else {
+    labHeader.style.display = 'none';
+    labGrid.innerHTML = '';
   }
 
   // ── 空数据 ──
