@@ -375,6 +375,16 @@
     .fin-card-client .fin-client-name { font-weight: 600; color: #333; }
     .fin-card-client .fin-sep { color: #ccc; margin: 0 0.3rem; }
     .fin-card-client .fin-proj-name { color: #888; }
+    .fin-card-client .fin-cert-type {
+      display: inline-block;
+      background: #e8f0fe;
+      color: #1b3a6b;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      margin-left: 0.3rem;
+    }
     .fin-card-amounts {
       display: flex;
       gap: 1rem;
@@ -1795,6 +1805,10 @@ function buildFinancePanel() {
           <div class="mfg"><label>信息费（元）</label><input id="fin-em-info-fee" type="number" min="0" step="0.01"></div>
           <div class="mfg"><label>实验室额（元）</label><input id="fin-em-lab-fee" type="number" min="0" step="0.01"></div>
         </div>
+        <div class="form-row" style="margin-top:0.6rem;">
+          <div class="mfg"><label>认证类型</label><input id="fin-em-tag" type="text" placeholder="如 CE、UN38.3…"></div>
+          <div class="mfg"><label>订单编号</label><input id="fin-em-no" type="text" readonly style="background:#f8faff;"></div>
+        </div>
         <div class="mfg" style="margin-top:0.8rem;"><label style="font-weight:700;color:#1b3a6b;">👤 客户付款</label></div>
         <div class="form-row-3">
           <div class="mfg"><label>首付款</label><input id="fin-em-cp1" type="number" min="0" step="0.01"></div>
@@ -2046,6 +2060,7 @@ function renderFinance() {
           '<span class="fin-client-name">' + escHtml(r.client || '—') + '</span>' +
           '<span class="fin-sep">·</span>' +
           '<span class="fin-proj-name">' + escHtml(r.proj || '—') + '</span>' +
+          (r.tag ? '<span class="fin-cert-type">' + escHtml(r.tag) + '</span>' : '') +
         '</div>' +
         // 金额摘要
         '<div class="fin-card-amounts">' +
@@ -2163,6 +2178,8 @@ function openFinanceEditModal(id) {
   var rec = SYSTEMS.cert.records.find(function(r) { return r.id === id; });
   if (!rec) return;
   _financeEditId = id;
+  document.getElementById('fin-em-tag').value = rec.tag ?? '';
+  document.getElementById('fin-em-no').value = rec.no ?? '';
   document.getElementById('fin-em-contract').value = rec.contract ?? '';
   document.getElementById('fin-em-info-fee').value = rec.infoFee ?? '';
   document.getElementById('fin-em-lab-fee').value = rec.labFee ?? '';
@@ -2195,6 +2212,9 @@ async function saveFinanceEditModal() {
     var fields = {};
     var localUpdates = {};
     var v;
+    // 认证类型
+    var tag = document.getElementById('fin-em-tag').value.trim();
+    if (tag) { fields[sys.F.tag] = tag; localUpdates.tag = tag; saveCustomTag(sys, tag); }
     v = parseFloat(document.getElementById('fin-em-contract').value);
     if (!isNaN(v)) { fields[sys.F.contract] = v; localUpdates.contract = v; }
     v = parseFloat(document.getElementById('fin-em-info-fee').value);
