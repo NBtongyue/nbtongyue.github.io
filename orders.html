@@ -405,6 +405,12 @@
       color: #555;
       margin-bottom: 0.2rem;
     }
+    .fin-pay-label .fin-lab-name {
+      font-weight: 500;
+      color: #2563a8;
+      font-size: 0.7rem;
+      margin-left: 0.2rem;
+    }
     .fin-pay-bar {
       height: 6px;
       background: #e8eef8;
@@ -1923,6 +1929,12 @@ function renderFinance() {
   var totalLab = 0, totalLabPaid = 0, totalLabRemain = 0;
   var totalInfoFeePaid = 0, totalInfoFeeRemain = 0;
 
+  // 实验室名称查找表（按订单编号匹配）
+  var labMap = {};
+  (SYSTEMS.lab.records || []).forEach(function(lr) {
+    if (lr.no) labMap[lr.no] = lr.client || '';
+  });
+
   var rows = filtered.map(function(r) {
     var client = calcPayStatus(r.contract, [r.clientPay1, r.clientPay2, r.clientPay3]);
     var lab    = calcPayStatus(r.labFee,    [r.labPay1, r.labPay2, r.labPay3]);
@@ -1942,7 +1954,8 @@ function renderFinance() {
     totalInfoFeePaid += infoFeePaid;
     totalInfoFeeRemain += infoFeeRemain;
 
-    return { r: r, client: client, lab: lab, infoFee: infoFee, profit: profit, infoFeePaid: infoFeePaid, infoFeeRemain: infoFeeRemain };
+    var labName = labMap[r.no] || '';
+    return { r: r, client: client, lab: lab, infoFee: infoFee, profit: profit, infoFeePaid: infoFeePaid, infoFeeRemain: infoFeeRemain, labName: labName };
   });
 
   // 拆分为已付清和未付清两组（客户已付清 = 已付清）
@@ -2033,7 +2046,7 @@ function renderFinance() {
 
   // ── 辅助函数：渲染卡片 ──
   function renderCard(row) {
-    var r = row.r, c = row.client, l = row.lab;
+    var r = row.r, c = row.client, l = row.lab, labName = row.labName;
     // 进度百分比
     var clientPct = (r.contract && r.contract > 0) ? Math.round((c.paid / r.contract) * 100) : 0;
     var labPct = (r.labFee && r.labFee > 0) ? Math.round((l.paid / r.labFee) * 100) : 0;
@@ -2080,7 +2093,7 @@ function renderFinance() {
         '</div>' +
         // 实验室付款
         '<div class="fin-pay-section">' +
-          '<div class="fin-pay-label">🔬 实验室付款</div>' +
+          '<div class="fin-pay-label">🔬 实验室付款' + (labName ? ' <span class="fin-lab-name">' + escHtml(labName) + '</span>' : '') + '</div>' +
           '<div class="fin-pay-bar"><div class="fin-pay-bar-fill ' + labBarCls + '" style="width:' + Math.min(labPct, 100) + '%"></div></div>' +
           '<div class="fin-pay-detail">' +
             '<span class="fin-pay-amount">已付 ' + fmtAmount(l.paid) + '</span>' +
