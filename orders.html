@@ -385,6 +385,16 @@
       border-radius: 4px;
       margin-left: 0.3rem;
     }
+    .fin-card-client .fin-lab-tag {
+      display: inline-block;
+      background: #f0fdf4;
+      color: #166534;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      margin-left: 0.25rem;
+    }
     .fin-card-amounts {
       display: flex;
       gap: 1rem;
@@ -2074,6 +2084,7 @@ function renderFinance() {
           '<span class="fin-sep">·</span>' +
           '<span class="fin-proj-name">' + escHtml(r.proj || '—') + '</span>' +
           (r.tag ? '<span class="fin-cert-type">' + escHtml(r.tag) + '</span>' : '') +
+          (labName ? '<span class="fin-lab-tag">' + escHtml(labName) + '</span>' : '') +
         '</div>' +
         // 金额摘要
         '<div class="fin-card-amounts">' +
