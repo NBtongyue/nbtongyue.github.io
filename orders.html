@@ -527,6 +527,7 @@
   <button class="tab-btn"        id="tab-btn-ledger" onclick="switchTab('ledger')">账本统计</button>
   <button class="tab-btn"        id="tab-btn-done" onclick="switchTab('done')">已交付</button>
   <button class="tab-btn"        id="tab-btn-void" onclick="switchTab('void')">已作废</button>
+  <button class="tab-btn"        id="tab-btn-pending" onclick="switchTab('pending')">待付款明细</button>
 </nav>
 
 <div id="panel-cert" class="tab-panel active"></div>
@@ -535,6 +536,7 @@
 <div id="panel-ledger" class="tab-panel"></div>
 <div id="panel-done" class="tab-panel"></div>
 <div id="panel-void" class="tab-panel"></div>
+<div id="panel-pending" class="tab-panel"></div>
 <div id="debug-info" style="display:none;position:fixed;bottom:0;right:0;background:#ffeb3b;color:#333;padding:4px 8px;font-size:11px;z-index:9999;font-family:monospace;max-width:400px;word-break:break-all;"></div>
 
 <script>
@@ -1621,7 +1623,7 @@ function today() { return new Date().toISOString().slice(0, 10); }
 // ════════════════════════════════════════════════════════════
 function switchTab(sysKey) {
   if (sysKey === 'finance') {
-    ['cert','lab','ledger','done','void'].forEach(k => {
+    ['cert','lab','ledger','done','void','pending'].forEach(k => {
       document.getElementById('panel-' + k).classList.remove('active');
       document.getElementById('tab-btn-' + k).classList.remove('active');
     });
@@ -1633,7 +1635,7 @@ function switchTab(sysKey) {
     return;
   }
   if (sysKey === 'ledger') {
-    ['cert','lab','finance','done','void'].forEach(k => {
+    ['cert','lab','finance','done','void','pending'].forEach(k => {
       document.getElementById('panel-' + k).classList.remove('active');
       document.getElementById('tab-btn-' + k).classList.remove('active');
     });
@@ -1650,7 +1652,7 @@ function switchTab(sysKey) {
     return;
   }
   if (sysKey === 'done') {
-    ['cert','lab','finance','ledger','void'].forEach(k => {
+    ['cert','lab','finance','ledger','void','pending'].forEach(k => {
       document.getElementById('panel-' + k).classList.remove('active');
       document.getElementById('tab-btn-' + k).classList.remove('active');
     });
@@ -1662,7 +1664,7 @@ function switchTab(sysKey) {
     return;
   }
   if (sysKey === 'void') {
-    ['cert','lab','finance','ledger'].forEach(k => {
+    ['cert','lab','finance','ledger','pending'].forEach(k => {
       document.getElementById('panel-' + k).classList.remove('active');
       document.getElementById('tab-btn-' + k).classList.remove('active');
     });
@@ -1671,6 +1673,18 @@ function switchTab(sysKey) {
     document.getElementById('h-tab-title').textContent = '已作废订单';
     if (!window._voidBuilt) { buildVoidPanel(); window._voidBuilt = true; }
     loadVoid();
+    return;
+  }
+  if (sysKey === 'pending') {
+    ['cert','lab','finance','ledger','done','void'].forEach(k => {
+      document.getElementById('panel-' + k).classList.remove('active');
+      document.getElementById('tab-btn-' + k).classList.remove('active');
+    });
+    document.getElementById('panel-pending').classList.add('active');
+    document.getElementById('tab-btn-pending').classList.add('active');
+    document.getElementById('h-tab-title').textContent = '待付款明细';
+    if (!window._pendingBuilt) { buildPendingPanel(); window._pendingBuilt = true; }
+    loadPending();
     return;
   }
   ['cert','lab'].forEach(k => {
@@ -1685,6 +1699,8 @@ function switchTab(sysKey) {
   document.getElementById('tab-btn-done').classList.remove('active');
   document.getElementById('panel-void').classList.remove('active');
   document.getElementById('tab-btn-void').classList.remove('active');
+  document.getElementById('panel-pending').classList.remove('active');
+  document.getElementById('tab-btn-pending').classList.remove('active');
   document.getElementById('h-tab-title').textContent = SYSTEMS[sysKey].name;
 }
 
@@ -1906,7 +1922,7 @@ function renderFinance() {
   var infoPay   = (document.getElementById('fin-f-info-pay-status') || {}).value || '';
 
   // 只统计正式合同及之后状态（排除暂时合同、已作废）
-  var VALID_FINANCE_STATUS = ['正式合同','检测中','证书申请中','已交付'];
+  var VALID_FINANCE_STATUS = ['正式合同','检测中','证书申请中','已完成','已交付'];
   var filtered = records.filter(function(r) {
     if (VALID_FINANCE_STATUS.indexOf(r.status) === -1) return false;
     if (q && ![r.no, r.client, r.proj].some(function(v) { return (v||'').toLowerCase().indexOf(q) !== -1; })) return false;
@@ -2279,6 +2295,220 @@ async function saveFinanceEditModal() {
   } finally {
     btn.disabled = false;
     btn.textContent = '保存';
+  }
+}
+
+
+// ════════════════════════════════════════════════════════════
+//  待付款明细
+// ════════════════════════════════════════════════════════════
+
+function buildPendingPanel() {
+  document.getElementById('panel-pending').innerHTML = `
+    <main>
+      <div class="controls">
+        <button class="btn-refresh" onclick="loadPending()">↻ 刷新</button>
+      </div>
+      <!-- 客户待付款 -->
+      <div class="finance-section unpaid" id="pending-client-header" style="display:none;">
+        <span class="section-icon">👤</span>
+        <span class="section-title">客户待付款明细</span>
+        <span class="section-count" id="pending-client-count"></span>
+      </div>
+      <div class="stats stats-finance" id="pending-client-stats"></div>
+      <div class="table-wrap" style="margin-bottom:1.5rem;">
+        <table>
+          <thead><tr>
+            <th>订单编号</th><th>客户名称</th><th>项目名称</th><th>认证类型</th>
+            <th>合同额</th><th>已付</th><th>待付</th><th>状态</th>
+          </tr></thead>
+          <tbody id="pending-client-tbody">
+            <tr><td colspan="8" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- 实验室待付款 -->
+      <div class="finance-section unpaid" id="pending-lab-header" style="display:none;">
+        <span class="section-icon">🔬</span>
+        <span class="section-title">实验室待付款明细</span>
+        <span class="section-count" id="pending-lab-count"></span>
+      </div>
+      <div class="stats stats-finance" id="pending-lab-stats"></div>
+      <div class="table-wrap" style="margin-bottom:1.5rem;">
+        <table>
+          <thead><tr>
+            <th>订单编号</th><th>客户名称</th><th>项目名称</th><th>认证类型</th>
+            <th>实验室名称</th><th>实验室额</th><th>已付</th><th>待付</th><th>状态</th>
+          </tr></thead>
+          <tbody id="pending-lab-tbody">
+            <tr><td colspan="9" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- 信息费待付款 -->
+      <div class="finance-section unpaid" id="pending-info-header" style="display:none;">
+        <span class="section-icon">💰</span>
+        <span class="section-title">信息费待付款明细</span>
+        <span class="section-count" id="pending-info-count"></span>
+      </div>
+      <div class="stats stats-finance" id="pending-info-stats"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>订单编号</th><th>客户名称</th><th>项目名称</th><th>认证类型</th>
+            <th>信息费总额</th><th>已付</th><th>待付</th><th>状态</th>
+          </tr></thead>
+          <tbody id="pending-info-tbody">
+            <tr><td colspan="8" class="state-msg"><span class="spinner"></span>加载中…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>`;
+}
+
+function loadPending() {
+  var certSys = SYSTEMS.cert;
+  if (certSys.records && certSys.records.length > 0) {
+    renderPending();
+    return;
+  }
+  loadData('cert').then(function() {
+    renderPending();
+  }).catch(function(err) {
+    debug('loadPending ERROR: ' + err.message);
+  });
+}
+
+function renderPending() {
+  var records = SYSTEMS.cert.records;
+  var VALID_FINANCE_STATUS = ['正式合同','检测中','证书申请中','已完成','已交付'];
+
+  // 过滤有效财务状态
+  var filtered = records.filter(function(r) {
+    return VALID_FINANCE_STATUS.indexOf(r.status) !== -1;
+  });
+
+  // 实验室名称查找表
+  var labMap = {};
+  (SYSTEMS.lab.records || []).forEach(function(lr) {
+    if (lr.no) labMap[lr.no] = lr.client || '';
+  });
+
+  // 构建带付款状态的行数据
+  var rows = filtered.map(function(r) {
+    var client = calcPayStatus(r.contract, [r.clientPay1, r.clientPay2, r.clientPay3]);
+    var lab = calcPayStatus(r.labFee, [r.labPay1, r.labPay2, r.labPay3]);
+    var infoFee = (r.infoFee || 0);
+    var infoFeePaid = (r.infoFeeExpense || 0);
+    var infoFeeRemain = Math.max(0, infoFee - infoFeePaid);
+    var labName = labMap[r.no] || '';
+    return { r: r, client: client, lab: lab, infoFee: infoFee, infoFeePaid: infoFeePaid, infoFeeRemain: infoFeeRemain, labName: labName };
+  });
+
+  // ── 客户待付款 ──
+  var clientPending = rows.filter(function(row) { return row.client.remaining > 0 && (row.r.contract || 0) > 0; });
+  clientPending.sort(function(a, b) { return b.client.remaining - a.client.remaining; });
+  renderPendingSection('client', clientPending, function(row) {
+    var r = row.r, c = row.client;
+    return '<tr>' +
+      '<td>' + (r.no || '—') + '</td>' +
+      '<td>' + escHtml(r.client || '—') + '</td>' +
+      '<td>' + escHtml(r.proj || '—') + '</td>' +
+      '<td>' + (r.tag ? '<span class="cert-tag">' + escHtml(r.tag) + '</span>' : '—') + '</td>' +
+      '<td class="amount-cell">' + fmtAmount(r.contract) + '</td>' +
+      '<td class="amount-cell" style="color:#16a34a;">' + fmtAmount(c.paid) + '</td>' +
+      '<td class="amount-cell" style="color:#dc2626;font-weight:700;">' + fmtAmount(c.remaining) + '</td>' +
+      '<td><span class="badge ' + c.cls + '">' + c.status + '</span></td>' +
+      '</tr>';
+  });
+
+  // ── 实验室待付款 ──
+  var labPending = rows.filter(function(row) { return row.lab.remaining > 0 && (row.r.labFee || 0) > 0; });
+  labPending.sort(function(a, b) { return b.lab.remaining - a.lab.remaining; });
+  renderPendingSection('lab', labPending, function(row) {
+    var r = row.r, l = row.lab;
+    return '<tr>' +
+      '<td>' + (r.no || '—') + '</td>' +
+      '<td>' + escHtml(r.client || '—') + '</td>' +
+      '<td>' + escHtml(r.proj || '—') + '</td>' +
+      '<td>' + (r.tag ? '<span class="cert-tag">' + escHtml(r.tag) + '</span>' : '—') + '</td>' +
+      '<td>' + escHtml(row.labName || '—') + '</td>' +
+      '<td class="amount-cell">' + fmtAmount(r.labFee) + '</td>' +
+      '<td class="amount-cell" style="color:#16a34a;">' + fmtAmount(l.paid) + '</td>' +
+      '<td class="amount-cell" style="color:#dc2626;font-weight:700;">' + fmtAmount(l.remaining) + '</td>' +
+      '<td><span class="badge ' + l.cls + '">' + l.status + '</span></td>' +
+      '</tr>';
+  });
+
+  // ── 信息费待付款 ──
+  var infoPending = rows.filter(function(row) { return row.infoFeeRemain > 0 && row.infoFee > 0; });
+  infoPending.sort(function(a, b) { return b.infoFeeRemain - a.infoFeeRemain; });
+  renderPendingSection('info', infoPending, function(row) {
+    var r = row.r;
+    var infoStatus = row.infoFeeRemain <= 0 ? '已结清' : (row.infoFeePaid > 0 ? '部分付款' : '未付款');
+    var infoCls = 's-' + infoStatus;
+    return '<tr>' +
+      '<td>' + (r.no || '—') + '</td>' +
+      '<td>' + escHtml(r.client || '—') + '</td>' +
+      '<td>' + escHtml(r.proj || '—') + '</td>' +
+      '<td>' + (r.tag ? '<span class="cert-tag">' + escHtml(r.tag) + '</span>' : '—') + '</td>' +
+      '<td class="amount-cell">' + fmtAmount(row.infoFee) + '</td>' +
+      '<td class="amount-cell" style="color:#16a34a;">' + fmtAmount(row.infoFeePaid) + '</td>' +
+      '<td class="amount-cell" style="color:#dc2626;font-weight:700;">' + fmtAmount(row.infoFeeRemain) + '</td>' +
+      '<td><span class="badge ' + infoCls + '">' + infoStatus + '</span></td>' +
+      '</tr>';
+  });
+
+  function renderPendingSection(key, pendingRows, renderRow) {
+    var header = document.getElementById('pending-' + key + '-header');
+    var count = document.getElementById('pending-' + key + '-count');
+    var stats = document.getElementById('pending-' + key + '-stats');
+    var tbody = document.getElementById('pending-' + key + '-tbody');
+
+    if (pendingRows.length > 0) {
+      header.style.display = 'flex';
+      count.textContent = '(' + pendingRows.length + ' 条)';
+
+      // 计算汇总
+      var totalAmount = 0, totalPaid = 0, totalRemain = 0;
+      if (key === 'client') {
+        pendingRows.forEach(function(row) {
+          totalAmount += (row.r.contract || 0);
+          totalPaid += row.client.paid;
+          totalRemain += row.client.remaining;
+        });
+        stats.innerHTML =
+          '<div class="stat-card"><div class="num">' + fmtAmount(totalAmount) + '</div><div class="lbl">合同额</div></div>' +
+          '<div class="stat-card"><div class="num" style="color:#16a34a;">' + fmtAmount(totalPaid) + '</div><div class="lbl">已付</div></div>' +
+          '<div class="stat-card warn"><div class="num">' + fmtAmount(totalRemain) + '</div><div class="lbl">待付</div></div>';
+      } else if (key === 'lab') {
+        pendingRows.forEach(function(row) {
+          totalAmount += (row.r.labFee || 0);
+          totalPaid += row.lab.paid;
+          totalRemain += row.lab.remaining;
+        });
+        stats.innerHTML =
+          '<div class="stat-card"><div class="num">' + fmtAmount(totalAmount) + '</div><div class="lbl">实验室额</div></div>' +
+          '<div class="stat-card"><div class="num" style="color:#16a34a;">' + fmtAmount(totalPaid) + '</div><div class="lbl">已付</div></div>' +
+          '<div class="stat-card warn"><div class="num">' + fmtAmount(totalRemain) + '</div><div class="lbl">待付</div></div>';
+      } else if (key === 'info') {
+        pendingRows.forEach(function(row) {
+          totalAmount += row.infoFee;
+          totalPaid += row.infoFeePaid;
+          totalRemain += row.infoFeeRemain;
+        });
+        stats.innerHTML =
+          '<div class="stat-card"><div class="num">' + fmtAmount(totalAmount) + '</div><div class="lbl">信息费总额</div></div>' +
+          '<div class="stat-card"><div class="num" style="color:#16a34a;">' + fmtAmount(totalPaid) + '</div><div class="lbl">已付</div></div>' +
+          '<div class="stat-card warn"><div class="num">' + fmtAmount(totalRemain) + '</div><div class="lbl">待付</div></div>';
+      }
+
+      tbody.innerHTML = pendingRows.map(renderRow).join('');
+    } else {
+      header.style.display = 'none';
+      stats.innerHTML = '';
+      tbody.innerHTML = '<tr><td colspan="' + (key === 'lab' ? '9' : '8') + '" class="state-msg">全部已付清 ✅</td></tr>';
+    }
   }
 }
 
