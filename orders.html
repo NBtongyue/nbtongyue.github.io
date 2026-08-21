@@ -1463,6 +1463,7 @@ async function saveOrder(sysKey) {
     await createRecord(sys.apiUrl, fields);
     closeModal(sysKey);
     await loadData(sysKey);
+    syncDependentPanels();
   } catch (err) {
     alert(err.message);
     btn.disabled = false; btn.textContent = '保存';
@@ -1515,6 +1516,7 @@ async function saveRowEdit(sysKey, recordId) {
     await updateRecord(sys.apiUrl, recordId, fields);
     sys.editingId = null;
     await loadData(sysKey);
+    syncDependentPanels();
   } catch (err) { alert(err.message); }
 }
 
@@ -1528,7 +1530,16 @@ async function deleteOrder(sysKey, recordId, orderNo) {
     await deleteRecord(sys.apiUrl, recordId);
     sys.editingId = null;
     await loadData(sysKey);
+    syncDependentPanels();
   } catch (err) { alert(err.message); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  同步依赖面板（lab/cert 数据变更后刷新财务统计和待付款明细）
+// ════════════════════════════════════════════════════════════
+function syncDependentPanels() {
+  if (window._finBuilt) { try { renderFinance(); } catch(e) { console.error('sync renderFinance:', e); } }
+  if (window._pendingBuilt) { try { renderPending(); } catch(e) { console.error('sync renderPending:', e); } }
 }
 
 // ════════════════════════════════════════════════════════════
@@ -2833,6 +2844,7 @@ async function saveDoneEdit(sysKey, recordId) {
     doneEditingId = null;
     await loadData(sysKey);
     renderDoneFiltered();
+    syncDependentPanels();
   } catch (err) { alert(err.message); }
 }
 
@@ -2845,6 +2857,7 @@ async function voidDoneOrder(sysKey, recordId, orderNo) {
     renderDoneFiltered();
     renderStats(sysKey);
     applyFilters(sysKey);
+    syncDependentPanels();
   } catch (err) { alert('操作失败：' + err.message); }
 }
 
@@ -3046,6 +3059,7 @@ async function restoreOrder(sysKey, recordId, orderNo) {
     loadVoid();
     renderStats(sysKey);
     applyFilters(sysKey);
+    syncDependentPanels();
   } catch (err) { alert('恢复失败：' + err.message); }
 }
 
