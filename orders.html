@@ -806,7 +806,9 @@ async function updateRecord(apiUrl, recordId, fields) {
     body: JSON.stringify({ record_id: recordId, fields }),
   });
   const d = await res.json();
-  if (d.code !== 0) throw new Error('更新失败：' + d.msg);
+  console.log('updateRecord response:', JSON.stringify(d));
+  if (d.code !== undefined && d.code !== 0) throw new Error('更新失败：' + (d.msg || JSON.stringify(d)));
+  if (d.error) throw new Error(d.error);
 }
 async function deleteRecord(apiUrl, recordId) {
   const res = await fetch(apiUrl + '?record_id=' + encodeURIComponent(recordId), {
@@ -2251,37 +2253,41 @@ async function saveFinanceEditModal() {
   try {
     var fields = {};
     var localUpdates = {};
-    var v;
+
+    // 辅助函数：读取数值字段（空值视为 0，允许清空）
+    function readNum(id) {
+      var el = document.getElementById(id);
+      if (!el) return null;
+      var raw = el.value.trim();
+      if (raw === '') return 0;  // 空值 → 0，允许清空字段
+      var v = parseFloat(raw);
+      return isNaN(v) ? null : v;
+    }
+
     // 认证类型
     var tag = document.getElementById('fin-em-tag').value.trim();
     if (tag) { fields[sys.F.tag] = tag; localUpdates.tag = tag; saveCustomTag(sys, tag); }
-    v = parseFloat(document.getElementById('fin-em-contract').value);
-    if (!isNaN(v)) { fields[sys.F.contract] = v; localUpdates.contract = v; }
-    v = parseFloat(document.getElementById('fin-em-info-fee').value);
-    if (!isNaN(v)) { fields[sys.F.infoFee] = v; localUpdates.infoFee = v; }
-    v = parseFloat(document.getElementById('fin-em-lab-fee').value);
-    if (!isNaN(v)) { fields[sys.F.labFee] = v; localUpdates.labFee = v; }
-    v = parseFloat(document.getElementById('fin-em-cp1').value);
-    if (!isNaN(v)) { fields[sys.F.clientPay1] = v; localUpdates.clientPay1 = v; }
-    v = parseFloat(document.getElementById('fin-em-cp2').value);
-    if (!isNaN(v)) { fields[sys.F.clientPay2] = v; localUpdates.clientPay2 = v; }
-    v = parseFloat(document.getElementById('fin-em-cp3').value);
-    if (!isNaN(v)) { fields[sys.F.clientPay3] = v; localUpdates.clientPay3 = v; }
-    v = parseFloat(document.getElementById('fin-em-lp1').value);
-    if (!isNaN(v)) { fields[sys.F.labPay1] = v; localUpdates.labPay1 = v; }
-    v = parseFloat(document.getElementById('fin-em-lp2').value);
-    if (!isNaN(v)) { fields[sys.F.labPay2] = v; localUpdates.labPay2 = v; }
-    v = parseFloat(document.getElementById('fin-em-lp3').value);
-    if (!isNaN(v)) { fields[sys.F.labPay3] = v; localUpdates.labPay3 = v; }
-    v = parseFloat(document.getElementById('fin-em-cli-inv').value);
-    if (!isNaN(v)) { fields[sys.F.clientInvoice] = v; localUpdates.clientInvoice = v; }
-    v = parseFloat(document.getElementById('fin-em-lab-inv').value);
-    if (!isNaN(v)) { fields[sys.F.labInvoice] = v; localUpdates.labInvoice = v; }
-    v = parseFloat(document.getElementById('fin-em-info-expense').value);
-    if (!isNaN(v)) { fields[sys.F.infoFeeExpense] = v; localUpdates.infoFeeExpense = v; }
+
+    var v;
+    v = readNum('fin-em-contract');    if (v !== null) { fields[sys.F.contract] = v; localUpdates.contract = v; }
+    v = readNum('fin-em-info-fee');    if (v !== null) { fields[sys.F.infoFee] = v; localUpdates.infoFee = v; }
+    v = readNum('fin-em-lab-fee');     if (v !== null) { fields[sys.F.labFee] = v; localUpdates.labFee = v; }
+    v = readNum('fin-em-cp1');         if (v !== null) { fields[sys.F.clientPay1] = v; localUpdates.clientPay1 = v; }
+    v = readNum('fin-em-cp2');         if (v !== null) { fields[sys.F.clientPay2] = v; localUpdates.clientPay2 = v; }
+    v = readNum('fin-em-cp3');         if (v !== null) { fields[sys.F.clientPay3] = v; localUpdates.clientPay3 = v; }
+    v = readNum('fin-em-lp1');         if (v !== null) { fields[sys.F.labPay1] = v; localUpdates.labPay1 = v; }
+    v = readNum('fin-em-lp2');         if (v !== null) { fields[sys.F.labPay2] = v; localUpdates.labPay2 = v; }
+    v = readNum('fin-em-lp3');         if (v !== null) { fields[sys.F.labPay3] = v; localUpdates.labPay3 = v; }
+    v = readNum('fin-em-cli-inv');     if (v !== null) { fields[sys.F.clientInvoice] = v; localUpdates.clientInvoice = v; }
+    v = readNum('fin-em-lab-inv');     if (v !== null) { fields[sys.F.labInvoice] = v; localUpdates.labInvoice = v; }
+    v = readNum('fin-em-info-expense'); if (v !== null) { fields[sys.F.infoFeeExpense] = v; localUpdates.infoFeeExpense = v; }
+
+    console.log('saveFinanceEditModal: fields=', JSON.stringify(fields));
+    console.log('saveFinanceEditModal: localUpdates=', JSON.stringify(localUpdates));
 
     await updateRecord(sys.apiUrl, recordId, fields);
 
+    // 更新本地缓存
     var rec = sys.records.find(function(r) { return r.id === recordId; });
     if (rec) {
       Object.keys(localUpdates).forEach(function(k) { rec[k] = localUpdates[k]; });
@@ -2289,8 +2295,11 @@ async function saveFinanceEditModal() {
 
     closeFinanceEditModal();
     renderFinance();
+    // 同步刷新待付款明细
+    if (window._pendingBuilt) { try { renderPending(); } catch(e) { console.error('renderPending error:', e); } }
     debug('save OK');
   } catch (err) {
+    console.error('saveFinanceEditModal error:', err);
     alert('保存失败: ' + err.message);
   } finally {
     btn.disabled = false;
