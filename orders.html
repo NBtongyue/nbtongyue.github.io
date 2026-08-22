@@ -505,7 +505,7 @@
 <body>
 
 <script>
-  if (!sessionStorage.getItem('ty_token')) location.replace('login.html');
+  if (!sessionStorage.getItem('ty_token')) location.replace('login.html?next=orders.html%3Fv%3D6');
 </script>
 
 <header>
@@ -528,6 +528,7 @@
   <button class="tab-btn"        id="tab-btn-done" onclick="switchTab('done')">已交付</button>
   <button class="tab-btn"        id="tab-btn-void" onclick="switchTab('void')">已作废</button>
   <button class="tab-btn"        id="tab-btn-pending" onclick="switchTab('pending')">待付款明细</button>
+  <button class="tab-btn"        id="tab-btn-finance-center" onclick="location.href='finance-management.html'">新版财务管理</button>
 </nav>
 
 <div id="panel-cert" class="tab-panel active"></div>

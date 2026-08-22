@@ -157,6 +157,11 @@
   </style>
 </head>
 <body>
+  <script>
+    if (!sessionStorage.getItem('ty_token')) {
+      location.replace('login.html?next=finance-management.html');
+    }
+  </script>
   <a class="skip-link" href="#main-content">跳到主要内容</a>
   <div class="app">
     <aside class="sidebar" aria-label="财务模块导航">
@@ -179,8 +184,10 @@
         <div class="system-title">通跃检测 <span>·</span><span class="sub">财务管理中心</span></div>
         <div class="top-actions">
           <select id="periodSelect" class="period-select" aria-label="当前会计期间"></select>
+          <a class="link-btn" href="finance-migration-review.html" title="整理历史财务数据">迁移数据整理</a>
           <a class="link-btn" href="orders.html" title="返回现有订单管理页面">← 返回原系统</a>
           <div class="user" id="currentUser">用户</div>
+          <button class="link-btn" type="button" onclick="sessionStorage.clear();location.href='login.html'">退出登录</button>
         </div>
       </header>
 

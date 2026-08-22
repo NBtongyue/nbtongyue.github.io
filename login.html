@@ -75,7 +75,14 @@
   <div class="back"><a href="index.html">← 返回公司主页</a></div>
 </div>
 <script>
-  if (sessionStorage.getItem('ty_token')) location.href = 'orders.html?v=6';
+  function nextPage() {
+    var next = new URLSearchParams(location.search).get('next') || '';
+    return /^(orders|finance-management|finance-migration-review)\.html(?:[?#].*)?$/.test(next)
+      ? next
+      : 'orders.html?v=6';
+  }
+
+  if (sessionStorage.getItem('ty_token')) location.href = nextPage();
 
   async function doLogin(e) {
     e.preventDefault();
@@ -99,7 +106,7 @@
       if (data.token) {
         sessionStorage.setItem('ty_token', data.token);
         sessionStorage.setItem('ty_user',  data.username || username);
-        location.href = 'orders.html?v=6';
+        location.href = nextPage();
       } else {
         err.textContent = data.error || '用户名或密码错误，请重试';
         err.style.display = 'block';

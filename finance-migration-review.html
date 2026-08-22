@@ -18,7 +18,12 @@
   </style>
 </head>
 <body>
-  <header class="topbar"><div class="brand">通跃检测 <span>·</span> 财务数据整理与修改</div><div class="top-actions"><a class="top-link" href="finance-management.html">返回财务中心</a><a class="top-link" href="orders.html">返回原系统</a><label class="top-link top-file" for="previewFile">选择本地预览文件</label><input class="file-input" id="previewFile" type="file" accept="application/json,.json"></div></header>
+  <script>
+    if (!sessionStorage.getItem('ty_token')) {
+      location.replace('login.html?next=finance-migration-review.html');
+    }
+  </script>
+  <header class="topbar"><div class="brand">通跃检测 <span>·</span> 财务数据整理与修改</div><div class="top-actions"><a class="top-link" href="finance-management.html">返回财务中心</a><a class="top-link" href="orders.html">返回原系统</a><button class="top-link" type="button" onclick="sessionStorage.clear();location.href='login.html'">退出登录</button><label class="top-link top-file" for="previewFile">选择本地预览文件</label><input class="file-input" id="previewFile" type="file" accept="application/json,.json"></div></header>
   <main>
     <div class="notice"><span>ⓘ</span><span><strong>可直接修改并保存，无需双重复核；</strong>所有修改保存在当前浏览器。导入的本地文件不会发送到任何外部服务。</span></div>
     <div class="page-head"><div><h1>迁移数据整理</h1><p id="sourceInfo">尚未导入迁移预览文件，请选择桌面的“财务迁移预览.json”。</p></div><div class="page-actions"><button class="btn btn-danger" id="clearReviewBtn">清空已保存修改</button><button class="btn" id="exportBtn">导出整理结果</button><button class="btn btn-primary" disabled title="正式写入数据库功能尚未开放">进入正式导入</button></div></div>
