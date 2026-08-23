@@ -10,6 +10,12 @@
  *   FEISHU_TABLE_ID_CERT  证书订单表 ID
  *   FEISHU_TABLE_ID_LAB   实验室订单表 ID
  *   FEISHU_TABLE_ID_LEDGER 财务账本表 ID
+ *   FEISHU_APP_TOKEN_FINANCE 独立财务多维表格 App Token
+ *   FEISHU_TABLE_ID_FINANCE_TRANSACTIONS 资金流水表 ID
+ *   FEISHU_TABLE_ID_FINANCE_INVOICES 发票表 ID
+ *   FEISHU_TABLE_ID_FINANCE_ALLOCATIONS 发票分摊表 ID
+ *   FEISHU_TABLE_ID_FINANCE_PERIODS 会计期间表 ID
+ *   FEISHU_TABLE_ID_FINANCE_AUDIT 财务审计日志表 ID
  *   JWT_SECRET            任意随机字符串，用于签名登录令牌
  *   AUTH_USERS            JSON 字符串，例如：{"happy":"新密码","mindy":"新密码"}
  *   UPSTREAM             （可选）前端托管地址，默认 nbtongyue.github.io
@@ -132,6 +138,179 @@ async function handleTable(request, env, tableId) {
   return json({ error: 'not found' }, 404);
 }
 
+function financeConfig(env) {
+  return {
+    appToken: env.FEISHU_APP_TOKEN_FINANCE,
+    transactions: env.FEISHU_TABLE_ID_FINANCE_TRANSACTIONS,
+    invoices: env.FEISHU_TABLE_ID_FINANCE_INVOICES,
+    allocations: env.FEISHU_TABLE_ID_FINANCE_ALLOCATIONS,
+    periods: env.FEISHU_TABLE_ID_FINANCE_PERIODS,
+    audit: env.FEISHU_TABLE_ID_FINANCE_AUDIT,
+  };
+}
+
+function requireFinanceConfig(env) {
+  const config = financeConfig(env);
+  const missing = Object.entries(config).filter(([, value]) => !value).map(([key]) => key);
+  return missing.length ? { error: `财务数据库尚未完成配置：${missing.join(', ')}` } : config;
+}
+
+async function fetchAllFinanceRecords(env, token, tableId) {
+  const records = [];
+  let pageToken = '';
+  do {
+    const query = new URLSearchParams({ page_size: '500' });
+    if (pageToken) query.set('page_token', pageToken);
+    const url = `${FEISHU}/bitable/v1/apps/${env.FEISHU_APP_TOKEN_FINANCE}/tables/${tableId}/records?${query}`;
+    const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    const result = await response.json();
+    if (!response.ok || result.code) throw new Error(result.msg || `飞书读取失败（${response.status}）`);
+    records.push(...(result.data?.items || []));
+    pageToken = result.data?.has_more ? result.data?.page_token || '' : '';
+  } while (pageToken);
+  return records;
+}
+
+async function batchCreateFinanceRecords(env, token, tableId, fieldsList) {
+  let created = 0;
+  for (let index = 0; index < fieldsList.length; index += 500) {
+    const records = fieldsList.slice(index, index + 500).map(fields => ({ fields }));
+    const url = `${FEISHU}/bitable/v1/apps/${env.FEISHU_APP_TOKEN_FINANCE}/tables/${tableId}/records/batch_create`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ records }),
+    });
+    const result = await response.json();
+    if (!response.ok || result.code) throw new Error(result.msg || `飞书写入失败（${response.status}）`);
+    created += result.data?.records?.length || records.length;
+  }
+  return created;
+}
+
+function dateValue(value) {
+  if (!value) return null;
+  if (typeof value === 'number') return new Date(value + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return String(value).slice(0, 10);
+}
+
+function transactionToFields(item, now) {
+  return {
+    '流水号': String(item.id || ''),
+    '日期': Date.parse(`${item.date}T00:00:00+08:00`),
+    '方向': item.direction,
+    '资金性质': item.nature || '',
+    '类目': item.category || '',
+    '代码': String(item.allocationCode ?? 1),
+    '对方单位': item.party || '',
+    '关联订单': item.order || '',
+    '备注': item.memo || '',
+    '含税金额': Number(item.gross || 0) / 100,
+    '税率': Number(item.rate || 0),
+    '可抵扣税额': Number(item.tax || 0) / 100,
+    '发票状态': item.invoiceStatus || '',
+    '状态': item.status || '',
+    '经办人': item.handler || '',
+    '创建时间': now,
+    '更新时间': now,
+    '导入批次': item.importBatchId || '',
+  };
+}
+
+function invoiceToFields(item) {
+  return {
+    '发票号码': String(item.number || ''),
+    '方向': item.direction || '',
+    '发票类型': item.type || '',
+    '开票日期': Date.parse(`${item.date}T00:00:00+08:00`),
+    '对方单位': item.party || '',
+    '不含税金额': Number(item.net || 0) / 100,
+    '税率': Number(item.rate || 0),
+    '税额': Number(item.tax || 0) / 100,
+    '价税合计': Number(item.gross || 0) / 100,
+    '抵扣状态': item.deductible || '',
+    '状态': item.status || '',
+    '关联流水号': item.transactionId || '',
+    '导入批次': item.importBatchId || '',
+  };
+}
+
+function transactionFromFields(record) {
+  const f = record.fields || {};
+  return {
+    id: String(f['流水号'] || ''), date: dateValue(f['日期']), direction: f['方向'] || '',
+    nature: f['资金性质'] || '', category: f['类目'] || '', allocationCode: Number(f['代码']) === 0 ? 0 : 1,
+    party: f['对方单位'] || '', order: f['关联订单'] || '', memo: f['备注'] || '',
+    gross: Math.round(Number(f['含税金额'] || 0) * 100), rate: Number(f['税率'] || 0),
+    tax: Math.round(Number(f['可抵扣税额'] || 0) * 100), invoiceStatus: f['发票状态'] || '',
+    status: f['状态'] || '', handler: f['经办人'] || '', importBatchId: f['导入批次'] || '',
+    feishuRecordId: record.record_id,
+  };
+}
+
+function invoiceFromFields(record) {
+  const f = record.fields || {};
+  return {
+    number: String(f['发票号码'] || ''), direction: f['方向'] || '', type: f['发票类型'] || '',
+    date: dateValue(f['开票日期']), party: f['对方单位'] || '',
+    net: Math.round(Number(f['不含税金额'] || 0) * 100), rate: Number(f['税率'] || 0),
+    tax: Math.round(Number(f['税额'] || 0) * 100), gross: Math.round(Number(f['价税合计'] || 0) * 100),
+    deductible: f['抵扣状态'] || '', status: f['状态'] || '', transactionId: f['关联流水号'] || '',
+    importBatchId: f['导入批次'] || '', feishuRecordId: record.record_id,
+  };
+}
+
+async function handleFinanceState(request, env, actor) {
+  const config = requireFinanceConfig(env);
+  if (config.error) return json({ error: config.error }, 503);
+  const token = await getTenantToken(env);
+
+  if (request.method === 'GET') {
+    const [transactions, invoices] = await Promise.all([
+      fetchAllFinanceRecords(env, token, config.transactions),
+      fetchAllFinanceRecords(env, token, config.invoices),
+    ]);
+    return json({
+      transactions: transactions.map(transactionFromFields).filter(item => item.id),
+      invoices: invoices.map(invoiceFromFields).filter(item => item.number),
+    });
+  }
+
+  if (request.method === 'POST') {
+    const body = await request.json().catch(() => ({}));
+    const transactions = Array.isArray(body.transactions) ? body.transactions : [];
+    const invoices = Array.isArray(body.invoices) ? body.invoices : [];
+    if (transactions.length > 10000 || invoices.length > 20000) return json({ error: '同步数据量超出限制' }, 413);
+
+    const [existingTransactions, existingInvoices] = await Promise.all([
+      fetchAllFinanceRecords(env, token, config.transactions),
+      fetchAllFinanceRecords(env, token, config.invoices),
+    ]);
+    const transactionIds = new Set(existingTransactions.map(record => String(record.fields?.['流水号'] || '')));
+    const invoiceNumbers = new Set(existingInvoices.map(record => String(record.fields?.['发票号码'] || '')));
+    const now = Date.now();
+    const newTransactions = transactions.filter(item => item?.id && !transactionIds.has(String(item.id)));
+    const newInvoices = invoices.filter(item => item?.number && !invoiceNumbers.has(String(item.number)));
+    const createdTransactions = await batchCreateFinanceRecords(env, token, config.transactions, newTransactions.map(item => transactionToFields(item, now)));
+    const createdInvoices = await batchCreateFinanceRecords(env, token, config.invoices, newInvoices.map(invoiceToFields));
+
+    await batchCreateFinanceRecords(env, token, config.audit, [{
+      '日志编号': `AUD${now}`,
+      '操作时间': now,
+      '操作人': actor,
+      '操作类型': '同步新增',
+      '数据类型': '财务本地数据',
+      '数据编号': body.batchId || '',
+      '修改前': '',
+      '修改后': JSON.stringify({ createdTransactions, createdInvoices }),
+      '请求编号': request.headers.get('cf-ray') || crypto.randomUUID(),
+    }]);
+    return json({ ok: true, createdTransactions, createdInvoices, skippedTransactions: transactions.length - newTransactions.length, skippedInvoices: invoices.length - newInvoices.length });
+  }
+
+  return json({ error: 'method not allowed' }, 405);
+}
+
 // ── 主入口 ────────────────────────────────────────────────────────────────────
 
 export default {
@@ -156,6 +335,19 @@ export default {
         env.JWT_SECRET
       );
       return json({ token, username });
+    }
+
+    // 独立财务数据库接口（需要 JWT）
+    if (pathname === '/api/finance/state') {
+      const auth = request.headers.get('Authorization') || '';
+      const jwt = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+      const user = await verifyJWT(jwt, env.JWT_SECRET);
+      if (!user) return json({ error: '未登录或登录已过期，请重新登录' }, 401);
+      try {
+        return await handleFinanceState(request, env, user.sub || 'unknown');
+      } catch (error) {
+        return json({ error: error.message || '财务数据库操作失败' }, 502);
+      }
     }
 
     // 数据接口（需要 JWT），兼容 /api/ 前缀
