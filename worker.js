@@ -46,21 +46,25 @@ async function signJWT(payload, secret) {
 }
 
 async function verifyJWT(token, secret) {
-  const parts = (token || '').split('.');
-  if (parts.length !== 3) return null;
-  const [header, payload, sig] = parts;
-  const key = await crypto.subtle.importKey(
-    'raw', new TextEncoder().encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']
-  );
-  const sigBytes = Uint8Array.from(fromb64url(sig), c => c.charCodeAt(0));
-  const valid = await crypto.subtle.verify(
-    'HMAC', key, sigBytes, new TextEncoder().encode(`${header}.${payload}`)
-  );
-  if (!valid) return null;
-  const pl = JSON.parse(fromb64url(payload));
-  if (pl.exp && Date.now() > pl.exp) return null;
-  return pl;
+  try {
+    const parts = (token || '').split('.');
+    if (parts.length !== 3) return null;
+    const [header, payload, sig] = parts;
+    const key = await crypto.subtle.importKey(
+      'raw', new TextEncoder().encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']
+    );
+    const sigBytes = Uint8Array.from(fromb64url(sig), c => c.charCodeAt(0));
+    const valid = await crypto.subtle.verify(
+      'HMAC', key, sigBytes, new TextEncoder().encode(`${header}.${payload}`)
+    );
+    if (!valid) return null;
+    const pl = JSON.parse(fromb64url(payload));
+    if (pl.exp && Date.now() > pl.exp) return null;
+    return pl;
+  } catch {
+    return null;
+  }
 }
 
 // ── 响应工具 ──────────────────────────────────────────────────────────────────
@@ -278,6 +282,59 @@ function invoiceFromFields(record) {
   };
 }
 
+function canonicalTransaction(item) {
+  return [
+    String(item.id || ''), item.date || '', item.direction || '', item.nature || '', item.category || '',
+    Number(item.allocationCode) === 0 ? 0 : 1, item.party || '', item.order || '', item.memo || '',
+    Number(item.gross || 0), Number(item.rate || 0), Number(item.tax || 0), item.invoiceStatus || '',
+    item.status || '', item.handler || '', item.importBatchId || '',
+  ];
+}
+
+function canonicalInvoice(item) {
+  return [
+    String(item.number || ''), item.direction || '', item.type || '', item.date || '', item.party || '',
+    Number(item.net || 0), Number(item.rate || 0), Number(item.tax || 0), Number(item.gross || 0),
+    item.deductible || '', item.status || '', item.transactionId || '', item.importBatchId || '',
+  ];
+}
+
+async function financeRevision(transactions, invoices) {
+  const snapshot = {
+    transactions: transactions.map(canonicalTransaction).sort((a, b) => a[0].localeCompare(b[0])),
+    invoices: invoices.map(canonicalInvoice).sort((a, b) => a[0].localeCompare(b[0])),
+  };
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(snapshot)));
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function validText(value, maxLength = 500) {
+  return value === undefined || value === null || (typeof value === 'string' && value.length <= maxLength);
+}
+
+function validateFinancePayload(transactions, invoices) {
+  const transactionIds = new Set();
+  for (const item of transactions) {
+    if (!item || typeof item.id !== 'string' || !item.id || item.id.length > 80 || transactionIds.has(item.id)) return '资金流水编号无效或重复';
+    transactionIds.add(item.id);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(item.date || '') || !['收入', '支出'].includes(item.direction)) return `资金流水 ${item.id} 的日期或方向无效`;
+    if (![0, 1].includes(Number(item.allocationCode)) || ![0, 0.06, 0.13].includes(Number(item.rate))) return `资金流水 ${item.id} 的代码或税率无效`;
+    if (!Number.isInteger(item.gross) || item.gross <= 0 || !Number.isInteger(item.tax) || item.tax < 0 || item.tax > item.gross) return `资金流水 ${item.id} 的金额无效`;
+    if (![item.nature, item.category, item.party, item.order, item.memo, item.invoiceStatus, item.status, item.handler, item.importBatchId].every((value, index) => validText(value, index === 4 ? 2000 : 500))) return `资金流水 ${item.id} 的文本内容过长或格式无效`;
+  }
+  const invoiceNumbers = new Set();
+  for (const item of invoices) {
+    if (!item || typeof item.number !== 'string' || !item.number || item.number.length > 120 || invoiceNumbers.has(item.number)) return '发票号码无效或重复';
+    invoiceNumbers.add(item.number);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(item.date || '') || !['进项', '销项'].includes(item.direction)) return `发票 ${item.number} 的日期或方向无效`;
+    if (![0, 0.06, 0.13].includes(Number(item.rate))) return `发票 ${item.number} 的税率无效`;
+    if (![item.net, item.tax, item.gross].every(value => Number.isInteger(value) && value >= 0) || item.tax > item.gross) return `发票 ${item.number} 的金额无效`;
+    if (item.transactionId && !transactionIds.has(String(item.transactionId))) return `发票 ${item.number} 关联了不存在的流水`;
+    if (![item.type, item.party, item.deductible, item.status, item.transactionId, item.importBatchId].every(value => validText(value))) return `发票 ${item.number} 的文本内容过长或格式无效`;
+  }
+  return '';
+}
+
 async function handleFinanceState(request, env, actor) {
   const config = requireFinanceConfig(env);
   if (config.error) return json({ error: config.error }, 503);
@@ -288,46 +345,80 @@ async function handleFinanceState(request, env, actor) {
       fetchAllFinanceRecords(env, token, config.transactions),
       fetchAllFinanceRecords(env, token, config.invoices),
     ]);
-    return json({
-      transactions: transactions.map(transactionFromFields).filter(item => item.id),
-      invoices: invoices.map(invoiceFromFields).filter(item => item.number),
-    });
+    const transactionItems = transactions.map(transactionFromFields).filter(item => item.id);
+    const invoiceItems = invoices.map(invoiceFromFields).filter(item => item.number);
+    return json({ transactions: transactionItems, invoices: invoiceItems, revision: await financeRevision(transactionItems, invoiceItems) });
   }
 
   if (request.method === 'POST') {
+    const contentLength = Number(request.headers.get('content-length') || 0);
+    if (contentLength > 5 * 1024 * 1024) return json({ error: '同步请求不能超过 5MB' }, 413);
     const body = await request.json().catch(() => ({}));
     const transactions = Array.isArray(body.transactions) ? body.transactions : [];
     const invoices = Array.isArray(body.invoices) ? body.invoices : [];
     if (transactions.length > 10000 || invoices.length > 20000) return json({ error: '同步数据量超出限制' }, 413);
+    const validationError = validateFinancePayload(transactions, invoices);
+    if (validationError) return json({ error: validationError }, 400);
 
     const [existingTransactions, existingInvoices] = await Promise.all([
       fetchAllFinanceRecords(env, token, config.transactions),
       fetchAllFinanceRecords(env, token, config.invoices),
     ]);
+    const existingTransactionItems = existingTransactions.map(transactionFromFields).filter(item => item.id);
+    const existingInvoiceItems = existingInvoices.map(invoiceFromFields).filter(item => item.number);
+    const currentRevision = await financeRevision(existingTransactionItems, existingInvoiceItems);
+    if (typeof body.baseRevision !== 'string' || !body.baseRevision) return json({ error: '同步版本缺失，请刷新财务页面后重试', currentRevision }, 428);
+    if (body.baseRevision !== currentRevision) return json({ error: '飞书数据已被其他页面更新，请先重新加载云端数据', currentRevision }, 409);
     const transactionRecords = new Map(existingTransactions.map(record => [String(record.fields?.['流水号'] || ''), record.record_id]));
     const invoiceRecords = new Map(existingInvoices.map(record => [String(record.fields?.['发票号码'] || ''), record.record_id]));
+    const transactionItemsById = new Map(existingTransactionItems.map(item => [item.id, item]));
+    const invoiceItemsByNumber = new Map(existingInvoiceItems.map(item => [item.number, item]));
     const now = Date.now();
     const newTransactions = transactions.filter(item => item?.id && !transactionRecords.has(String(item.id)));
-    const changedTransactions = transactions.filter(item => item?.id && transactionRecords.has(String(item.id)));
+    const changedTransactions = transactions.filter(item => item?.id && transactionRecords.has(String(item.id)) && JSON.stringify(canonicalTransaction(item)) !== JSON.stringify(canonicalTransaction(transactionItemsById.get(String(item.id)))));
     const newInvoices = invoices.filter(item => item?.number && !invoiceRecords.has(String(item.number)));
-    const changedInvoices = invoices.filter(item => item?.number && invoiceRecords.has(String(item.number)));
-    const createdTransactions = await batchCreateFinanceRecords(env, token, config.transactions, newTransactions.map(item => transactionToFields(item, now)));
-    const createdInvoices = await batchCreateFinanceRecords(env, token, config.invoices, newInvoices.map(invoiceToFields));
-    const updatedTransactions = await batchUpdateFinanceRecords(env, token, config.transactions, changedTransactions.map(item => ({ record_id: transactionRecords.get(String(item.id)), fields: transactionToFields(item, now, false) })));
-    const updatedInvoices = await batchUpdateFinanceRecords(env, token, config.invoices, changedInvoices.map(item => ({ record_id: invoiceRecords.get(String(item.number)), fields: invoiceToFields(item) })));
-
-    await batchCreateFinanceRecords(env, token, config.audit, [{
-      '日志编号': `AUD${now}`,
-      '操作时间': now,
-      '操作人': actor,
-      '操作类型': '同步新增/更新',
-      '数据类型': '财务本地数据',
-      '数据编号': body.batchId || '',
-      '修改前': '',
-      '修改后': JSON.stringify({ createdTransactions, createdInvoices, updatedTransactions, updatedInvoices }),
-      '请求编号': request.headers.get('cf-ray') || crypto.randomUUID(),
-    }]);
-    return json({ ok: true, createdTransactions, createdInvoices, updatedTransactions, updatedInvoices });
+    const changedInvoices = invoices.filter(item => item?.number && invoiceRecords.has(String(item.number)) && JSON.stringify(canonicalInvoice(item)) !== JSON.stringify(canonicalInvoice(invoiceItemsByNumber.get(String(item.number)))));
+    let createdTransactions = 0;
+    let createdInvoices = 0;
+    let updatedTransactions = 0;
+    let updatedInvoices = 0;
+    try {
+      createdTransactions = await batchCreateFinanceRecords(env, token, config.transactions, newTransactions.map(item => transactionToFields(item, now)));
+      createdInvoices = await batchCreateFinanceRecords(env, token, config.invoices, newInvoices.map(invoiceToFields));
+      updatedTransactions = await batchUpdateFinanceRecords(env, token, config.transactions, changedTransactions.map(item => ({ record_id: transactionRecords.get(String(item.id)), fields: transactionToFields(item, now, false) })));
+      updatedInvoices = await batchUpdateFinanceRecords(env, token, config.invoices, changedInvoices.map(item => ({ record_id: invoiceRecords.get(String(item.number)), fields: invoiceToFields(item) })));
+      await batchCreateFinanceRecords(env, token, config.audit, [{
+        '日志编号': `AUD${now}`,
+        '操作时间': now,
+        '操作人': actor,
+        '操作类型': newTransactions.length || newInvoices.length || changedTransactions.length || changedInvoices.length ? '同步新增/更新' : '同步检查',
+        '数据类型': '财务本地数据',
+        '数据编号': body.batchId || '',
+        '修改前': '',
+        '修改后': JSON.stringify({ createdTransactions, createdInvoices, updatedTransactions, updatedInvoices }),
+        '请求编号': request.headers.get('cf-ray') || crypto.randomUUID(),
+      }]);
+    } catch (error) {
+      try {
+        const [recoveryTransactions, recoveryInvoices] = await Promise.all([
+          fetchAllFinanceRecords(env, token, config.transactions),
+          fetchAllFinanceRecords(env, token, config.invoices),
+        ]);
+        const recoveryRevision = await financeRevision(
+          recoveryTransactions.map(transactionFromFields).filter(item => item.id),
+          recoveryInvoices.map(invoiceFromFields).filter(item => item.number),
+        );
+        return json({ error: `同步未完整完成：${error.message || '飞书写入失败'}。本地数据已保留，可直接重试`, partial: true, currentRevision: recoveryRevision }, 502);
+      } catch {
+        throw error;
+      }
+    }
+    const mergedTransactions = new Map(existingTransactionItems.map(item => [item.id, item]));
+    const mergedInvoices = new Map(existingInvoiceItems.map(item => [item.number, item]));
+    transactions.forEach(item => mergedTransactions.set(item.id, item));
+    invoices.forEach(item => mergedInvoices.set(item.number, item));
+    const revision = await financeRevision([...mergedTransactions.values()], [...mergedInvoices.values()]);
+    return json({ ok: true, createdTransactions, createdInvoices, updatedTransactions, updatedInvoices, revision });
   }
 
   return json({ error: 'method not allowed' }, 405);
@@ -348,7 +439,13 @@ export default {
     // 登录接口（无需 JWT）
     if (pathname === '/api/login' && method === 'POST') {
       const { username, password } = await request.json().catch(() => ({}));
-      const accounts = JSON.parse(env.AUTH_USERS || '{}');
+      let accounts;
+      try {
+        accounts = JSON.parse(env.AUTH_USERS || '{}');
+      } catch {
+        console.error(JSON.stringify({ message: 'AUTH_USERS configuration is invalid' }));
+        return json({ error: '登录服务配置异常' }, 503);
+      }
       if (!username || !accounts[username] || accounts[username] !== password) {
         return json({ error: '用户名或密码错误' }, 401);
       }
@@ -368,6 +465,7 @@ export default {
       try {
         return await handleFinanceState(request, env, user.sub || 'unknown');
       } catch (error) {
+        console.error(JSON.stringify({ message: 'finance operation failed', error: error.message || String(error), path: pathname }));
         return json({ error: error.message || '财务数据库操作失败' }, 502);
       }
     }
@@ -414,6 +512,7 @@ export default {
         headers: outHeaders,
       });
     } catch (e) {
+      console.error(JSON.stringify({ message: 'upstream proxy failed', error: e.message || String(e), path: pathname }));
       return new Response(`Upstream error: ${e.message}`, { status: 502 });
     }
   },
