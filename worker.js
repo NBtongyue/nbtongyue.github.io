@@ -258,6 +258,17 @@ function invoiceToFields(item) {
   };
 }
 
+function allocationToFields(item) {
+  return {
+    '分摊编号': String(item.id || ''),
+    '流水号': String(item.transactionId || ''),
+    '发票号码': String(item.invoiceNumber || ''),
+    '分摊金额': Number(item.amount || 0) / 100,
+    '创建时间': Number(item.createdAt || Date.now()),
+    '创建人': item.creator || '',
+  };
+}
+
 function transactionFromFields(record) {
   const f = record.fields || {};
   return {
@@ -283,6 +294,15 @@ function invoiceFromFields(record) {
   };
 }
 
+function allocationFromFields(record) {
+  const f = record.fields || {};
+  return {
+    id: String(f['分摊编号'] || ''), transactionId: String(f['流水号'] || ''),
+    invoiceNumber: String(f['发票号码'] || ''), amount: Math.round(Number(f['分摊金额'] || 0) * 100),
+    createdAt: Number(f['创建时间'] || 0), creator: f['创建人'] || '', feishuRecordId: record.record_id,
+  };
+}
+
 function canonicalTransaction(item) {
   return [
     String(item.id || ''), item.date || '', item.direction || '', item.nature || '', item.category || '',
@@ -300,11 +320,20 @@ function canonicalInvoice(item) {
   ];
 }
 
-async function financeRevision(transactions, invoices) {
+function canonicalAllocation(item) {
+  return [
+    String(item.id || ''), String(item.transactionId || ''), String(item.invoiceNumber || ''),
+    Number(item.amount || 0), Number(item.createdAt || 0), item.creator || '',
+  ];
+}
+
+async function financeRevision(transactions, invoices, allocations = []) {
   const snapshot = {
     transactions: transactions.map(canonicalTransaction).sort((a, b) => a[0].localeCompare(b[0])),
     invoices: invoices.map(canonicalInvoice).sort((a, b) => a[0].localeCompare(b[0])),
   };
+  // Keep the empty-table digest compatible with v0.6 clients during rollout.
+  if (allocations.length) snapshot.allocations = allocations.map(canonicalAllocation).sort((a, b) => a[0].localeCompare(b[0]));
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(snapshot)));
   return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
 }
@@ -313,25 +342,52 @@ function validText(value, maxLength = 500) {
   return value === undefined || value === null || (typeof value === 'string' && value.length <= maxLength);
 }
 
-function validateFinancePayload(transactions, invoices) {
+function validateFinancePayload(transactions, invoices, allocations) {
   const transactionIds = new Set();
+  const transactionsById = new Map();
   for (const item of transactions) {
     if (!item || typeof item.id !== 'string' || !item.id || item.id.length > 80 || transactionIds.has(item.id)) return '资金流水编号无效或重复';
     transactionIds.add(item.id);
+    transactionsById.set(item.id, item);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(item.date || '') || !['收入', '支出'].includes(item.direction)) return `资金流水 ${item.id} 的日期或方向无效`;
     if (![0, 1].includes(Number(item.allocationCode)) || ![0, 0.06, 0.13].includes(Number(item.rate))) return `资金流水 ${item.id} 的代码或税率无效`;
     if (!Number.isInteger(item.gross) || item.gross <= 0 || !Number.isInteger(item.tax) || item.tax < 0 || item.tax > item.gross) return `资金流水 ${item.id} 的金额无效`;
     if (![item.nature, item.category, item.party, item.order, item.account, item.memo, item.invoiceStatus, item.status, item.handler, item.importBatchId].every((value, index) => validText(value, index === 5 ? 2000 : 500))) return `资金流水 ${item.id} 的文本内容过长或格式无效`;
   }
   const invoiceNumbers = new Set();
+  const invoicesByNumber = new Map();
   for (const item of invoices) {
     if (!item || typeof item.number !== 'string' || !item.number || item.number.length > 120 || invoiceNumbers.has(item.number)) return '发票号码无效或重复';
     invoiceNumbers.add(item.number);
+    invoicesByNumber.set(item.number, item);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(item.date || '') || !['进项', '销项'].includes(item.direction)) return `发票 ${item.number} 的日期或方向无效`;
     if (![0, 0.06, 0.13].includes(Number(item.rate))) return `发票 ${item.number} 的税率无效`;
     if (![item.net, item.tax, item.gross].every(value => Number.isInteger(value) && value >= 0) || item.tax > item.gross) return `发票 ${item.number} 的金额无效`;
     if (item.transactionId && !transactionIds.has(String(item.transactionId))) return `发票 ${item.number} 关联了不存在的流水`;
     if (![item.type, item.party, item.deductible, item.status, item.transactionId, item.importBatchId].every(value => validText(value))) return `发票 ${item.number} 的文本内容过长或格式无效`;
+  }
+  const allocationIds = new Set();
+  const amountByTransaction = new Map();
+  const amountByInvoice = new Map();
+  for (const item of allocations) {
+    if (!item || typeof item.id !== 'string' || !item.id || item.id.length > 100 || allocationIds.has(item.id)) return '发票分摊编号无效或重复';
+    allocationIds.add(item.id);
+    const transactionId = String(item.transactionId || '');
+    const invoiceNumber = String(item.invoiceNumber || '');
+    const transaction = transactionsById.get(transactionId);
+    const invoice = invoicesByNumber.get(invoiceNumber);
+    if (!transaction || !invoice) return `发票分摊 ${item.id} 关联了不存在的流水或发票`;
+    if (!Number.isInteger(item.amount) || item.amount <= 0) return `发票分摊 ${item.id} 的金额无效`;
+    if (!Number.isFinite(Number(item.createdAt)) || Number(item.createdAt) <= 0 || !validText(item.creator, 100)) return `发票分摊 ${item.id} 的创建信息无效`;
+    if ((transaction.direction === '收入' ? '销项' : '进项') !== invoice.direction) return `发票分摊 ${item.id} 的收支方向不一致`;
+    amountByTransaction.set(transactionId, (amountByTransaction.get(transactionId) || 0) + item.amount);
+    amountByInvoice.set(invoiceNumber, (amountByInvoice.get(invoiceNumber) || 0) + item.amount);
+  }
+  for (const [transactionId, amount] of amountByTransaction) {
+    if (amount > transactionsById.get(transactionId).gross) return `流水 ${transactionId} 的发票分摊合计超过收付金额`;
+  }
+  for (const [invoiceNumber, amount] of amountByInvoice) {
+    if (amount > invoicesByNumber.get(invoiceNumber).gross) return `发票 ${invoiceNumber} 的分摊合计超过价税合计`;
   }
   return '';
 }
@@ -342,13 +398,15 @@ async function handleFinanceState(request, env, actor) {
   const token = await getTenantToken(env);
 
   if (request.method === 'GET') {
-    const [transactions, invoices] = await Promise.all([
+    const [transactions, invoices, allocations] = await Promise.all([
       fetchAllFinanceRecords(env, token, config.transactions),
       fetchAllFinanceRecords(env, token, config.invoices),
+      fetchAllFinanceRecords(env, token, config.allocations),
     ]);
     const transactionItems = transactions.map(transactionFromFields).filter(item => item.id);
     const invoiceItems = invoices.map(invoiceFromFields).filter(item => item.number);
-    return json({ transactions: transactionItems, invoices: invoiceItems, revision: await financeRevision(transactionItems, invoiceItems) });
+    const allocationItems = allocations.map(allocationFromFields).filter(item => item.id);
+    return json({ transactions: transactionItems, invoices: invoiceItems, allocations: allocationItems, revision: await financeRevision(transactionItems, invoiceItems, allocationItems) });
   }
 
   if (request.method === 'POST') {
@@ -357,57 +415,70 @@ async function handleFinanceState(request, env, actor) {
     const body = await request.json().catch(() => ({}));
     const transactions = Array.isArray(body.transactions) ? body.transactions : [];
     const invoices = Array.isArray(body.invoices) ? body.invoices : [];
-    if (transactions.length > 10000 || invoices.length > 20000) return json({ error: '同步数据量超出限制' }, 413);
-    const validationError = validateFinancePayload(transactions, invoices);
+    const allocations = Array.isArray(body.allocations) ? body.allocations : [];
+    if (transactions.length > 10000 || invoices.length > 20000 || allocations.length > 40000) return json({ error: '同步数据量超出限制' }, 413);
+    const validationError = validateFinancePayload(transactions, invoices, allocations);
     if (validationError) return json({ error: validationError }, 400);
 
-    const [existingTransactions, existingInvoices] = await Promise.all([
+    const [existingTransactions, existingInvoices, existingAllocations] = await Promise.all([
       fetchAllFinanceRecords(env, token, config.transactions),
       fetchAllFinanceRecords(env, token, config.invoices),
+      fetchAllFinanceRecords(env, token, config.allocations),
     ]);
     const existingTransactionItems = existingTransactions.map(transactionFromFields).filter(item => item.id);
     const existingInvoiceItems = existingInvoices.map(invoiceFromFields).filter(item => item.number);
-    const currentRevision = await financeRevision(existingTransactionItems, existingInvoiceItems);
+    const existingAllocationItems = existingAllocations.map(allocationFromFields).filter(item => item.id);
+    const currentRevision = await financeRevision(existingTransactionItems, existingInvoiceItems, existingAllocationItems);
     if (typeof body.baseRevision !== 'string' || !body.baseRevision) return json({ error: '同步版本缺失，请刷新财务页面后重试', currentRevision }, 428);
     if (body.baseRevision !== currentRevision) return json({ error: '飞书数据已被其他页面更新，请先重新加载云端数据', currentRevision }, 409);
     const transactionRecords = new Map(existingTransactions.map(record => [String(record.fields?.['流水号'] || ''), record.record_id]));
     const invoiceRecords = new Map(existingInvoices.map(record => [String(record.fields?.['发票号码'] || ''), record.record_id]));
+    const allocationRecords = new Map(existingAllocations.map(record => [String(record.fields?.['分摊编号'] || ''), record.record_id]));
     const transactionItemsById = new Map(existingTransactionItems.map(item => [item.id, item]));
     const invoiceItemsByNumber = new Map(existingInvoiceItems.map(item => [item.number, item]));
+    const allocationItemsById = new Map(existingAllocationItems.map(item => [item.id, item]));
     const now = Date.now();
     const newTransactions = transactions.filter(item => item?.id && !transactionRecords.has(String(item.id)));
     const changedTransactions = transactions.filter(item => item?.id && transactionRecords.has(String(item.id)) && JSON.stringify(canonicalTransaction(item)) !== JSON.stringify(canonicalTransaction(transactionItemsById.get(String(item.id)))));
     const newInvoices = invoices.filter(item => item?.number && !invoiceRecords.has(String(item.number)));
     const changedInvoices = invoices.filter(item => item?.number && invoiceRecords.has(String(item.number)) && JSON.stringify(canonicalInvoice(item)) !== JSON.stringify(canonicalInvoice(invoiceItemsByNumber.get(String(item.number)))));
+    const newAllocations = allocations.filter(item => item?.id && !allocationRecords.has(String(item.id)));
+    const changedAllocations = allocations.filter(item => item?.id && allocationRecords.has(String(item.id)) && JSON.stringify(canonicalAllocation(item)) !== JSON.stringify(canonicalAllocation(allocationItemsById.get(String(item.id)))));
     let createdTransactions = 0;
     let createdInvoices = 0;
     let updatedTransactions = 0;
     let updatedInvoices = 0;
+    let createdAllocations = 0;
+    let updatedAllocations = 0;
     try {
       createdTransactions = await batchCreateFinanceRecords(env, token, config.transactions, newTransactions.map(item => transactionToFields(item, now)));
       createdInvoices = await batchCreateFinanceRecords(env, token, config.invoices, newInvoices.map(invoiceToFields));
       updatedTransactions = await batchUpdateFinanceRecords(env, token, config.transactions, changedTransactions.map(item => ({ record_id: transactionRecords.get(String(item.id)), fields: transactionToFields(item, now, false) })));
       updatedInvoices = await batchUpdateFinanceRecords(env, token, config.invoices, changedInvoices.map(item => ({ record_id: invoiceRecords.get(String(item.number)), fields: invoiceToFields(item) })));
+      createdAllocations = await batchCreateFinanceRecords(env, token, config.allocations, newAllocations.map(allocationToFields));
+      updatedAllocations = await batchUpdateFinanceRecords(env, token, config.allocations, changedAllocations.map(item => ({ record_id: allocationRecords.get(String(item.id)), fields: allocationToFields(item) })));
       await batchCreateFinanceRecords(env, token, config.audit, [{
         '日志编号': `AUD${now}`,
         '操作时间': now,
         '操作人': actor,
-        '操作类型': newTransactions.length || newInvoices.length || changedTransactions.length || changedInvoices.length ? '同步新增/更新' : '同步检查',
+        '操作类型': newTransactions.length || newInvoices.length || newAllocations.length || changedTransactions.length || changedInvoices.length || changedAllocations.length ? '同步新增/更新' : '同步检查',
         '数据类型': '财务本地数据',
         '数据编号': body.batchId || '',
         '修改前': '',
-        '修改后': JSON.stringify({ createdTransactions, createdInvoices, updatedTransactions, updatedInvoices }),
+        '修改后': JSON.stringify({ createdTransactions, createdInvoices, createdAllocations, updatedTransactions, updatedInvoices, updatedAllocations }),
         '请求编号': request.headers.get('cf-ray') || crypto.randomUUID(),
       }]);
     } catch (error) {
       try {
-        const [recoveryTransactions, recoveryInvoices] = await Promise.all([
+        const [recoveryTransactions, recoveryInvoices, recoveryAllocations] = await Promise.all([
           fetchAllFinanceRecords(env, token, config.transactions),
           fetchAllFinanceRecords(env, token, config.invoices),
+          fetchAllFinanceRecords(env, token, config.allocations),
         ]);
         const recoveryRevision = await financeRevision(
           recoveryTransactions.map(transactionFromFields).filter(item => item.id),
           recoveryInvoices.map(invoiceFromFields).filter(item => item.number),
+          recoveryAllocations.map(allocationFromFields).filter(item => item.id),
         );
         return json({ error: `同步未完整完成：${error.message || '飞书写入失败'}。本地数据已保留，可直接重试`, partial: true, currentRevision: recoveryRevision }, 502);
       } catch {
@@ -416,10 +487,12 @@ async function handleFinanceState(request, env, actor) {
     }
     const mergedTransactions = new Map(existingTransactionItems.map(item => [item.id, item]));
     const mergedInvoices = new Map(existingInvoiceItems.map(item => [item.number, item]));
+    const mergedAllocations = new Map(existingAllocationItems.map(item => [item.id, item]));
     transactions.forEach(item => mergedTransactions.set(item.id, item));
     invoices.forEach(item => mergedInvoices.set(item.number, item));
-    const revision = await financeRevision([...mergedTransactions.values()], [...mergedInvoices.values()]);
-    return json({ ok: true, createdTransactions, createdInvoices, updatedTransactions, updatedInvoices, revision });
+    allocations.forEach(item => mergedAllocations.set(item.id, item));
+    const revision = await financeRevision([...mergedTransactions.values()], [...mergedInvoices.values()], [...mergedAllocations.values()]);
+    return json({ ok: true, createdTransactions, createdInvoices, createdAllocations, updatedTransactions, updatedInvoices, updatedAllocations, revision });
   }
 
   return json({ error: 'method not allowed' }, 405);
