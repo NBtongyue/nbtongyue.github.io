@@ -225,6 +225,7 @@ function transactionToFields(item, now, includeCreatedAt = true) {
     '代码': String(item.allocationCode ?? 1),
     '对方单位': item.party || '',
     '关联订单': item.order || '',
+    '资金账户': item.account || '公司银行账户',
     '备注': item.memo || '',
     '含税金额': Number(item.gross || 0) / 100,
     '税率': Number(item.rate || 0),
@@ -262,7 +263,7 @@ function transactionFromFields(record) {
   return {
     id: String(f['流水号'] || ''), date: dateValue(f['日期']), direction: f['方向'] || '',
     nature: f['资金性质'] || '', category: f['类目'] || '', allocationCode: Number(f['代码']) === 0 ? 0 : 1,
-    party: f['对方单位'] || '', order: f['关联订单'] || '', memo: f['备注'] || '',
+    party: f['对方单位'] || '', order: f['关联订单'] || '', account: f['资金账户'] || '公司银行账户', memo: f['备注'] || '',
     gross: Math.round(Number(f['含税金额'] || 0) * 100), rate: Number(f['税率'] || 0),
     tax: Math.round(Number(f['可抵扣税额'] || 0) * 100), invoiceStatus: f['发票状态'] || '',
     status: f['状态'] || '', handler: f['经办人'] || '', importBatchId: f['导入批次'] || '',
@@ -285,7 +286,7 @@ function invoiceFromFields(record) {
 function canonicalTransaction(item) {
   return [
     String(item.id || ''), item.date || '', item.direction || '', item.nature || '', item.category || '',
-    Number(item.allocationCode) === 0 ? 0 : 1, item.party || '', item.order || '', item.memo || '',
+    Number(item.allocationCode) === 0 ? 0 : 1, item.party || '', item.order || '', item.account || '公司银行账户', item.memo || '',
     Number(item.gross || 0), Number(item.rate || 0), Number(item.tax || 0), item.invoiceStatus || '',
     item.status || '', item.handler || '', item.importBatchId || '',
   ];
@@ -320,7 +321,7 @@ function validateFinancePayload(transactions, invoices) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(item.date || '') || !['收入', '支出'].includes(item.direction)) return `资金流水 ${item.id} 的日期或方向无效`;
     if (![0, 1].includes(Number(item.allocationCode)) || ![0, 0.06, 0.13].includes(Number(item.rate))) return `资金流水 ${item.id} 的代码或税率无效`;
     if (!Number.isInteger(item.gross) || item.gross <= 0 || !Number.isInteger(item.tax) || item.tax < 0 || item.tax > item.gross) return `资金流水 ${item.id} 的金额无效`;
-    if (![item.nature, item.category, item.party, item.order, item.memo, item.invoiceStatus, item.status, item.handler, item.importBatchId].every((value, index) => validText(value, index === 4 ? 2000 : 500))) return `资金流水 ${item.id} 的文本内容过长或格式无效`;
+    if (![item.nature, item.category, item.party, item.order, item.account, item.memo, item.invoiceStatus, item.status, item.handler, item.importBatchId].every((value, index) => validText(value, index === 5 ? 2000 : 500))) return `资金流水 ${item.id} 的文本内容过长或格式无效`;
   }
   const invoiceNumbers = new Set();
   for (const item of invoices) {
