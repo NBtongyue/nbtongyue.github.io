@@ -188,14 +188,31 @@ async function batchCreateFinanceRecords(env, token, tableId, fieldsList) {
   return created;
 }
 
+async function batchUpdateFinanceRecords(env, token, tableId, recordsList) {
+  let updated = 0;
+  for (let index = 0; index < recordsList.length; index += 500) {
+    const records = recordsList.slice(index, index + 500);
+    const url = `${FEISHU}/bitable/v1/apps/${env.FEISHU_APP_TOKEN_FINANCE}/tables/${tableId}/records/batch_update`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ records }),
+    });
+    const result = await response.json();
+    if (!response.ok || result.code) throw new Error(result.msg || `飞书更新失败（${response.status}）`);
+    updated += result.data?.records?.length || records.length;
+  }
+  return updated;
+}
+
 function dateValue(value) {
   if (!value) return null;
   if (typeof value === 'number') return new Date(value + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
   return String(value).slice(0, 10);
 }
 
-function transactionToFields(item, now) {
-  return {
+function transactionToFields(item, now, includeCreatedAt = true) {
+  const fields = {
     '流水号': String(item.id || ''),
     '日期': Date.parse(`${item.date}T00:00:00+08:00`),
     '方向': item.direction,
@@ -211,10 +228,11 @@ function transactionToFields(item, now) {
     '发票状态': item.invoiceStatus || '',
     '状态': item.status || '',
     '经办人': item.handler || '',
-    '创建时间': now,
     '更新时间': now,
     '导入批次': item.importBatchId || '',
   };
+  if (includeCreatedAt) fields['创建时间'] = now;
+  return fields;
 }
 
 function invoiceToFields(item) {
@@ -286,26 +304,30 @@ async function handleFinanceState(request, env, actor) {
       fetchAllFinanceRecords(env, token, config.transactions),
       fetchAllFinanceRecords(env, token, config.invoices),
     ]);
-    const transactionIds = new Set(existingTransactions.map(record => String(record.fields?.['流水号'] || '')));
-    const invoiceNumbers = new Set(existingInvoices.map(record => String(record.fields?.['发票号码'] || '')));
+    const transactionRecords = new Map(existingTransactions.map(record => [String(record.fields?.['流水号'] || ''), record.record_id]));
+    const invoiceRecords = new Map(existingInvoices.map(record => [String(record.fields?.['发票号码'] || ''), record.record_id]));
     const now = Date.now();
-    const newTransactions = transactions.filter(item => item?.id && !transactionIds.has(String(item.id)));
-    const newInvoices = invoices.filter(item => item?.number && !invoiceNumbers.has(String(item.number)));
+    const newTransactions = transactions.filter(item => item?.id && !transactionRecords.has(String(item.id)));
+    const changedTransactions = transactions.filter(item => item?.id && transactionRecords.has(String(item.id)));
+    const newInvoices = invoices.filter(item => item?.number && !invoiceRecords.has(String(item.number)));
+    const changedInvoices = invoices.filter(item => item?.number && invoiceRecords.has(String(item.number)));
     const createdTransactions = await batchCreateFinanceRecords(env, token, config.transactions, newTransactions.map(item => transactionToFields(item, now)));
     const createdInvoices = await batchCreateFinanceRecords(env, token, config.invoices, newInvoices.map(invoiceToFields));
+    const updatedTransactions = await batchUpdateFinanceRecords(env, token, config.transactions, changedTransactions.map(item => ({ record_id: transactionRecords.get(String(item.id)), fields: transactionToFields(item, now, false) })));
+    const updatedInvoices = await batchUpdateFinanceRecords(env, token, config.invoices, changedInvoices.map(item => ({ record_id: invoiceRecords.get(String(item.number)), fields: invoiceToFields(item) })));
 
     await batchCreateFinanceRecords(env, token, config.audit, [{
       '日志编号': `AUD${now}`,
       '操作时间': now,
       '操作人': actor,
-      '操作类型': '同步新增',
+      '操作类型': '同步新增/更新',
       '数据类型': '财务本地数据',
       '数据编号': body.batchId || '',
       '修改前': '',
-      '修改后': JSON.stringify({ createdTransactions, createdInvoices }),
+      '修改后': JSON.stringify({ createdTransactions, createdInvoices, updatedTransactions, updatedInvoices }),
       '请求编号': request.headers.get('cf-ray') || crypto.randomUUID(),
     }]);
-    return json({ ok: true, createdTransactions, createdInvoices, skippedTransactions: transactions.length - newTransactions.length, skippedInvoices: invoices.length - newInvoices.length });
+    return json({ ok: true, createdTransactions, createdInvoices, updatedTransactions, updatedInvoices });
   }
 
   return json({ error: 'method not allowed' }, 405);
